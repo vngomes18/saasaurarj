@@ -166,7 +166,12 @@
 
     <!-- Stock Alert -->
     {% if produtos %}
-        {% set produtos_estoque_baixo = produtos|selectattr('estoque_atual', '<=', 'estoque_minimo')|list %}
+        {% set produtos_estoque_baixo = [] %}
+        {% for produto in produtos %}
+            {% if produto.estoque_atual <= produto.estoque_minimo and produto.estoque_minimo > 0 %}
+                {% set _ = produtos_estoque_baixo.append(produto) %}
+            {% endif %}
+        {% endfor %}
         {% if produtos_estoque_baixo %}
         <div class="row mt-4">
             <div class="col-12">
