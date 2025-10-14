@@ -1,0 +1,394 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Nova Venda - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>
+                <i class="fas fa-shopping-cart text-primary me-2"></i>
+                Nova Venda
+            </h2>
+            <p class="text-muted">Realize uma nova venda</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('vendas') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Voltar para Vendas
+            </a>
+        </div>
+    </div>
+
+    <!-- Sale Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <form method="POST" id="sale-form" class="needs-validation" novalidate>
+                <!-- Customer Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>
+                            Informações do Cliente
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cliente_id" class="form-label">
+                                    <i class="fas fa-users me-1"></i>
+                                    Cliente
+                                </label>
+                                <select class="form-select" id="cliente_id" name="cliente_id">
+                                    <option value="">Cliente Avulso</option>
+                                    {% for cliente in clientes %}
+                                    <option value="{{ cliente.id }}">{{ cliente.nome }} - {{ cliente.telefone or cliente.email or 'Sem contato' }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    Selecione um cliente cadastrado ou deixe em branco para cliente avulso
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Section -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-box me-2"></i>
+                            Produtos da Venda
+                        </h5>
+                        <button type="button" id="add-item-btn" class="btn btn-success btn-sm">
+                            <i class="fas fa-plus me-1"></i>
+                            Adicionar Produto
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="sale-items">
+                            <!-- Items will be added here dynamically -->
+                        </div>
+                        
+                        <div class="text-center mt-3" id="no-items-message">
+                            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Nenhum produto adicionado</h5>
+                            <p class="text-muted">Clique em "Adicionar Produto" para começar</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-credit-card me-2"></i>
+                            Informações de Pagamento
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="forma_pagamento" class="form-label">
+                                    <i class="fas fa-money-bill-wave me-1"></i>
+                                    Forma de Pagamento
+                                </label>
+                                <select class="form-select" id="forma_pagamento" name="forma_pagamento" required>
+                                    <option value="">Selecione a forma de pagamento</option>
+                                    <option value="dinheiro">Dinheiro</option>
+                                    <option value="cartao_debito">Cartão de Débito</option>
+                                    <option value="cartao_credito">Cartão de Crédito</option>
+                                    <option value="pix">PIX</option>
+                                    <option value="transferencia">Transferência Bancária</option>
+                                    <option value="cheque">Cheque</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Por favor, selecione a forma de pagamento.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="observacoes" class="form-label">
+                                    <i class="fas fa-sticky-note me-1"></i>
+                                    Observações
+                                </label>
+                                <textarea class="form-control" 
+                                          id="observacoes" 
+                                          name="observacoes" 
+                                          rows="3" 
+                                          placeholder="Observações sobre a venda..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('vendas') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-success" id="submit-btn" disabled>
+                        <i class="fas fa-check me-2"></i>
+                        Finalizar Venda
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sale Summary -->
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt me-2"></i>
+                        Resumo da Venda
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="sale-summary">
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                            <p class="mb-0">Adicione produtos para ver o resumo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let itemCount = 0;
+        const itemsContainer = document.getElementById('sale-items');
+        const noItemsMessage = document.getElementById('no-items-message');
+        const submitBtn = document.getElementById('submit-btn');
+        const saleSummary = document.getElementById('sale-summary');
+        
+        // Add first item automatically
+        addSaleItem();
+        
+        function addSaleItem() {
+            itemCount++;
+            const itemHtml = `
+                <div class="row sale-item mb-3" data-item="${itemCount}">
+                    <div class="col-md-5">
+                        <label class="form-label">Produto</label>
+                        <select class="form-select produto-select" name="produto_${itemCount}" required>
+                            <option value="">Selecione um produto</option>
+                            {% for produto in produtos %}
+                            <option value="{{ produto.id }}" 
+                                    data-preco="{{ produto.preco }}" 
+                                    data-estoque="{{ produto.estoque_atual }}"
+                                    data-nome="{{ produto.nome }}">
+                                {{ produto.nome }} - R$ {{ "%.2f"|format(produto.preco) }} (Estoque: {{ produto.estoque_atual }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Quantidade</label>
+                        <input type="number" class="form-control quantidade-input" name="quantidade_${itemCount}" min="1" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Preço Unit.</label>
+                        <input type="text" class="form-control preco-input" readonly>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Subtotal</label>
+                        <input type="text" class="form-control subtotal-input" readonly>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="button" class="btn btn-danger btn-sm d-block remove-item-btn">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            itemsContainer.insertAdjacentHTML('beforeend', itemHtml);
+            noItemsMessage.style.display = 'none';
+            updateSubmitButton();
+        }
+        
+        // Add item button
+        document.getElementById('add-item-btn').addEventListener('click', addSaleItem);
+        
+        // Handle product selection
+        itemsContainer.addEventListener('change', function(e) {
+            if (e.target.classList.contains('produto-select')) {
+                const selectedOption = e.target.selectedOptions[0];
+                const itemRow = e.target.closest('.sale-item');
+                const precoInput = itemRow.querySelector('.preco-input');
+                
+                if (selectedOption && selectedOption.dataset.preco) {
+                    const preco = parseFloat(selectedOption.dataset.preco);
+                    precoInput.value = 'R$ ' + preco.toFixed(2).replace('.', ',');
+                    calculateSubtotal(itemRow);
+                } else {
+                    precoInput.value = '';
+                    itemRow.querySelector('.subtotal-input').value = '';
+                }
+                updateSaleSummary();
+                updateSubmitButton();
+            }
+        });
+        
+        // Handle quantity change
+        itemsContainer.addEventListener('input', function(e) {
+            if (e.target.classList.contains('quantidade-input')) {
+                const itemRow = e.target.closest('.sale-item');
+                const quantidade = parseInt(e.target.value);
+                const selectedOption = itemRow.querySelector('.produto-select').selectedOptions[0];
+                
+                if (selectedOption && selectedOption.dataset.estoque) {
+                    const estoque = parseInt(selectedOption.dataset.estoque);
+                    if (quantidade > estoque) {
+                        e.target.setCustomValidity(`Estoque insuficiente. Disponível: ${estoque}`);
+                        e.target.reportValidity();
+                        return;
+                    } else {
+                        e.target.setCustomValidity('');
+                    }
+                }
+                
+                calculateSubtotal(itemRow);
+                updateSaleSummary();
+                updateSubmitButton();
+            }
+        });
+        
+        // Remove item
+        itemsContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-item-btn') || e.target.closest('.remove-item-btn')) {
+                const itemRow = e.target.closest('.sale-item');
+                itemRow.remove();
+                
+                const remainingItems = itemsContainer.querySelectorAll('.sale-item');
+                if (remainingItems.length === 0) {
+                    noItemsMessage.style.display = 'block';
+                }
+                
+                updateSaleSummary();
+                updateSubmitButton();
+            }
+        });
+        
+        function calculateSubtotal(itemRow) {
+            const quantidade = parseInt(itemRow.querySelector('.quantidade-input').value) || 0;
+            const precoText = itemRow.querySelector('.preco-input').value.replace('R$ ', '').replace(',', '.');
+            const preco = parseFloat(precoText) || 0;
+            const subtotal = quantidade * preco;
+            
+            itemRow.querySelector('.subtotal-input').value = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
+        }
+        
+        function updateSaleSummary() {
+            const items = itemsContainer.querySelectorAll('.sale-item');
+            let totalItems = 0;
+            let totalValue = 0;
+            let summaryHtml = '';
+            
+            items.forEach(item => {
+                const quantidade = parseInt(item.querySelector('.quantidade-input').value) || 0;
+                const subtotalText = item.querySelector('.subtotal-input').value.replace('R$ ', '').replace(',', '.');
+                const subtotal = parseFloat(subtotalText) || 0;
+                const produtoSelect = item.querySelector('.produto-select');
+                const selectedOption = produtoSelect.selectedOptions[0];
+                
+                if (quantidade > 0 && subtotal > 0 && selectedOption) {
+                    totalItems += quantidade;
+                    totalValue += subtotal;
+                    
+                    summaryHtml += `
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <small class="fw-bold">${selectedOption.dataset.nome}</small>
+                                <br><small class="text-muted">${quantidade}x R$ ${parseFloat(selectedOption.dataset.preco).toFixed(2).replace('.', ',')}</small>
+                            </div>
+                            <span class="badge bg-primary">R$ ${subtotal.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                    `;
+                }
+            });
+            
+            if (totalItems > 0) {
+                summaryHtml += `
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold">Total de Itens:</span>
+                        <span class="badge bg-secondary">${totalItems}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold fs-5">Valor Total:</span>
+                        <span class="badge bg-success fs-5">R$ ${totalValue.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                `;
+            } else {
+                summaryHtml = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                        <p class="mb-0">Adicione produtos para ver o resumo</p>
+                    </div>
+                `;
+            }
+            
+            saleSummary.innerHTML = summaryHtml;
+        }
+        
+        function updateSubmitButton() {
+            const items = itemsContainer.querySelectorAll('.sale-item');
+            let hasValidItems = false;
+            
+            items.forEach(item => {
+                const quantidade = parseInt(item.querySelector('.quantidade-input').value) || 0;
+                const subtotalText = item.querySelector('.subtotal-input').value.replace('R$ ', '').replace(',', '.');
+                const subtotal = parseFloat(subtotalText) || 0;
+                
+                if (quantidade > 0 && subtotal > 0) {
+                    hasValidItems = true;
+                }
+            });
+            
+            submitBtn.disabled = !hasValidItems;
+        }
+        
+        // Form validation
+        const form = document.getElementById('sale-form');
+        form.addEventListener('submit', function(e) {
+            const items = itemsContainer.querySelectorAll('.sale-item');
+            let hasValidItems = false;
+            
+            items.forEach(item => {
+                const produtoSelect = item.querySelector('.produto-select');
+                const quantidade = parseInt(item.querySelector('.quantidade-input').value) || 0;
+                
+                if (produtoSelect.value && quantidade > 0) {
+                    hasValidItems = true;
+                }
+            });
+            
+            if (!hasValidItems) {
+                e.preventDefault();
+                alert('Adicione pelo menos um produto à venda.');
+                return;
+            }
+            
+            const formaPagamento = document.getElementById('forma_pagamento').value;
+            if (!formaPagamento) {
+                e.preventDefault();
+                alert('Selecione a forma de pagamento.');
+                document.getElementById('forma_pagamento').focus();
+                return;
+            }
+        });
+    });
+</script>
+{% endblock %}
+
