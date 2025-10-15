@@ -1,0 +1,277 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+    {% if cliente %}Editar Cliente{% else %}Novo Cliente{% endif %} - SaaS Sistema
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>
+                <i class="fas fa-users text-primary me-2"></i>
+                {% if cliente %}Editar Cliente{% else %}Novo Cliente{% endif %}
+            </h2>
+            <p class="text-muted">
+                {% if cliente %}Atualize as informações do cliente{% else %}Cadastre um novo cliente no sistema{% endif %}
+            </p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('clientes') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Voltar para Clientes
+            </a>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        <div class="row">
+                            <!-- Basic Information -->
+                            <div class="col-md-6 mb-3">
+                                <label for="nome" class="form-label">
+                                    <i class="fas fa-user me-1"></i>
+                                    Nome Completo *
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="nome" 
+                                       name="nome" 
+                                       value="{{ cliente.nome if cliente else '' }}"
+                                       required>
+                                <div class="invalid-feedback">
+                                    Por favor, insira o nome do cliente.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="cpf_cnpj" class="form-label">
+                                    <i class="fas fa-id-card me-1"></i>
+                                    CPF/CNPJ
+                                </label>
+                                <input type="text" 
+                                       class="form-control cpf-cnpj-input" 
+                                       id="cpf_cnpj" 
+                                       name="cpf_cnpj" 
+                                       placeholder="000.000.000-00 ou 00.000.000/0000-00"
+                                       value="{{ cliente.cpf_cnpj if cliente else '' }}">
+                                <div class="form-text">
+                                    Digite apenas números, a formatação será aplicada automaticamente
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">
+                                    <i class="fas fa-envelope me-1"></i>
+                                    Email
+                                </label>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="email" 
+                                       name="email" 
+                                       placeholder="cliente@exemplo.com"
+                                       value="{{ cliente.email if cliente else '' }}">
+                                <div class="invalid-feedback">
+                                    Por favor, insira um email válido.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="telefone" class="form-label">
+                                    <i class="fas fa-phone me-1"></i>
+                                    Telefone
+                                </label>
+                                <input type="text" 
+                                       class="form-control phone-input" 
+                                       id="telefone" 
+                                       name="telefone" 
+                                       placeholder="(11) 99999-9999"
+                                       value="{{ cliente.telefone if cliente else '' }}">
+                                <div class="form-text">
+                                    Digite apenas números, a formatação será aplicada automaticamente
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="endereco" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    Endereço Completo
+                                </label>
+                                <textarea class="form-control" 
+                                          id="endereco" 
+                                          name="endereco" 
+                                          rows="3" 
+                                          placeholder="Rua, número, bairro, cidade, estado, CEP">{{ cliente.endereco if cliente else '' }}</textarea>
+                                <div class="form-text">
+                                    Endereço completo para entrega e cobrança
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('clientes') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-2"></i>
+                                        Cancelar
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        {% if cliente %}Atualizar Cliente{% else %}Cadastrar Cliente{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Preview -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-eye me-2"></i>
+                        Visualização do Cliente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="avatar bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" 
+                                     style="width: 50px; height: 50px;">
+                                    <i class="fas fa-user fa-lg"></i>
+                                </div>
+                                <div>
+                                    <h4 id="preview-nome" class="mb-0">Nome do Cliente</h4>
+                                    <small class="text-muted" id="preview-cpf-cnpj">CPF/CNPJ</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-end">
+                                <div class="mb-2">
+                                    <i class="fas fa-envelope text-muted me-2"></i>
+                                    <span id="preview-email" class="text-muted">Email não informado</span>
+                                </div>
+                                <div class="mb-2">
+                                    <i class="fas fa-phone text-muted me-2"></i>
+                                    <span id="preview-telefone" class="text-muted">Telefone não informado</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="border-top pt-3">
+                                <div class="d-flex align-items-start">
+                                    <i class="fas fa-map-marker-alt text-muted me-2 mt-1"></i>
+                                    <div>
+                                        <strong>Endereço:</strong><br>
+                                        <span id="preview-endereco" class="text-muted">Endereço não informado</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Real-time preview
+        const inputs = {
+            nome: document.getElementById('nome'),
+            email: document.getElementById('email'),
+            telefone: document.getElementById('telefone'),
+            endereco: document.getElementById('endereco'),
+            cpf_cnpj: document.getElementById('cpf_cnpj')
+        };
+
+        const previews = {
+            nome: document.getElementById('preview-nome'),
+            email: document.getElementById('preview-email'),
+            telefone: document.getElementById('preview-telefone'),
+            endereco: document.getElementById('preview-endereco'),
+            cpfCnpj: document.getElementById('preview-cpf-cnpj')
+        };
+
+        function updatePreview() {
+            // Update name
+            previews.nome.textContent = inputs.nome.value || 'Nome do Cliente';
+            
+            // Update email
+            if (inputs.email.value) {
+                previews.email.textContent = inputs.email.value;
+                previews.email.className = '';
+            } else {
+                previews.email.textContent = 'Email não informado';
+                previews.email.className = 'text-muted';
+            }
+            
+            // Update phone
+            if (inputs.telefone.value) {
+                previews.telefone.textContent = inputs.telefone.value;
+                previews.telefone.className = '';
+            } else {
+                previews.telefone.textContent = 'Telefone não informado';
+                previews.telefone.className = 'text-muted';
+            }
+            
+            // Update address
+            if (inputs.endereco.value) {
+                previews.endereco.textContent = inputs.endereco.value;
+                previews.endereco.className = '';
+            } else {
+                previews.endereco.textContent = 'Endereço não informado';
+                previews.endereco.className = 'text-muted';
+            }
+            
+            // Update CPF/CNPJ
+            if (inputs.cpf_cnpj.value) {
+                previews.cpfCnpj.textContent = inputs.cpf_cnpj.value;
+                previews.cpfCnpj.className = '';
+            } else {
+                previews.cpfCnpj.textContent = 'CPF/CNPJ não informado';
+                previews.cpfCnpj.className = 'text-muted';
+            }
+        }
+
+        // Add event listeners
+        Object.values(inputs).forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
+
+        // Initial update
+        updatePreview();
+
+        // Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            // Basic validation is handled by HTML5
+            // Additional custom validation can be added here
+        });
+    });
+</script>
+{% endblock %}
+

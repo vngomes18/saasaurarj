@@ -1,0 +1,222 @@
+{% extends "layout/base.html" %}
+
+{% block title %}{{ 'Editar' if fornecedor else 'Novo' }} Fornecedor - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-{{ 'edit' if fornecedor else 'plus' }} text-primary me-2"></i>
+                        {{ 'Editar' if fornecedor else 'Novo' }} Fornecedor
+                    </h2>
+                    <p class="text-muted mb-0">
+                        {{ 'Atualize as informações do fornecedor' if fornecedor else 'Cadastre um novo fornecedor' }}
+                    </p>
+                </div>
+                <a href="{{ url_for('fornecedores') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle text-primary me-2"></i>
+                        Informações do Fornecedor
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nome" class="form-label">Nome *</label>
+                                <input type="text" class="form-control" id="nome" name="nome" 
+                                       value="{{ fornecedor.nome if fornecedor else '' }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="razao_social" class="form-label">Razão Social</label>
+                                <input type="text" class="form-control" id="razao_social" name="razao_social"
+                                       value="{{ fornecedor.razao_social if fornecedor else '' }}">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cnpj" class="form-label">CNPJ</label>
+                                <input type="text" class="form-control" id="cnpj" name="cnpj"
+                                       value="{{ fornecedor.cnpj if fornecedor else '' }}"
+                                       placeholder="00.000.000/0000-00">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="contato" class="form-label">Pessoa de Contato</label>
+                                <input type="text" class="form-control" id="contato" name="contato"
+                                       value="{{ fornecedor.contato if fornecedor else '' }}">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">E-mail</label>
+                                <input type="email" class="form-control" id="email" name="email"
+                                       value="{{ fornecedor.email if fornecedor else '' }}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="telefone" class="form-label">Telefone</label>
+                                <input type="text" class="form-control" id="telefone" name="telefone"
+                                       value="{{ fornecedor.telefone if fornecedor else '' }}"
+                                       placeholder="(11) 99999-9999">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="endereco" class="form-label">Endereço</label>
+                            <textarea class="form-control" id="endereco" name="endereco" rows="2">{{ fornecedor.endereco if fornecedor else '' }}</textarea>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="cidade" class="form-label">Cidade</label>
+                                <input type="text" class="form-control" id="cidade" name="cidade"
+                                       value="{{ fornecedor.cidade if fornecedor else '' }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="estado" class="form-label">Estado</label>
+                                <select class="form-select" id="estado" name="estado">
+                                    <option value="">Selecione</option>
+                                    <option value="AC" {{ 'selected' if fornecedor and fornecedor.estado == 'AC' else '' }}>Acre</option>
+                                    <option value="AL" {{ 'selected' if fornecedor and fornecedor.estado == 'AL' else '' }}>Alagoas</option>
+                                    <option value="AP" {{ 'selected' if fornecedor and fornecedor.estado == 'AP' else '' }}>Amapá</option>
+                                    <option value="AM" {{ 'selected' if fornecedor and fornecedor.estado == 'AM' else '' }}>Amazonas</option>
+                                    <option value="BA" {{ 'selected' if fornecedor and fornecedor.estado == 'BA' else '' }}>Bahia</option>
+                                    <option value="CE" {{ 'selected' if fornecedor and fornecedor.estado == 'CE' else '' }}>Ceará</option>
+                                    <option value="DF" {{ 'selected' if fornecedor and fornecedor.estado == 'DF' else '' }}>Distrito Federal</option>
+                                    <option value="ES" {{ 'selected' if fornecedor and fornecedor.estado == 'ES' else '' }}>Espírito Santo</option>
+                                    <option value="GO" {{ 'selected' if fornecedor and fornecedor.estado == 'GO' else '' }}>Goiás</option>
+                                    <option value="MA" {{ 'selected' if fornecedor and fornecedor.estado == 'MA' else '' }}>Maranhão</option>
+                                    <option value="MT" {{ 'selected' if fornecedor and fornecedor.estado == 'MT' else '' }}>Mato Grosso</option>
+                                    <option value="MS" {{ 'selected' if fornecedor and fornecedor.estado == 'MS' else '' }}>Mato Grosso do Sul</option>
+                                    <option value="MG" {{ 'selected' if fornecedor and fornecedor.estado == 'MG' else '' }}>Minas Gerais</option>
+                                    <option value="PA" {{ 'selected' if fornecedor and fornecedor.estado == 'PA' else '' }}>Pará</option>
+                                    <option value="PB" {{ 'selected' if fornecedor and fornecedor.estado == 'PB' else '' }}>Paraíba</option>
+                                    <option value="PR" {{ 'selected' if fornecedor and fornecedor.estado == 'PR' else '' }}>Paraná</option>
+                                    <option value="PE" {{ 'selected' if fornecedor and fornecedor.estado == 'PE' else '' }}>Pernambuco</option>
+                                    <option value="PI" {{ 'selected' if fornecedor and fornecedor.estado == 'PI' else '' }}>Piauí</option>
+                                    <option value="RJ" {{ 'selected' if fornecedor and fornecedor.estado == 'RJ' else '' }}>Rio de Janeiro</option>
+                                    <option value="RN" {{ 'selected' if fornecedor and fornecedor.estado == 'RN' else '' }}>Rio Grande do Norte</option>
+                                    <option value="RS" {{ 'selected' if fornecedor and fornecedor.estado == 'RS' else '' }}>Rio Grande do Sul</option>
+                                    <option value="RO" {{ 'selected' if fornecedor and fornecedor.estado == 'RO' else '' }}>Rondônia</option>
+                                    <option value="RR" {{ 'selected' if fornecedor and fornecedor.estado == 'RR' else '' }}>Roraima</option>
+                                    <option value="SC" {{ 'selected' if fornecedor and fornecedor.estado == 'SC' else '' }}>Santa Catarina</option>
+                                    <option value="SP" {{ 'selected' if fornecedor and fornecedor.estado == 'SP' else '' }}>São Paulo</option>
+                                    <option value="SE" {{ 'selected' if fornecedor and fornecedor.estado == 'SE' else '' }}>Sergipe</option>
+                                    <option value="TO" {{ 'selected' if fornecedor and fornecedor.estado == 'TO' else '' }}>Tocantins</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="cep" class="form-label">CEP</label>
+                                <input type="text" class="form-control" id="cep" name="cep"
+                                       value="{{ fornecedor.cep if fornecedor else '' }}"
+                                       placeholder="00000-000">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="observacoes" class="form-label">Observações</label>
+                            <textarea class="form-control" id="observacoes" name="observacoes" rows="3">{{ fornecedor.observacoes if fornecedor else '' }}</textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('fornecedores') }}" class="btn btn-secondary">
+                                <i class="fas fa-times me-2"></i>
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                {{ 'Atualizar' if fornecedor else 'Salvar' }} Fornecedor
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info Card -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle text-info me-2"></i>
+                        Informações
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Dica:</strong> Preencha pelo menos o nome e contato do fornecedor. 
+                        As informações de endereço e CNPJ são opcionais mas recomendadas.
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong> Fornecedores inativos não aparecerão nas listas de compras.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.card').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+
+        // CNPJ mask
+        document.getElementById('cnpj').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/^(\d{2})(\d)/, '$1.$2');
+            value = value.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3');
+            value = value.replace(/\.(\d{3})(\d)/, '.$1/$2');
+            value = value.replace(/(\d{4})(\d)/, '$1-$2');
+            e.target.value = value;
+        });
+
+        // Phone mask
+        document.getElementById('telefone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 10) {
+                value = value.replace(/^(\d{2})(\d)/, '($1) $2');
+                value = value.replace(/(\d{4})(\d)/, '$1-$2');
+            } else {
+                value = value.replace(/^(\d{2})(\d)/, '($1) $2');
+                value = value.replace(/(\d{5})(\d)/, '$1-$2');
+            }
+            e.target.value = value;
+        });
+
+        // CEP mask
+        document.getElementById('cep').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/^(\d{5})(\d)/, '$1-$2');
+            e.target.value = value;
+        });
+    });
+</script>
+{% endblock %}
+

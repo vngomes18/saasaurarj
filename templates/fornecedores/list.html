@@ -1,0 +1,131 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Fornecedores - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-truck text-primary me-2"></i>
+                        Fornecedores
+                    </h2>
+                    <p class="text-muted mb-0">Gerencie seus fornecedores e parceiros comerciais</p>
+                </div>
+                <a href="{{ url_for('novo_fornecedor') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Novo Fornecedor
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fornecedores List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list text-primary me-2"></i>
+                        Lista de Fornecedores
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if fornecedores %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Razão Social</th>
+                                        <th>CNPJ</th>
+                                        <th>Contato</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for fornecedor in fornecedores %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                    <i class="fas fa-building"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ fornecedor.nome }}</h6>
+                                                    <small class="text-muted">{{ fornecedor.cidade }}, {{ fornecedor.estado }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="text-dark">{{ fornecedor.razao_social or '-' }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="text-muted">{{ fornecedor.cnpj or '-' }}</span>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <div class="text-dark">{{ fornecedor.contato or '-' }}</div>
+                                                <small class="text-muted">{{ fornecedor.telefone or '-' }}</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if fornecedor.status == 'ativo' else 'secondary' }}">
+                                                {{ fornecedor.status.title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('editar_fornecedor', id=fornecedor.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{{ url_for('excluir_fornecedor', id=fornecedor.id) }}" 
+                                                   class="btn btn-sm btn-outline-danger" 
+                                                   title="Excluir"
+                                                   onclick="return confirm('Tem certeza que deseja excluir este fornecedor?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center p-5">
+                            <i class="fas fa-truck fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">Nenhum fornecedor cadastrado</h5>
+                            <p class="text-muted">Comece adicionando seu primeiro fornecedor</p>
+                            <a href="{{ url_for('novo_fornecedor') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>
+                                Adicionar Fornecedor
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.card, .table').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}
+

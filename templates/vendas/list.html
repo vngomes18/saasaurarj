@@ -1,0 +1,312 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Vendas - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>
+                <i class="fas fa-shopping-cart text-primary me-2"></i>
+                Controle de Vendas
+            </h2>
+            <p class="text-muted">Acompanhe todas as suas vendas</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('nova_venda') }}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>
+                Nova Venda
+            </a>
+            <button class="btn btn-outline-secondary btn-export-csv">
+                <i class="fas fa-download me-2"></i>
+                Exportar CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" class="form-control table-search" placeholder="Buscar vendas...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="statusFilter">
+                <option value="">Todos os status</option>
+                <option value="finalizada">Finalizada</option>
+                <option value="pendente">Pendente</option>
+                <option value="cancelada">Cancelada</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="paymentFilter">
+                <option value="">Todas as formas</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="cartao">Cartão</option>
+                <option value="pix">PIX</option>
+                <option value="transferencia">Transferência</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="date" class="form-control" id="dateFilter" placeholder="Filtrar por data">
+        </div>
+    </div>
+
+    <!-- Sales Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>
+                                <i class="fas fa-hashtag me-1"></i>
+                                ID
+                            </th>
+                            <th>
+                                <i class="fas fa-calendar me-1"></i>
+                                Data/Hora
+                            </th>
+                            <th>
+                                <i class="fas fa-user me-1"></i>
+                                Cliente
+                            </th>
+                            <th>
+                                <i class="fas fa-dollar-sign me-1"></i>
+                                Valor Total
+                            </th>
+                            <th>
+                                <i class="fas fa-credit-card me-1"></i>
+                                Pagamento
+                            </th>
+                            <th>
+                                <i class="fas fa-info-circle me-1"></i>
+                                Status
+                            </th>
+                            <th>
+                                <i class="fas fa-box me-1"></i>
+                                Itens
+                            </th>
+                            <th class="text-center">
+                                <i class="fas fa-cogs me-1"></i>
+                                Ações
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if vendas %}
+                            {% for venda in vendas %}
+                            <tr>
+                                <td>
+                                    <strong>#{{ venda.id }}</strong>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ venda.data_venda.strftime('%d/%m/%Y') }}</strong>
+                                        <br><small class="text-muted">{{ venda.data_venda.strftime('%H:%M') }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if venda.cliente %}
+                                        <div>
+                                            <strong>{{ venda.cliente.nome }}</strong>
+                                            {% if venda.cliente.telefone %}
+                                                <br><small class="text-muted">{{ venda.cliente.telefone }}</small>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">Cliente Avulso</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-success fs-6">
+                                        R$ {{ "%.2f"|format(venda.valor_total) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if venda.forma_pagamento %}
+                                        <span class="badge bg-info">{{ venda.forma_pagamento.title() }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if venda.status == 'finalizada' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Finalizada
+                                        </span>
+                                    {% elif venda.status == 'pendente' %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock me-1"></i>Pendente
+                                        </span>
+                                    {% elif venda.status == 'cancelada' %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times me-1"></i>Cancelada
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">
+                                        {{ venda.itens|length }} item(s)
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('detalhes_venda', id=venda.id) }}" 
+                                           class="btn btn-sm btn-outline-primary"
+                                           data-bs-toggle="tooltip" 
+                                           title="Ver detalhes">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-secondary btn-print"
+                                                data-bs-toggle="tooltip" 
+                                                title="Imprimir">
+                                            <i class="fas fa-print"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">Nenhuma venda realizada</h5>
+                                    <p class="text-muted">Comece realizando sua primeira venda</p>
+                                    <a href="{{ url_for('nova_venda') }}" class="btn btn-success">
+                                        <i class="fas fa-plus me-2"></i>
+                                        Realizar Primeira Venda
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Summary -->
+    {% if vendas %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Resumo das Vendas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-primary">{{ vendas|length }}</h3>
+                                <p class="text-muted mb-0">Total de Vendas</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-success">
+                                    R$ {{ "%.2f"|format(vendas|sum(attribute='valor_total')) }}
+                                </h3>
+                                <p class="text-muted mb-0">Faturamento Total</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-warning">
+                                    {{ vendas|selectattr('status', 'equalto', 'pendente')|list|length }}
+                                </h3>
+                                <p class="text-muted mb-0">Vendas Pendentes</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-info">
+                                    R$ {{ "%.2f"|format(vendas|sum(attribute='valor_total') / vendas|length if vendas|length > 0 else 0) }}
+                                </h3>
+                                <p class="text-muted mb-0">Ticket Médio</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filters
+        const statusFilter = document.getElementById('statusFilter');
+        const paymentFilter = document.getElementById('paymentFilter');
+        const dateFilter = document.getElementById('dateFilter');
+        const table = document.querySelector('table');
+        
+        function applyFilters() {
+            const selectedStatus = statusFilter.value;
+            const selectedPayment = paymentFilter.value;
+            const selectedDate = dateFilter.value;
+            const rows = table.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                let showRow = true;
+                
+                // Status filter
+                if (selectedStatus && showRow) {
+                    const statusCell = row.querySelector('td:nth-child(6)');
+                    if (statusCell && !statusCell.textContent.toLowerCase().includes(selectedStatus.toLowerCase())) {
+                        showRow = false;
+                    }
+                }
+                
+                // Payment filter
+                if (selectedPayment && showRow) {
+                    const paymentCell = row.querySelector('td:nth-child(5)');
+                    if (paymentCell && !paymentCell.textContent.toLowerCase().includes(selectedPayment.toLowerCase())) {
+                        showRow = false;
+                    }
+                }
+                
+                // Date filter
+                if (selectedDate && showRow) {
+                    const dateCell = row.querySelector('td:nth-child(2)');
+                    if (dateCell) {
+                        const dateText = dateCell.textContent.trim();
+                        const rowDate = dateText.split('\n')[0]; // Get just the date part
+                        const [day, month, year] = rowDate.split('/');
+                        const rowDateFormatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                        
+                        if (rowDateFormatted !== selectedDate) {
+                            showRow = false;
+                        }
+                    }
+                }
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+        
+        statusFilter.addEventListener('change', applyFilters);
+        paymentFilter.addEventListener('change', applyFilters);
+        dateFilter.addEventListener('change', applyFilters);
+
+        // Add animation to table rows
+        document.querySelectorAll('tbody tr').forEach((row, index) => {
+            setTimeout(() => {
+                row.classList.add('fade-in');
+            }, index * 50);
+        });
+    });
+</script>
+{% endblock %}
+

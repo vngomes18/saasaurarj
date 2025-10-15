@@ -1,0 +1,423 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Dashboard - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="mb-2">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Bem-vindo, {{ session.username }}!
+                        </h1>
+                        <p class="mb-0">Acompanhe o desempenho do seu negócio em tempo real</p>
+                        <div class="mt-3">
+                            <span class="badge bg-primary me-2">
+                                <i class="fas fa-building me-1"></i>{{ session.empresa }}
+                            </span>
+                            <span class="badge bg-success">
+                                <i class="fas fa-calendar me-1"></i>Hoje
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card primary h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-warehouse"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">{{ total_produtos }}</h3>
+                        <p class="mb-0 text-muted">Produtos Cadastrados</p>
+                        <small class="text-success">
+                            <i class="fas fa-arrow-up me-1"></i>Estoque total
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card success h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">{{ total_clientes }}</h3>
+                        <p class="mb-0 text-muted">Clientes Ativos</p>
+                        <small class="text-success">
+                            <i class="fas fa-heart me-1"></i>Base ativa
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card info h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">{{ total_fornecedores }}</h3>
+                        <p class="mb-0 text-muted">Fornecedores</p>
+                        <small class="text-info">
+                            <i class="fas fa-handshake me-1"></i>Parceiros
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card warning h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">{{ total_produtos_auxiliares }}</h3>
+                        <p class="mb-0 text-muted">Produtos Auxiliares</p>
+                        <small class="text-warning">
+                            <i class="fas fa-cog me-1"></i>Suprimentos
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card stat-card success h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">R$ {{ "%.2f"|format(total_vendas_mes) }}</h3>
+                        <p class="mb-0 text-muted">Vendas do Mês</p>
+                        <small class="text-success">
+                            <i class="fas fa-arrow-up me-1"></i>Receita
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card stat-card info h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">R$ {{ "%.2f"|format(total_compras_mes) }}</h3>
+                        <p class="mb-0 text-muted">Compras do Mês</p>
+                        <small class="text-info">
+                            <i class="fas fa-arrow-down me-1"></i>Investimento
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card stat-card {% if produtos_estoque_baixo + produtos_auxiliares_estoque_baixo > 0 %}danger{% else %}success{% endif %} h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">{{ produtos_estoque_baixo + produtos_auxiliares_estoque_baixo }}</h3>
+                        <p class="mb-0 text-muted">Estoque Baixo</p>
+                        <small class="{% if produtos_estoque_baixo + produtos_auxiliares_estoque_baixo > 0 %}text-danger{% else %}text-success{% endif %}">
+                            <i class="fas fa-{% if produtos_estoque_baixo + produtos_auxiliares_estoque_baixo > 0 %}exclamation-circle{% else %}check-circle{% endif %} me-1"></i>
+                            {% if produtos_estoque_baixo + produtos_auxiliares_estoque_baixo > 0 %}Atenção{% else %}OK{% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Chart Section -->
+        <div class="col-lg-8 mb-4">
+            <div class="chart-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0">
+                        <i class="fas fa-chart-line text-primary me-2"></i>
+                        Vendas dos Últimos 7 Dias
+                    </h4>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary active">7D</button>
+                        <button type="button" class="btn btn-outline-primary">30D</button>
+                        <button type="button" class="btn btn-outline-primary">90D</button>
+                    </div>
+                </div>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="salesChart" data-sales="{{ vendas_7_dias|tojson }}"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Sales -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-shopping-cart text-success me-2"></i>
+                            Vendas Recentes
+                        </h5>
+                        <span class="badge bg-success">{{ vendas_recentes|length }}</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if vendas_recentes %}
+                        <div class="list-group list-group-flush">
+                            {% for venda in vendas_recentes %}
+                            <div class="list-group-item border-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-light rounded-circle d-flex align-items-center justify-content-center me-3">
+                                            <i class="fas fa-user text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">
+                                                {% if venda.cliente %}
+                                                    {{ venda.cliente.nome }}
+                                                {% else %}
+                                                    Cliente Avulso
+                                                {% endif %}
+                                            </h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock me-1"></i>
+                                                {{ venda.data_venda.strftime('%d/%m %H:%M') }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge bg-success fs-6">
+                                            R$ {{ "%.2f"|format(venda.valor_total) }}
+                                        </span>
+                                        <div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-{{ 'credit-card' if venda.forma_pagamento == 'cartao' else 'money-bill' if venda.forma_pagamento == 'dinheiro' else 'qrcode' if venda.forma_pagamento == 'pix' else 'credit-card' }} me-1"></i>
+                                                {{ venda.forma_pagamento|title }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="card-footer text-center">
+                            <a href="{{ url_for('vendas') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-list me-1"></i>Ver Todas as Vendas
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center p-4">
+                            <div class="avatar-lg bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3">
+                                <i class="fas fa-shopping-cart fa-2x text-muted"></i>
+                            </div>
+                            <h6 class="text-muted">Nenhuma venda realizada ainda</h6>
+                            <p class="text-muted small">Comece vendendo seus produtos</p>
+                            <a href="{{ url_for('nova_venda') }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus me-1"></i>Realizar Primeira Venda
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt text-warning me-2"></i>
+                        Ações Rápidas
+                    </h5>
+                    <p class="text-muted mb-0">Acesso rápido às principais funcionalidades</p>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('nova_venda') }}" class="btn btn-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                                <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                                <span class="fw-bold">Nova Venda</span>
+                                <small class="opacity-75">Realizar venda</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('nova_compra') }}" class="btn btn-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                                <i class="fas fa-shopping-bag fa-2x mb-2"></i>
+                                <span class="fw-bold">Nova Compra</span>
+                                <small class="opacity-75">Registrar compra</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('novo_produto') }}" class="btn btn-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                                <i class="fas fa-warehouse fa-2x mb-2"></i>
+                                <span class="fw-bold">Cadastrar Produto</span>
+                                <small class="opacity-75">Adicionar ao estoque</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('novo_cliente') }}" class="btn btn-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                                <i class="fas fa-user-plus fa-2x mb-2"></i>
+                                <span class="fw-bold">Novo Cliente</span>
+                                <small class="opacity-75">Cadastrar cliente</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('novo_fornecedor') }}" class="btn btn-secondary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                                <i class="fas fa-truck fa-2x mb-2"></i>
+                                <span class="fw-bold">Novo Fornecedor</span>
+                                <small class="opacity-75">Adicionar fornecedor</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('produtos') }}" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                                <i class="fas fa-boxes fa-2x mb-2"></i>
+                                <span class="fw-bold">Ver Estoque</span>
+                                <small class="opacity-75">Gerenciar produtos</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('vendas') }}" class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                                <i class="fas fa-chart-line fa-2x mb-2"></i>
+                                <span class="fw-bold">Relatórios</span>
+                                <small class="opacity-75">Ver vendas</small>
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('suporte') }}" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4">
+                                <i class="fas fa-headset fa-2x mb-2"></i>
+                                <span class="fw-bold">Suporte</span>
+                                <small class="opacity-75">Precisa de ajuda?</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Dashboard specific JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.stat-card, .chart-container, .card').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+
+        // Initialize dashboard chart
+        if (document.getElementById('salesChart')) {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            const salesData = JSON.parse(document.getElementById('salesChart').dataset.sales || '[]');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: salesData.map(item => item.data),
+                    datasets: [{
+                        label: 'Vendas',
+                        data: salesData.map(item => item.vendas),
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#2563eb',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 3,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#2563eb',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                color: '#64748b',
+                                font: {
+                                    weight: '500'
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(100, 116, 139, 0.1)',
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#64748b',
+                                font: {
+                                    weight: '500'
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+
