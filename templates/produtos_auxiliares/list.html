@@ -1,0 +1,141 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Produtos Auxiliares - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-tools text-primary me-2"></i>
+                        Produtos Auxiliares
+                    </h2>
+                    <p class="text-muted mb-0">Gerencie produtos auxiliares como materiais, ferramentas e insumos</p>
+                </div>
+                <a href="{{ url_for('novo_produto_auxiliar') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Novo Produto
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Produtos List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list text-primary me-2"></i>
+                        Lista de Produtos Auxiliares
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if produtos %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Categoria</th>
+                                        <th>Unidade</th>
+                                        <th>Preço Unit.</th>
+                                        <th>Estoque</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for produto in produtos %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                    <i class="fas fa-tools"></i>
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ produto.nome }}</h6>
+                                                    <small class="text-muted">{{ produto.codigo_interno or 'Sem código' }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="text-dark">{{ produto.categoria or '-' }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ produto.unidade or '-' }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="text-success fw-bold">
+                                                R$ {{ "%.2f"|format(produto.preco_unitario) }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-{{ 'danger' if produto.estoque_atual <= produto.estoque_minimo else 'success' }} me-2">
+                                                    {{ produto.estoque_atual }}
+                                                </span>
+                                                <small class="text-muted">
+                                                    (mín: {{ produto.estoque_minimo }})
+                                                </small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 'success' if produto.status == 'ativo' else 'secondary' }}">
+                                                {{ produto.status.title() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('editar_produto_auxiliar', id=produto.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{{ url_for('excluir_produto_auxiliar', id=produto.id) }}" 
+                                                   class="btn btn-sm btn-outline-danger" 
+                                                   title="Excluir"
+                                                   onclick="return confirm('Tem certeza que deseja excluir este produto auxiliar?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center p-5">
+                            <i class="fas fa-tools fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted">Nenhum produto auxiliar cadastrado</h5>
+                            <p class="text-muted">Comece adicionando produtos auxiliares como materiais e ferramentas</p>
+                            <a href="{{ url_for('novo_produto_auxiliar') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>
+                                Adicionar Produto
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.card, .table').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,324 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Dashboard - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="mb-2">
+                            <i class="fas fa-sun me-2"></i>
+                            Bem-vindo, {{ session.username }}!
+                        </h1>
+                        <p class="mb-0">Aqui está um resumo das suas operações de hoje</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card primary h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">{{ total_produtos }}</h3>
+                        <p class="mb-0 text-muted">Produtos Cadastrados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card success h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">{{ total_clientes }}</h3>
+                        <p class="mb-0 text-muted">Clientes Ativos</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card info h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">{{ total_fornecedores }}</h3>
+                        <p class="mb-0 text-muted">Fornecedores</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stat-card warning h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">{{ total_produtos_auxiliares }}</h3>
+                        <p class="mb-0 text-muted">Produtos Auxiliares</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card stat-card success h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">R$ {{ "%.2f"|format(total_vendas_mes) }}</h3>
+                        <p class="mb-0 text-muted">Vendas do Mês</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card stat-card info h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-shopping-bag"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">R$ {{ "%.2f"|format(total_compras_mes) }}</h3>
+                        <p class="mb-0 text-muted">Compras do Mês</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="card stat-card danger h-100">
+                <div class="card-body d-flex align-items-center">
+                    <div class="stat-icon me-3">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-1">{{ produtos_estoque_baixo + produtos_auxiliares_estoque_baixo }}</h3>
+                        <p class="mb-0 text-muted">Estoque Baixo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Chart Section -->
+        <div class="col-lg-8 mb-4">
+            <div class="chart-container">
+                <h4 class="mb-3">
+                    <i class="fas fa-chart-line text-primary me-2"></i>
+                    Vendas dos Últimos 7 Dias
+                </h4>
+                <canvas id="salesChart" data-sales="{{ vendas_7_dias|tojson }}"></canvas>
+            </div>
+        </div>
+
+        <!-- Recent Sales -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shopping-cart text-success me-2"></i>
+                        Vendas Recentes
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if vendas_recentes %}
+                        <div class="list-group list-group-flush">
+                            {% for venda in vendas_recentes %}
+                            <div class="list-group-item border-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">
+                                            {% if venda.cliente %}
+                                                {{ venda.cliente.nome }}
+                                            {% else %}
+                                                Cliente Avulso
+                                            {% endif %}
+                                        </h6>
+                                        <small class="text-muted">
+                                            {{ venda.data_venda.strftime('%d/%m/%Y %H:%M') }}
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-success">
+                                        R$ {{ "%.2f"|format(venda.valor_total) }}
+                                    </span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center p-4">
+                            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhuma venda realizada ainda</p>
+                            <a href="{{ url_for('nova_venda') }}" class="btn btn-primary btn-sm">
+                                Realizar Primeira Venda
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt text-warning me-2"></i>
+                        Ações Rápidas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('nova_venda') }}" class="btn btn-success w-100">
+                                <i class="fas fa-shopping-cart me-2"></i>
+                                Nova Venda
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('nova_compra') }}" class="btn btn-primary w-100">
+                                <i class="fas fa-shopping-bag me-2"></i>
+                                Nova Compra
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('novo_produto') }}" class="btn btn-info w-100">
+                                <i class="fas fa-box me-2"></i>
+                                Cadastrar Produto
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('novo_fornecedor') }}" class="btn btn-warning w-100">
+                                <i class="fas fa-truck me-2"></i>
+                                Novo Fornecedor
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('novo_produto_auxiliar') }}" class="btn btn-secondary w-100">
+                                <i class="fas fa-tools me-2"></i>
+                                Produto Auxiliar
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('nova_nota_fiscal') }}" class="btn btn-dark w-100">
+                                <i class="fas fa-file-invoice me-2"></i>
+                                Nota Fiscal
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('novo_ticket') }}" class="btn btn-danger w-100">
+                                <i class="fas fa-life-ring me-2"></i>
+                                Suporte
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('produtos') }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-list me-2"></i>
+                                Ver Estoque
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Dashboard specific JavaScript
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.stat-card, .chart-container, .card').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+
+        // Initialize dashboard chart
+        if (document.getElementById('salesChart')) {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            const salesData = JSON.parse(document.getElementById('salesChart').dataset.sales || '[]');
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: salesData.map(item => item.data),
+                    datasets: [{
+                        label: 'Vendas',
+                        data: salesData.map(item => item.vendas),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,353 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+    {% if produto %}Editar Produto{% else %}Novo Produto{% endif %} - SaaS Sistema
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>
+                <i class="fas fa-box text-primary me-2"></i>
+                {% if produto %}Editar Produto{% else %}Novo Produto{% endif %}
+            </h2>
+            <p class="text-muted">
+                {% if produto %}Atualize as informações do produto{% else %}Cadastre um novo produto no sistema{% endif %}
+            </p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('produtos') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>
+                Voltar para Produtos
+            </a>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        <div class="row">
+                            <!-- Basic Information -->
+                            <div class="col-md-6 mb-3">
+                                <label for="nome" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>
+                                    Nome do Produto *
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="nome" 
+                                       name="nome" 
+                                       value="{{ produto.nome if produto else '' }}"
+                                       required>
+                                <div class="invalid-feedback">
+                                    Por favor, insira o nome do produto.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="categoria" class="form-label">
+                                    <i class="fas fa-folder me-1"></i>
+                                    Categoria
+                                </label>
+                                <select class="form-select" id="categoria" name="categoria">
+                                    <option value="">Selecione uma categoria</option>
+                                    <option value="Eletrônicos" {% if produto and produto.categoria == 'Eletrônicos' %}selected{% endif %}>Eletrônicos</option>
+                                    <option value="Roupas" {% if produto and produto.categoria == 'Roupas' %}selected{% endif %}>Roupas</option>
+                                    <option value="Alimentícios" {% if produto and produto.categoria == 'Alimentícios' %}selected{% endif %}>Alimentícios</option>
+                                    <option value="Casa e Jardim" {% if produto and produto.categoria == 'Casa e Jardim' %}selected{% endif %}>Casa e Jardim</option>
+                                    <option value="Livros" {% if produto and produto.categoria == 'Livros' %}selected{% endif %}>Livros</option>
+                                    <option value="Outros" {% if produto and produto.categoria == 'Outros' %}selected{% endif %}>Outros</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="descricao" class="form-label">
+                                    <i class="fas fa-align-left me-1"></i>
+                                    Descrição
+                                </label>
+                                <textarea class="form-control" 
+                                          id="descricao" 
+                                          name="descricao" 
+                                          rows="3" 
+                                          placeholder="Descreva o produto...">{{ produto.descricao if produto else '' }}</textarea>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="preco" class="form-label">
+                                    <i class="fas fa-dollar-sign me-1"></i>
+                                    Preço de Venda *
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="text" 
+                                           class="form-control currency-input" 
+                                           id="preco" 
+                                           name="preco" 
+                                           placeholder="0,00"
+                                           value="{{ produto.preco if produto else '' }}"
+                                           required>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Por favor, insira o preço do produto.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="estoque_atual" class="form-label">
+                                    <i class="fas fa-boxes me-1"></i>
+                                    Estoque Atual *
+                                </label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="estoque_atual" 
+                                       name="estoque_atual" 
+                                       min="0"
+                                       value="{{ produto.estoque_atual if produto else '0' }}"
+                                       required>
+                                <div class="invalid-feedback">
+                                    Por favor, insira a quantidade em estoque.
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="estoque_minimo" class="form-label">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    Estoque Mínimo *
+                                </label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="estoque_minimo" 
+                                       name="estoque_minimo" 
+                                       min="0"
+                                       value="{{ produto.estoque_minimo if produto else '0' }}"
+                                       required>
+                                <div class="invalid-feedback">
+                                    Por favor, insira o estoque mínimo.
+                                </div>
+                                <div class="form-text">
+                                    Receba alertas quando o estoque estiver baixo
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="codigo_barras" class="form-label">
+                                    <i class="fas fa-barcode me-1"></i>
+                                    Código de Barras
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="codigo_barras" 
+                                       name="codigo_barras" 
+                                       placeholder="Ex: 123456789012"
+                                       value="{{ produto.codigo_barras if produto else '' }}">
+                                <div class="form-text">
+                                    Código único para identificação do produto
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('produtos') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-times me-2"></i>
+                                        Cancelar
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        {% if produto %}Atualizar Produto{% else %}Cadastrar Produto{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Preview -->
+    <div class="row justify-content-center mt-4">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-eye me-2"></i>
+                        Visualização do Produto
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4 id="preview-nome">Nome do Produto</h4>
+                            <p id="preview-descricao" class="text-muted">Descrição do produto aparecerá aqui</p>
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge bg-success fs-6" id="preview-preco">R$ 0,00</span>
+                                <span class="badge bg-primary" id="preview-categoria">Categoria</span>
+                                {% if produto and produto.codigo_barras %}
+                                <code id="preview-codigo">{{ produto.codigo_barras }}</code>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="d-flex flex-column gap-2">
+                                <div>
+                                    <small class="text-muted">Estoque Atual</small>
+                                    <div class="badge bg-primary fs-6" id="preview-estoque-atual">0</div>
+                                </div>
+                                <div>
+                                    <small class="text-muted">Estoque Mínimo</small>
+                                    <div class="badge bg-warning fs-6" id="preview-estoque-minimo">0</div>
+                                </div>
+                                <div id="estoque-status" class="mt-2">
+                                    <span class="badge bg-success" id="preview-status">Em Estoque</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Real-time preview
+        const inputs = {
+            nome: document.getElementById('nome'),
+            descricao: document.getElementById('descricao'),
+            preco: document.getElementById('preco'),
+            categoria: document.getElementById('categoria'),
+            estoque_atual: document.getElementById('estoque_atual'),
+            estoque_minimo: document.getElementById('estoque_minimo'),
+            codigo_barras: document.getElementById('codigo_barras')
+        };
+
+        const previews = {
+            nome: document.getElementById('preview-nome'),
+            descricao: document.getElementById('preview-descricao'),
+            preco: document.getElementById('preview-preco'),
+            categoria: document.getElementById('preview-categoria'),
+            estoque_atual: document.getElementById('preview-estoque-atual'),
+            estoque_minimo: document.getElementById('preview-estoque-minimo'),
+            codigo: document.getElementById('preview-codigo'),
+            status: document.getElementById('preview-status')
+        };
+
+        function updatePreview() {
+            // Update basic info
+            previews.nome.textContent = inputs.nome.value || 'Nome do Produto';
+            previews.descricao.textContent = inputs.descricao.value || 'Descrição do produto aparecerá aqui';
+            previews.categoria.textContent = inputs.categoria.value || 'Categoria';
+            
+            // Update price
+            let precoValue = inputs.preco.value.replace(',', '.');
+            const preco = parseFloat(precoValue) || 0;
+            previews.preco.textContent = 'R$ ' + preco.toFixed(2).replace('.', ',');
+            
+            // Update stock
+            const estoqueAtual = parseInt(inputs.estoque_atual.value) || 0;
+            const estoqueMinimo = parseInt(inputs.estoque_minimo.value) || 0;
+            
+            previews.estoque_atual.textContent = estoqueAtual;
+            previews.estoque_minimo.textContent = estoqueMinimo;
+            
+            // Update status
+            if (estoqueAtual <= estoqueMinimo && estoqueMinimo > 0) {
+                previews.status.textContent = 'Estoque Baixo';
+                previews.status.className = 'badge bg-danger';
+            } else if (estoqueAtual === 0) {
+                previews.status.textContent = 'Sem Estoque';
+                previews.status.className = 'badge bg-danger';
+            } else {
+                previews.status.textContent = 'Em Estoque';
+                previews.status.className = 'badge bg-success';
+            }
+            
+            // Update code if exists
+            if (inputs.codigo_barras.value) {
+                if (!previews.codigo) {
+                    const codeElement = document.createElement('code');
+                    codeElement.id = 'preview-codigo';
+                    document.querySelector('#preview-categoria').parentNode.appendChild(codeElement);
+                    previews.codigo = codeElement;
+                }
+                previews.codigo.textContent = inputs.codigo_barras.value;
+            }
+        }
+
+        // Add event listeners
+        Object.values(inputs).forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
+
+        // Currency formatting for price field
+        inputs.preco.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+            if (value) {
+                // Convert to currency format (centavos)
+                const formattedValue = (parseInt(value) / 100).toFixed(2);
+                e.target.value = formattedValue.replace('.', ',');
+            }
+        });
+
+        // Allow only numbers and comma for price field
+        inputs.preco.addEventListener('keypress', function(e) {
+            const char = String.fromCharCode(e.which);
+            if (!/[0-9,]/.test(char) && e.which !== 8 && e.which !== 0) {
+                e.preventDefault();
+            }
+        });
+
+        // Initial update
+        updatePreview();
+
+        // Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const estoqueAtual = parseInt(inputs.estoque_atual.value) || 0;
+            const estoqueMinimo = parseInt(inputs.estoque_minimo.value) || 0;
+            const precoValue = inputs.preco.value.replace(',', '.');
+            const preco = parseFloat(precoValue) || 0;
+            
+            if (preco <= 0) {
+                e.preventDefault();
+                alert('O preço deve ser maior que zero.');
+                inputs.preco.focus();
+                return;
+            }
+            
+            if (estoqueAtual < 0) {
+                e.preventDefault();
+                alert('O estoque atual não pode ser negativo.');
+                inputs.estoque_atual.focus();
+                return;
+            }
+            
+            if (estoqueMinimo < 0) {
+                e.preventDefault();
+                alert('O estoque mínimo não pode ser negativo.');
+                inputs.estoque_minimo.focus();
+                return;
+            }
+        });
+    });
+</script>
+{% endblock %}
+

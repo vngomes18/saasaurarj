@@ -1,0 +1,234 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Nova Compra - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-plus text-primary me-2"></i>
+                        Nova Compra
+                    </h2>
+                    <p class="text-muted mb-0">Cadastre uma nova compra de produtos</p>
+                </div>
+                <a href="{{ url_for('compras') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <form method="POST">
+                <div class="card mb-4">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle text-primary me-2"></i>
+                            Informações da Compra
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="fornecedor_id" class="form-label">Fornecedor *</label>
+                                <select class="form-select" id="fornecedor_id" name="fornecedor_id" required>
+                                    <option value="">Selecione um fornecedor</option>
+                                    {% for fornecedor in fornecedores %}
+                                    <option value="{{ fornecedor.id }}">{{ fornecedor.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="data_entrega" class="form-label">Data de Entrega</label>
+                                <input type="date" class="form-control" id="data_entrega" name="data_entrega">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="forma_pagamento" class="form-label">Forma de Pagamento</label>
+                                <select class="form-select" id="forma_pagamento" name="forma_pagamento">
+                                    <option value="">Selecione</option>
+                                    <option value="dinheiro">Dinheiro</option>
+                                    <option value="cartao_debito">Cartão de Débito</option>
+                                    <option value="cartao_credito">Cartão de Crédito</option>
+                                    <option value="pix">PIX</option>
+                                    <option value="transferencia">Transferência</option>
+                                    <option value="boleto">Boleto</option>
+                                    <option value="cheque">Cheque</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="observacoes" class="form-label">Observações</label>
+                                <textarea class="form-control" id="observacoes" name="observacoes" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Produtos -->
+                <div class="card">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0">
+                            <i class="fas fa-box text-primary me-2"></i>
+                            Produtos
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if produtos %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Produto</th>
+                                            <th>Preço Unit.</th>
+                                            <th>Estoque Atual</th>
+                                            <th>Quantidade</th>
+                                            <th>Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for produto in produtos %}
+                                        <tr>
+                                            <td>
+                                                <div>
+                                                    <h6 class="mb-0">{{ produto.nome }}</h6>
+                                                    <small class="text-muted">{{ produto.categoria or 'Sem categoria' }}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="fw-bold text-success">
+                                                    R$ {{ "%.2f"|format(produto.preco) }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{{ 'danger' if produto.estoque_atual <= produto.estoque_minimo else 'success' }}">
+                                                    {{ produto.estoque_atual }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <input type="number" 
+                                                       class="form-control quantidade-input" 
+                                                       name="produto_{{ produto.id }}" 
+                                                       min="0" 
+                                                       data-preco="{{ produto.preco }}"
+                                                       onchange="calcularSubtotal(this)">
+                                            </td>
+                                            <td>
+                                                <span class="subtotal text-success fw-bold">R$ 0,00</span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="table-primary">
+                                            <th colspan="4" class="text-end">Total da Compra:</th>
+                                            <th>
+                                                <span id="total-compra" class="text-success fw-bold fs-5">R$ 0,00</span>
+                                            </th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center p-4">
+                                <i class="fas fa-box fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">Nenhum produto cadastrado</h5>
+                                <p class="text-muted">Cadastre produtos primeiro para poder fazer compras</p>
+                                <a href="{{ url_for('novo_produto') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>
+                                    Cadastrar Produto
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if produtos %}
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a href="{{ url_for('compras') }}" class="btn btn-secondary">
+                        <i class="fas fa-times me-2"></i>
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>
+                        Salvar Compra
+                    </button>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+
+        <!-- Info Card -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle text-info me-2"></i>
+                        Informações
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Dica:</strong> Após salvar a compra, você poderá confirmá-la para atualizar o estoque dos produtos.
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Importante:</strong> Apenas fornecedores ativos aparecem na lista.
+                    </div>
+
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Processo:</strong> Compra → Confirmação → Atualização do Estoque
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.card').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+
+    function calcularSubtotal(input) {
+        const quantidade = parseFloat(input.value) || 0;
+        const preco = parseFloat(input.dataset.preco) || 0;
+        const subtotal = quantidade * preco;
+        
+        const row = input.closest('tr');
+        const subtotalElement = row.querySelector('.subtotal');
+        subtotalElement.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+        
+        calcularTotal();
+    }
+
+    function calcularTotal() {
+        let total = 0;
+        document.querySelectorAll('.subtotal').forEach(element => {
+            const valor = element.textContent.replace('R$ ', '').replace(',', '.');
+            total += parseFloat(valor) || 0;
+        });
+        
+        document.getElementById('total-compra').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+    }
+</script>
+{% endblock %}
+
