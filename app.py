@@ -52,6 +52,32 @@ def update_user_settings(user_id, **kwargs):
     db.session.commit()
     return settings
 
+# Helper de autorização
+def is_admin():
+    return session.get('role') == 'admin'
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        if not is_admin():
+            flash('Acesso restrito ao administrador.', 'error')
+            return redirect(url_for('dashboard'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+def serialize_model(instance):
+    data = {}
+    for column in instance.__table__.columns:
+        value = getattr(instance, column.name)
+        if isinstance(value, datetime):
+            value = value.isoformat()
+        data[column.name] = value
+    return data
+
+ 
+
 # Modelos do Banco de Dados
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,6 +85,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(120), nullable=False)
     empresa = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(20), default='user', nullable=False)  # 'user' | 'admin'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relacionamentos
@@ -230,6 +257,82 @@ class UserSettings(db.Model):
     dashboard_refresh = db.Column(db.Integer, default=30)  # seconds
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+# ========== ADMIN DATA VIEWER ==========
+@app.route('/admin')
+@admin_required
+def admin_home():
+    # contagens rápidas
+    counts = {
+        'user': User.query.count(),
+        'cliente': Cliente.query.count(),
+        'produto': Produto.query.count(),
+        'venda': Venda.query.count(),
+        'fornecedor': Fornecedor.query.count(),
+        'compra': Compra.query.count(),
+        'produto_auxiliar': ProdutoAuxiliar.query.count(),
+        'nota_fiscal': NotaFiscal.query.count(),
+        'ticket_suporte': TicketSuporte.query.count(),
+        'resposta_ticket': RespostaTicket.query.count(),
+        'user_settings': UserSettings.query.count(),
+        'item_venda': ItemVenda.query.count(),
+        'item_compra': ItemCompra.query.count(),
+    }
+    return render_template('admin/index.html', counts=counts)
+
+
+MODEL_MAP = {
+    'user': User,
+    'cliente': Cliente,
+    'produto': Produto,
+    'venda': Venda,
+    'fornecedor': Fornecedor,
+    'compra': Compra,
+    'produto_auxiliar': ProdutoAuxiliar,
+    'nota_fiscal': NotaFiscal,
+    'ticket_suporte': TicketSuporte,
+    'resposta_ticket': RespostaTicket,
+    'user_settings': UserSettings,
+    'item_venda': ItemVenda,
+    'item_compra': ItemCompra,
+}
+
+@app.route('/admin/table/<string:table_name>')
+@admin_required
+def admin_table(table_name: str):
+    model = MODEL_MAP.get(table_name)
+    if not model:
+        flash('Tabela não reconhecida.', 'error')
+        return redirect(url_for('admin_home'))
+    # busca limitada
+    rows = model.query.limit(200).all()
+    items = [serialize_model(r) for r in rows]
+    columns = list(items[0].keys()) if items else [c.name for c in model.__table__.columns]
+    return render_template('admin/table.html', table_name=table_name, columns=columns, items=items)
+
+@app.route('/admin/table/<string:table_name>/csv')
+@admin_required
+def admin_table_csv(table_name: str):
+    import csv
+    from io import StringIO
+    model = MODEL_MAP.get(table_name)
+    if not model:
+        flash('Tabela não reconhecida.', 'error')
+        return redirect(url_for('admin_home'))
+    rows = model.query.all()
+    items = [serialize_model(r) for r in rows]
+    output = StringIO()
+    if items:
+        writer = csv.DictWriter(output, fieldnames=list(items[0].keys()))
+        writer.writeheader()
+        writer.writerows(items)
+    else:
+        writer = csv.writer(output)
+        writer.writerow([c.name for c in model.__table__.columns])
+    resp = make_response(output.getvalue())
+    resp.headers['Content-Type'] = 'text/csv; charset=utf-8'
+    resp.headers['Content-Disposition'] = f'attachment; filename={table_name}.csv'
+    return resp
+
 # Rotas de Autenticação
 @app.route('/')
 def index():
@@ -249,6 +352,7 @@ def login():
             session['user_id'] = user.id
             session['username'] = user.username
             session['empresa'] = user.empresa
+            session['role'] = user.role
             
             # Carregar configurações do usuário
             settings = get_user_settings(user.id)
@@ -388,8 +492,11 @@ def dashboard():
 @app.route('/produtos')
 @login_required
 def produtos():
-    user_id = session['user_id']
-    produtos = Produto.query.filter_by(user_id=user_id).order_by(Produto.nome).all()
+    if is_admin():
+        produtos = Produto.query.order_by(Produto.nome).all()
+    else:
+        user_id = session['user_id']
+        produtos = Produto.query.filter_by(user_id=user_id).order_by(Produto.nome).all()
     return render_template('produtos/list.html', produtos=produtos)
 
 @app.route('/produtos/novo', methods=['GET', 'POST'])
@@ -454,8 +561,11 @@ def excluir_produto(id):
 @app.route('/clientes')
 @login_required
 def clientes():
-    user_id = session['user_id']
-    clientes = Cliente.query.filter_by(user_id=user_id).order_by(Cliente.nome).all()
+    if is_admin():
+        clientes = Cliente.query.order_by(Cliente.nome).all()
+    else:
+        user_id = session['user_id']
+        clientes = Cliente.query.filter_by(user_id=user_id).order_by(Cliente.nome).all()
     return render_template('clientes/list.html', clientes=clientes)
 
 @app.route('/clientes/novo', methods=['GET', 'POST'])
@@ -510,8 +620,11 @@ def excluir_cliente(id):
 @app.route('/vendas')
 @login_required
 def vendas():
-    user_id = session['user_id']
-    vendas = Venda.query.filter_by(user_id=user_id).order_by(Venda.data_venda.desc()).all()
+    if is_admin():
+        vendas = Venda.query.order_by(Venda.data_venda.desc()).all()
+    else:
+        user_id = session['user_id']
+        vendas = Venda.query.filter_by(user_id=user_id).order_by(Venda.data_venda.desc()).all()
     return render_template('vendas/list.html', vendas=vendas)
 
 @app.route('/vendas/nova', methods=['GET', 'POST'])
@@ -577,8 +690,11 @@ def detalhes_venda(id):
 @app.route('/fornecedores')
 @login_required
 def fornecedores():
-    user_id = session['user_id']
-    fornecedores = Fornecedor.query.filter_by(user_id=user_id).order_by(Fornecedor.nome).all()
+    if is_admin():
+        fornecedores = Fornecedor.query.order_by(Fornecedor.nome).all()
+    else:
+        user_id = session['user_id']
+        fornecedores = Fornecedor.query.filter_by(user_id=user_id).order_by(Fornecedor.nome).all()
     return render_template('fornecedores/list.html', fornecedores=fornecedores)
 
 @app.route('/fornecedores/novo', methods=['GET', 'POST'])
@@ -645,8 +761,11 @@ def excluir_fornecedor(id):
 @app.route('/compras')
 @login_required
 def compras():
-    user_id = session['user_id']
-    compras = Compra.query.filter_by(user_id=user_id).order_by(Compra.data_compra.desc()).all()
+    if is_admin():
+        compras = Compra.query.order_by(Compra.data_compra.desc()).all()
+    else:
+        user_id = session['user_id']
+        compras = Compra.query.filter_by(user_id=user_id).order_by(Compra.data_compra.desc()).all()
     return render_template('compras/list.html', compras=compras)
 
 @app.route('/compras/nova', methods=['GET', 'POST'])
@@ -835,8 +954,11 @@ def excluir_produto_auxiliar(id):
 @app.route('/notas-fiscais')
 @login_required
 def notas_fiscais():
-    user_id = session['user_id']
-    notas = NotaFiscal.query.filter_by(user_id=user_id).order_by(NotaFiscal.data_emissao.desc()).all()
+    if is_admin():
+        notas = NotaFiscal.query.order_by(NotaFiscal.data_emissao.desc()).all()
+    else:
+        user_id = session['user_id']
+        notas = NotaFiscal.query.filter_by(user_id=user_id).order_by(NotaFiscal.data_emissao.desc()).all()
     return render_template('notas_fiscais/list.html', notas=notas)
 
 @app.route('/notas-fiscais/nova', methods=['GET', 'POST'])
@@ -878,8 +1000,11 @@ def detalhes_nota_fiscal(id):
 @app.route('/suporte')
 @login_required
 def suporte():
-    user_id = session['user_id']
-    tickets = TicketSuporte.query.filter_by(user_id=user_id).order_by(TicketSuporte.data_abertura.desc()).all()
+    if is_admin():
+        tickets = TicketSuporte.query.order_by(TicketSuporte.data_abertura.desc()).all()
+    else:
+        user_id = session['user_id']
+        tickets = TicketSuporte.query.filter_by(user_id=user_id).order_by(TicketSuporte.data_abertura.desc()).all()
     return render_template('suporte/list.html', tickets=tickets)
 
 @app.route('/suporte/novo', methods=['GET', 'POST'])

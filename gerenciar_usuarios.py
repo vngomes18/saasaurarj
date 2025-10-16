@@ -4,6 +4,7 @@ Script para gerenciar usuários do sistema
 """
 
 from app import app, db, User
+import sys
 from werkzeug.security import generate_password_hash
 
 def criar_usuario_admin():
@@ -20,7 +21,8 @@ def criar_usuario_admin():
             username='admin',
             email='admin@sistema.com',
             password_hash=generate_password_hash('123456'),
-            empresa='Sistema Administrativo'
+            empresa='Sistema Administrativo',
+            role='admin'
         )
         
         db.session.add(admin)
@@ -29,6 +31,22 @@ def criar_usuario_admin():
         print("Usuario admin criado com sucesso!")
         print("Login: admin@sistema.com")
         print("Senha: 123456")
+
+def promover_usuario_admin(identifier, tipo='email'):
+    """Promove um usuário para admin pelo email ou username"""
+    with app.app_context():
+        if tipo == 'email':
+            usuario = User.query.filter_by(email=identifier).first()
+        else:
+            usuario = User.query.filter_by(username=identifier).first()
+        
+        if not usuario:
+            print(f"Usuario com {tipo} '{identifier}' nao encontrado!")
+            return
+        
+        usuario.role = 'admin'
+        db.session.commit()
+        print(f"Usuario '{identifier}' promovido para admin com sucesso!")
 
 def listar_usuarios():
     """Lista todos os usuários"""
@@ -83,6 +101,41 @@ def remover_usuario(username):
         db.session.commit()
         
         print(f"Usuario '{username}' removido com sucesso!")
+
+
+if __name__ == '__main__':
+    # Uso simples via linha de comando
+    # Exemplos:
+    #  - python gerenciar_usuarios.py criar_admin
+    #  - python gerenciar_usuarios.py listar
+    #  - python gerenciar_usuarios.py remover <username>
+    #  - python gerenciar_usuarios.py promover_admin <email|username> [email|username]
+    if len(sys.argv) < 2:
+        print("Uso:\n  python gerenciar_usuarios.py criar_admin\n  python gerenciar_usuarios.py listar\n  python gerenciar_usuarios.py remover <username>\n  python gerenciar_usuarios.py promover_admin <identificador> [email|username]")
+        sys.exit(0)
+
+    comando = sys.argv[1]
+    if comando == 'criar_admin':
+        criar_usuario_admin()
+    elif comando == 'listar':
+        listar_usuarios()
+    elif comando == 'remover':
+        if len(sys.argv) < 3:
+            print("Informe o username: python gerenciar_usuarios.py remover <username>")
+        else:
+            remover_usuario(sys.argv[2])
+    elif comando == 'promover_admin':
+        if len(sys.argv) < 3:
+            print("Informe o identificador (email ou username): python gerenciar_usuarios.py promover_admin <identificador> [email|username]")
+        else:
+            identificador = sys.argv[2]
+            tipo = sys.argv[3] if len(sys.argv) >= 4 else 'email'
+            if tipo not in ('email', 'username'):
+                print("Tipo invalido. Use 'email' ou 'username'.")
+            else:
+                promover_usuario_admin(identificador, tipo)
+    else:
+        print("Comando desconhecido.")
 
 def menu():
     """Menu interativo"""
