@@ -41,7 +41,7 @@
     <!-- Clients Table -->
     <div class="row">
         <div class="col-12">
-            <div class="clientes-table-container">
+            <div class="clientes-table-container d-none d-md-block">
                 <table class="clientes-table" id="clientsTable">
                     <thead>
                         <tr>
@@ -142,6 +142,64 @@
                         {% endif %}
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Lista em cards (mobile) -->
+            <div class="d-md-none">
+                {% if clientes %}
+                <div class="mobile-list">
+                    {% for cliente in clientes %}
+                    <div class="mobile-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="title">{{ cliente.nome }}</div>
+                                {% if cliente.email %}
+                                    <small class="text-muted">{{ cliente.email }}</small>
+                                {% elif cliente.telefone %}
+                                    <small class="text-muted">{{ cliente.telefone }}</small>
+                                {% endif %}
+                            </div>
+                            <span class="badge bg-light text-dark">{{ cliente.created_at.strftime('%d/%m/%Y') }}</span>
+                        </div>
+                        <div class="meta mt-2">
+                            {% if cliente.endereco %}
+                                <span class="badge bg-secondary">{{ cliente.endereco[:40] }}{% if cliente.endereco|length > 40 %}...{% endif %}</span>
+                            {% endif %}
+                            {% if cliente.cpf_cnpj %}
+                                <span class="badge bg-info">Doc: {{ cliente.cpf_cnpj }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="actions mt-2">
+                            <a href="{{ url_for('editar_cliente', id=cliente.id) }}" class="btn btn-sm btn-primary" aria-label="Editar">
+                                <i class="fas fa-edit me-1"></i>Editar
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-danger" aria-label="Excluir"
+                               onclick="showConfirm('Tem certeza que deseja excluir este cliente?', function() { window.location.href = '{{ url_for('excluir_cliente', id=cliente.id) }}'; }); return false;">
+                                <i class="fas fa-trash me-1"></i>Excluir
+                            </a>
+                            <a href="{{ url_for('nova_venda') }}?cliente_id={{ cliente.id }}" class="btn btn-sm btn-success" aria-label="Nova venda">
+                                <i class="fas fa-cash-register me-1"></i>Venda
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhum cliente cadastrado</h5>
+                    <p class="text-muted">Comece cadastrando seu primeiro cliente</p>
+                    <a href="{{ url_for('novo_cliente') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-2"></i>
+                        Cadastrar Primeiro Cliente
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- FAB Adicionar Cliente -->
+                <a href="{{ url_for('novo_cliente') }}" class="btn btn-primary rounded-circle position-fixed bottom-0 end-0 m-3 shadow" aria-label="Adicionar cliente">
+                    <i class="fas fa-plus"></i>
+                </a>
             </div>
         </div>
     </div>

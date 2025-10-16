@@ -39,7 +39,7 @@
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-body">
-                    <form method="POST" class="needs-validation" novalidate>
+                    <form method="POST" class="needs-validation" novalidate data-offline-queue="true">
                         <div class="row">
                             <!-- Basic Information -->
                             <div class="col-md-6 mb-3">
@@ -169,6 +169,7 @@
                                            name="preco" 
                                            placeholder="0,00"
                                            value="{{ produto.preco if produto else '' }}"
+                                           inputmode="decimal" autocomplete="off" enterkeyhint="next"
                                            required>
                                 </div>
                                 <div class="invalid-feedback">
@@ -195,6 +196,7 @@
                                            min="0"
                                            placeholder="0"
                                            value="{{ produto.estoque_atual if produto else '0' }}"
+                                           inputmode="numeric" enterkeyhint="next"
                                            required>
                                 </div>
                                 <div class="invalid-feedback">
@@ -221,6 +223,7 @@
                                            min="0"
                                            placeholder="0"
                                            value="{{ produto.estoque_minimo if produto else '0' }}"
+                                           inputmode="numeric" enterkeyhint="next"
                                            required>
                                 </div>
                                 <div class="invalid-feedback">
@@ -247,7 +250,7 @@
                                            id="codigo_barras" 
                                            name="codigo_barras" 
                                            placeholder="Ex: 123456789012"
-                                           value="{{ produto.codigo_barras if produto else '' }}">
+                                           value="{{ produto.codigo_barras if produto else '' }}" inputmode="numeric" autocomplete="off" enterkeyhint="done">
                                 </div>
                                 <div class="form-text">
                                     <i class="fas fa-qrcode me-1"></i>Código único para identificação do produto

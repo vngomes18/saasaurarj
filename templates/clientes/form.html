@@ -30,7 +30,7 @@
         <div class="col-lg-8">
             <div class="card">
                 <div class="card-body">
-                    <form method="POST" class="needs-validation" novalidate>
+                    <form method="POST" class="needs-validation" novalidate data-offline-queue="true">
                         <div class="row">
                             <!-- Basic Information -->
                             <div class="col-md-6 mb-3">
@@ -42,7 +42,7 @@
                                        class="form-control" 
                                        id="nome" 
                                        name="nome" 
-                                       value="{{ cliente.nome if cliente else '' }}"
+                                       value="{{ cliente.nome if cliente else '' }}" autocomplete="name" enterkeyhint="next"
                                        required>
                                 <div class="invalid-feedback">
                                     Por favor, insira o nome do cliente.
@@ -59,7 +59,7 @@
                                        id="cpf_cnpj" 
                                        name="cpf_cnpj" 
                                        placeholder="000.000.000-00 ou 00.000.000/0000-00"
-                                       value="{{ cliente.cpf_cnpj if cliente else '' }}">
+                                       value="{{ cliente.cpf_cnpj if cliente else '' }}" inputmode="numeric" autocomplete="off" enterkeyhint="next">
                                 <div class="form-text">
                                     Digite apenas números, a formatação será aplicada automaticamente
                                 </div>
@@ -77,7 +77,7 @@
                                        id="email" 
                                        name="email" 
                                        placeholder="cliente@exemplo.com"
-                                       value="{{ cliente.email if cliente else '' }}">
+                                       value="{{ cliente.email if cliente else '' }}" autocomplete="email" inputmode="email" enterkeyhint="next">
                                 <div class="invalid-feedback">
                                     Por favor, insira um email válido.
                                 </div>
@@ -93,7 +93,7 @@
                                        id="telefone" 
                                        name="telefone" 
                                        placeholder="(11) 99999-9999"
-                                       value="{{ cliente.telefone if cliente else '' }}">
+                                       value="{{ cliente.telefone if cliente else '' }}" autocomplete="tel" inputmode="tel" enterkeyhint="next">
                                 <div class="form-text">
                                     Digite apenas números, a formatação será aplicada automaticamente
                                 </div>
@@ -110,7 +110,7 @@
                                           id="endereco" 
                                           name="endereco" 
                                           rows="3" 
-                                          placeholder="Rua, número, bairro, cidade, estado, CEP">{{ cliente.endereco if cliente else '' }}</textarea>
+                                          placeholder="Rua, número, bairro, cidade, estado, CEP" autocomplete="street-address" enterkeyhint="done">{{ cliente.endereco if cliente else '' }}</textarea>
                                 <div class="form-text">
                                     Endereço completo para entrega e cobrança
                                 </div>

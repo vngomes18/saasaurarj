@@ -57,8 +57,8 @@
             </div>
         </div>
 
-        <!-- Tabela de produtos -->
-        <div class="produtos-table-container">
+        <!-- Tabela de produtos (desktop) -->
+        <div class="produtos-table-container d-none d-md-block">
             {% if produtos %}
             <table class="produtos-table" id="productsTable">
                 <thead>
@@ -167,6 +167,70 @@
                 </a>
             </div>
             {% endif %}
+        </div>
+
+        <!-- Lista em cards (mobile) -->
+        <div class="d-md-none">
+            {% if produtos %}
+            <div class="mobile-list">
+                {% for produto in produtos %}
+                <div class="mobile-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="title">{{ produto.nome }}</div>
+                            {% if produto.descricao %}
+                                <small class="text-muted">{{ produto.descricao[:60] }}{% if produto.descricao|length > 60 %}...{% endif %}</small>
+                            {% endif %}
+                        </div>
+                        <span class="badge bg-success">R$ {{ "%.2f"|format(produto.preco) }}</span>
+                    </div>
+                    <div class="meta mt-2">
+                        {% if produto.estoque_atual <= 0 %}
+                            <span class="badge bg-danger">Estoque: {{ produto.estoque_atual }}</span>
+                        {% elif produto.estoque_atual <= produto.estoque_minimo %}
+                            <span class="badge bg-warning">Estoque: {{ produto.estoque_atual }}</span>
+                        {% else %}
+                            <span class="badge bg-primary">Estoque: {{ produto.estoque_atual }}</span>
+                        {% endif %}
+                        <span class="badge bg-secondary">Mín: {{ produto.estoque_minimo }}</span>
+                        {% if produto.categoria %}
+                            <span class="badge bg-info">{{ produto.categoria }}</span>
+                        {% endif %}
+                        {% if produto.codigo_barras %}
+                            <span class="badge bg-light text-dark">Cod: {{ produto.codigo_barras }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="actions mt-2">
+                        <a href="{{ url_for('nova_venda') }}?produto_id={{ produto.id }}" class="btn btn-sm btn-success" aria-label="Vender">
+                            <i class="fas fa-cash-register me-1"></i>Vender
+                        </a>
+                        <a href="{{ url_for('editar_produto', id=produto.id) }}" class="btn btn-sm btn-primary" aria-label="Editar">
+                            <i class="fas fa-edit me-1"></i>Editar
+                        </a>
+                        <a href="#" class="btn btn-sm btn-outline-danger" aria-label="Excluir"
+                           onclick="showConfirm('Tem certeza que deseja excluir este produto?', function() { window.location.href = '{{ url_for('excluir_produto', id=produto.id) }}'; }); return false;">
+                            <i class="fas fa-trash me-1"></i>Excluir
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state text-center py-5">
+                <i class="fas fa-box fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Nenhum produto cadastrado</h5>
+                <p class="text-muted">Comece adicionando seu primeiro produto</p>
+                <a href="{{ url_for('novo_produto') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Cadastrar Primeiro Produto
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- FAB Adicionar Produto -->
+            <a href="{{ url_for('novo_produto') }}" class="btn btn-primary rounded-circle position-fixed bottom-0 end-0 m-3 shadow" aria-label="Adicionar produto">
+                <i class="fas fa-plus"></i>
+            </a>
         </div>
 
         <!-- Estatísticas rápidas -->
