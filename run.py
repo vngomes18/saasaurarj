@@ -14,13 +14,13 @@ if __name__ == '__main__':
     # Criar tabelas do banco de dados se não existirem
     with app.app_context():
         db.create_all()
-        print("✅ Banco de dados inicializado com sucesso!")
+        print("Banco de dados inicializado com sucesso!")
     
     # Executar aplicação
-    print("🚀 Iniciando SaaS Sistema de Gestão...")
-    print("📊 Dashboard: http://localhost:5000")
-    print("👤 Login: http://localhost:5000/login")
-    print("📝 Registro: http://localhost:5000/register")
+    print(">> Iniciando SaaS Sistema de Gestao...")
+    print(">> Dashboard: http://localhost:5000")
+    print(">> Login: http://localhost:5000/login")
+    print(">> Registro: http://localhost:5000/register")
     
     app.run(
         host='0.0.0.0',

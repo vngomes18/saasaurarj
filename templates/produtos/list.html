@@ -142,13 +142,13 @@
                                    title="Editar produto">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <a href="{{ url_for('excluir_produto', id=produto.id) }}" 
-                                   class="btn btn-sm btn-outline-danger"
-                                   data-bs-toggle="tooltip" 
-                                   title="Excluir produto"
-                                   onclick="return confirm('Tem certeza que deseja excluir este produto?')">
-                                    <i class="fas fa-trash"></i>
-                                </a>
+                                        <a href="#" 
+                                           class="btn btn-sm btn-outline-danger"
+                                           data-bs-toggle="tooltip" 
+                                           title="Excluir produto"
+                                           onclick="showConfirm('Tem certeza que deseja excluir este produto?', function() { window.location.href = '{{ url_for('excluir_produto', id=produto.id) }}'; }); return false;">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
                             </div>
                         </td>
                     </tr>

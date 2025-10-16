@@ -41,51 +41,75 @@
     <!-- Clients Table -->
     <div class="row">
         <div class="col-12">
-            <div class="table-responsive">
-                <table class="table table-hover">
+            <div class="clientes-table-container">
+                <table class="clientes-table" id="clientsTable">
                     <thead>
                         <tr>
-                            <th>
-                                <i class="fas fa-user me-1"></i>
-                                Cliente
-                            </th>
-                            <th>
-                                <i class="fas fa-envelope me-1"></i>
-                                Email
-                            </th>
-                            <th>
-                                <i class="fas fa-phone me-1"></i>
-                                Telefone
-                            </th>
-                            <th>
-                                <i class="fas fa-map-marker-alt me-1"></i>
-                                Endereço
-                            </th>
-                            <th>
-                                <i class="fas fa-id-card me-1"></i>
-                                CPF/CNPJ
-                            </th>
-                            <th>
-                                <i class="fas fa-calendar me-1"></i>
-                                Cadastro
-                            </th>
-                            <th class="text-center">
-                                <i class="fas fa-cogs me-1"></i>
-                                Ações
-                            </th>
+                            <th class="text-center">Cliente</th>
+                            <th class="text-center">Contato</th>
+                            <th class="text-center">Endereço</th>
+                            <th class="text-center">Documento</th>
+                            <th class="text-center">Cadastro</th>
+                            <th class="text-center">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% if clientes %}
                             {% for cliente in clientes %}
-                            <tr>
-                                <td><strong>{{ cliente.nome }}</strong></td>
-                                <td>{{ cliente.email or '-' }}</td>
-                                <td>{{ cliente.telefone or '-' }}</td>
-                                <td>{{ cliente.endereco or '-' }}</td>
-                                <td>{{ cliente.cpf_cnpj or '-' }}</td>
-                                <td>{{ cliente.created_at.strftime('%d/%m/%Y') }}</td>
-                                <td class="text-center">
+                            <tr class="cliente-row" 
+                                data-name="{{ cliente.nome|lower }}" 
+                                data-email="{{ cliente.email|lower if cliente.email else '' }}"
+                                data-phone="{{ cliente.telefone }}">
+                                <td>
+                                    <div class="cliente-info">
+                                        <div class="cliente-avatar">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="cliente-details">
+                                            <h6>{{ cliente.nome }}</h6>
+                                            {% if cliente.endereco %}
+                                                <small>{{ cliente.endereco[:50] }}{% if cliente.endereco|length > 50 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-center">
+                                        {% if cliente.email %}
+                                            <div class="mb-1">
+                                                <span class="badge bg-primary">
+                                                    <i class="fas fa-envelope me-1"></i>{{ cliente.email }}
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                        {% if cliente.telefone %}
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-phone me-1"></i>{{ cliente.telefone }}
+                                            </span>
+                                        {% endif %}
+                                        {% if not cliente.email and not cliente.telefone %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if cliente.endereco %}
+                                        <span class="badge bg-secondary">{{ cliente.endereco[:30] }}{% if cliente.endereco|length > 30 %}...{% endif %}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cliente.cpf_cnpj %}
+                                        <code>{{ cliente.cpf_cnpj }}</code>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ cliente.created_at.strftime('%d/%m/%Y') }}</span>
+                                </td>
+                                <td>
                                     <div class="btn-group" role="group">
                                         <a href="{{ url_for('editar_cliente', id=cliente.id) }}" 
                                            class="btn btn-sm btn-outline-primary"

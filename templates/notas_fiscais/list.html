@@ -26,87 +26,97 @@
     <!-- Notas Fiscais List -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-white border-0">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list text-primary me-2"></i>
-                        Lista de Notas Fiscais
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    {% if notas %}
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Número NF</th>
-                                        <th>Série</th>
-                                        <th>Modelo</th>
-                                        <th>Cliente/Fornecedor</th>
-                                        <th>Data Emissão</th>
-                                        <th>Valor Total</th>
-                                        <th>Status</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for nota in notas %}
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar-sm bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3">
-                                                    <i class="fas fa-file-invoice"></i>
-                                                </div>
-                                                <div>
-                                                    <h6 class="mb-0">{{ nota.numero_nf }}</h6>
-                                                    {% if nota.chave_acesso %}
-                                                    <small class="text-muted">Chave: {{ nota.chave_acesso[:20] }}...</small>
-                                                    {% endif %}
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-secondary">{{ nota.serie or '-' }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-info">{{ nota.modelo }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="text-dark">{{ nota.cliente_fornecedor or '-' }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="text-muted">{{ nota.data_emissao.strftime('%d/%m/%Y') }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="fw-bold text-success">
-                                                R$ {{ "%.2f"|format(nota.valor_total) }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {% if nota.status == 'pendente' %}
-                                                <span class="badge bg-warning">Pendente</span>
-                                            {% elif nota.status == 'emitida' %}
-                                                <span class="badge bg-success">Emitida</span>
-                                            {% else %}
-                                                <span class="badge bg-danger">Cancelada</span>
+            <div class="notas-fiscais-table-container">
+                <table class="notas-fiscais-table" id="invoicesTable">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Nota Fiscal</th>
+                            <th class="text-center">Cliente/Fornecedor</th>
+                            <th class="text-center">Data Emissão</th>
+                            <th class="text-center">Valor Total</th>
+                            <th class="text-center">Tipo</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if notas %}
+                            {% for nota in notas %}
+                            <tr class="nota-row" 
+                                data-id="{{ nota.id }}" 
+                                data-status="{{ nota.status }}"
+                                data-value="{{ nota.valor_total }}">
+                                <td>
+                                    <div class="nota-info">
+                                        <div class="nota-avatar">
+                                            <i class="fas fa-file-invoice"></i>
+                                        </div>
+                                        <div class="nota-details">
+                                            <h6>{{ nota.numero_nf }}</h6>
+                                            {% if nota.serie %}
+                                                <small>Série: {{ nota.serie }}</small>
                                             {% endif %}
-                                        </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{{ url_for('detalhes_nota_fiscal', id=nota.id) }}" 
-                                                   class="btn btn-sm btn-outline-primary" 
-                                                   title="Ver Detalhes">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                {% if nota.status == 'pendente' %}
-                                                <button class="btn btn-sm btn-outline-success" 
-                                                        title="Emitir NF"
-                                                        onclick="emitirNF({{ nota.id }})">
-                                                    <i class="fas fa-paper-plane"></i>
-                                                </button>
-                                                {% endif %}
-                                            </div>
-                                        </td>
+                                            {% if nota.chave_acesso %}
+                                                <br><small class="text-muted">Chave: {{ nota.chave_acesso[:15] }}...</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if nota.cliente_fornecedor %}
+                                        <span class="badge bg-secondary">{{ nota.cliente_fornecedor[:30] }}{% if nota.cliente_fornecedor|length > 30 %}...{% endif %}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ nota.data_emissao.strftime('%d/%m/%Y') }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">
+                                        R$ {{ "%.2f"|format(nota.valor_total) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if nota.modelo %}
+                                        <span class="badge bg-primary">{{ nota.modelo }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if nota.status == 'pendente' %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock me-1"></i>Pendente
+                                        </span>
+                                    {% elif nota.status == 'emitida' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Emitida
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-times me-1"></i>Cancelada
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('detalhes_nota_fiscal', id=nota.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           data-bs-toggle="tooltip"
+                                           title="Ver Detalhes">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if nota.status == 'pendente' %}
+                                        <button class="btn btn-sm btn-outline-success" 
+                                                data-bs-toggle="tooltip"
+                                                title="Emitir NF"
+                                                onclick="emitirNF({{ nota.id }})">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -142,10 +152,10 @@
     });
 
     function emitirNF(notaId) {
-        if (confirm('Emitir esta nota fiscal?')) {
+        showConfirm('Emitir esta nota fiscal?', function() {
             // Aqui você pode implementar a lógica para emitir a NF
             alert('Funcionalidade de emissão será implementada em breve!');
-        }
+        }, 'Emitir NF', 'btn-primary');
     }
 </script>
 {% endblock %}

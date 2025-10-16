@@ -247,9 +247,9 @@
     });
 
     function emitirNF(notaId) {
-        if (confirm('Emitir esta nota fiscal?')) {
+        showConfirm('Emitir esta nota fiscal?', function() {
             alert('Funcionalidade de emissão será implementada em breve!');
-        }
+        }, 'Emitir NF', 'btn-primary');
     }
 
     function imprimirNF(notaId) {

@@ -26,73 +26,102 @@
     <!-- Fornecedores List -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-white border-0">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list text-primary me-2"></i>
-                        Lista de Fornecedores
-                    </h5>
-                </div>
-                <div class="card-body p-0">
-                    {% if fornecedores %}
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Nome</th>
-                                        <th>Razão Social</th>
-                                        <th>CNPJ</th>
-                                        <th>Contato</th>
-                                        <th>Status</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for fornecedor in fornecedores %}
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
-                                                    <i class="fas fa-building"></i>
-                                                </div>
-                                                <div>
-                                                    <h6 class="mb-0">{{ fornecedor.nome }}</h6>
-                                                    <small class="text-muted">{{ fornecedor.cidade }}, {{ fornecedor.estado }}</small>
-                                                </div>
+            <div class="fornecedores-table-container">
+                <table class="fornecedores-table" id="suppliersTable">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Fornecedor</th>
+                            <th class="text-center">Documento</th>
+                            <th class="text-center">Contato</th>
+                            <th class="text-center">Localização</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if fornecedores %}
+                            {% for fornecedor in fornecedores %}
+                            <tr class="fornecedor-row" 
+                                data-name="{{ fornecedor.nome|lower }}" 
+                                data-status="{{ fornecedor.status }}"
+                                data-city="{{ fornecedor.cidade|lower if fornecedor.cidade else '' }}">
+                                <td>
+                                    <div class="fornecedor-info">
+                                        <div class="fornecedor-avatar">
+                                            <i class="fas fa-building"></i>
+                                        </div>
+                                        <div class="fornecedor-details">
+                                            <h6>{{ fornecedor.nome }}</h6>
+                                            {% if fornecedor.razao_social %}
+                                                <small>{{ fornecedor.razao_social[:50] }}{% if fornecedor.razao_social|length > 50 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if fornecedor.cnpj %}
+                                        <code>{{ fornecedor.cnpj }}</code>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="text-center">
+                                        {% if fornecedor.contato %}
+                                            <div class="mb-1">
+                                                <span class="badge bg-primary">
+                                                    <i class="fas fa-user me-1"></i>{{ fornecedor.contato }}
+                                                </span>
                                             </div>
-                                        </td>
-                                        <td>
-                                            <span class="text-dark">{{ fornecedor.razao_social or '-' }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="text-muted">{{ fornecedor.cnpj or '-' }}</span>
-                                        </td>
-                                        <td>
-                                            <div>
-                                                <div class="text-dark">{{ fornecedor.contato or '-' }}</div>
-                                                <small class="text-muted">{{ fornecedor.telefone or '-' }}</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-{{ 'success' if fornecedor.status == 'ativo' else 'secondary' }}">
-                                                {{ fornecedor.status.title() }}
+                                        {% endif %}
+                                        {% if fornecedor.telefone %}
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-phone me-1"></i>{{ fornecedor.telefone }}
                                             </span>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{{ url_for('editar_fornecedor', id=fornecedor.id) }}" 
-                                                   class="btn btn-sm btn-outline-primary" 
-                                                   title="Editar">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a href="{{ url_for('excluir_fornecedor', id=fornecedor.id) }}" 
-                                                   class="btn btn-sm btn-outline-danger" 
-                                                   title="Excluir"
-                                                   onclick="return confirm('Tem certeza que deseja excluir este fornecedor?')">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
-                                            </div>
-                                        </td>
+                                        {% endif %}
+                                        {% if fornecedor.email %}
+                                            <br><small class="text-muted">{{ fornecedor.email[:30] }}{% if fornecedor.email|length > 30 %}...{% endif %}</small>
+                                        {% endif %}
+                                        {% if not fornecedor.contato and not fornecedor.telefone %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if fornecedor.cidade %}
+                                        <span class="badge bg-secondary">{{ fornecedor.cidade }}, {{ fornecedor.estado or 'N/A' }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if fornecedor.status == 'ativo' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Ativo
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-pause me-1"></i>Inativo
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('editar_fornecedor', id=fornecedor.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           data-bs-toggle="tooltip"
+                                           title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="#" 
+                                           class="btn btn-sm btn-outline-danger" 
+                                           data-bs-toggle="tooltip"
+                                           title="Excluir"
+                                           onclick="showConfirm('Tem certeza que deseja excluir este fornecedor?', function() { window.location.href = '{{ url_for('excluir_fornecedor', id=fornecedor.id) }}'; }); return false;">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>

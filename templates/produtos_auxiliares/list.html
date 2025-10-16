@@ -163,11 +163,11 @@
                                    title="Editar produto auxiliar">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <a href="{{ url_for('excluir_produto_auxiliar', id=produto.id) }}" 
+                                <a href="#" 
                                    class="btn btn-sm btn-outline-danger"
                                    data-bs-toggle="tooltip" 
                                    title="Excluir produto auxiliar"
-                                   onclick="return confirm('Tem certeza que deseja excluir este produto auxiliar?')">
+                                   onclick="showConfirm('Tem certeza que deseja excluir este produto auxiliar?', function() { window.location.href = '{{ url_for('excluir_produto_auxiliar', id=produto.id) }}'; }); return false;">
                                     <i class="fas fa-trash"></i>
                                 </a>
                             </div>

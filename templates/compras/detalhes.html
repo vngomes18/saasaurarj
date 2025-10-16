@@ -17,9 +17,9 @@
                 </div>
                 <div class="d-flex gap-2">
                     {% if compra.status == 'pendente' %}
-                    <a href="{{ url_for('confirmar_compra', id=compra.id) }}" 
+                    <a href="#" 
                        class="btn btn-success"
-                       onclick="return confirm('Confirmar esta compra e atualizar o estoque?')">
+                       onclick="showConfirm('Confirmar esta compra e atualizar o estoque?', function() { window.location.href = '{{ url_for('confirmar_compra', id=compra.id) }}'; }, 'Confirmar Compra', 'btn-success'); return false;">
                         <i class="fas fa-check me-2"></i>
                         Confirmar Compra
                     </a>

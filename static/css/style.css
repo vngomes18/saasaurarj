@@ -1811,6 +1811,492 @@ p, .text-muted {
     }
 }
 
+/* ==================== ESTILOS PADRONIZADOS PARA TODAS AS TABELAS ==================== */
+
+/* Tabela de Vendas */
+.vendas-table-container {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.vendas-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+}
+
+.vendas-table thead {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
+
+.vendas-table thead th {
+    padding: 1.5rem 1rem;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    text-align: center;
+    vertical-align: middle;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.vendas-table tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.vendas-table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.vendas-table tbody td {
+    padding: 1.5rem 1rem;
+    vertical-align: middle;
+    border: none;
+}
+
+.venda-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.venda-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--success-color), var(--primary-color));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.venda-details h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1rem;
+}
+
+.venda-details small {
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+.cliente-avatar-sm {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, var(--info-color), var(--primary-color));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    margin: 0 auto 0.5rem;
+}
+
+/* Tabela de Clientes */
+.clientes-table-container {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.clientes-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+}
+
+.clientes-table thead {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
+
+.clientes-table thead th {
+    padding: 1.5rem 1rem;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    text-align: center;
+    vertical-align: middle;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.clientes-table tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.clientes-table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.clientes-table tbody td {
+    padding: 1.5rem 1rem;
+    vertical-align: middle;
+    border: none;
+}
+
+.cliente-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.cliente-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.cliente-details h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1rem;
+}
+
+.cliente-details small {
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+/* Tabela de Compras */
+.compras-table-container {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.compras-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+}
+
+.compras-table thead {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
+
+.compras-table thead th {
+    padding: 1.5rem 1rem;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    text-align: center;
+    vertical-align: middle;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.compras-table tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.compras-table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.compras-table tbody td {
+    padding: 1.5rem 1rem;
+    vertical-align: middle;
+    border: none;
+}
+
+.compra-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.compra-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--warning-color), var(--primary-color));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.compra-details h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1rem;
+}
+
+.compra-details small {
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+.fornecedor-avatar-sm {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+    margin: 0 auto 0.5rem;
+}
+
+/* Tabela de Fornecedores */
+.fornecedores-table-container {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.fornecedores-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+}
+
+.fornecedores-table thead {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
+
+.fornecedores-table thead th {
+    padding: 1.5rem 1rem;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    text-align: center;
+    vertical-align: middle;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.fornecedores-table tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.fornecedores-table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.fornecedores-table tbody td {
+    padding: 1.5rem 1rem;
+    vertical-align: middle;
+    border: none;
+}
+
+.fornecedor-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.fornecedor-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.fornecedor-details h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1rem;
+}
+
+.fornecedor-details small {
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+/* Tabela de Notas Fiscais */
+.notas-fiscais-table-container {
+    background: white;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.notas-fiscais-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+}
+
+.notas-fiscais-table thead {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+}
+
+.notas-fiscais-table thead th {
+    padding: 1.5rem 1rem;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    text-align: center;
+    vertical-align: middle;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.notas-fiscais-table tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.notas-fiscais-table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.notas-fiscais-table tbody td {
+    padding: 1.5rem 1rem;
+    vertical-align: middle;
+    border: none;
+}
+
+.nota-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nota-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--success-color), var(--primary-color));
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.nota-details h6 {
+    margin: 0;
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 1rem;
+}
+
+.nota-details small {
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+/* ===== CUSTOM CONFIRMATION MODAL ===== */
+#confirmModal .modal-content {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+#confirmModal .modal-header {
+    border-radius: 15px 15px 0 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+#confirmModal .modal-footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 15px 15px;
+}
+
+#confirmModal .modal-body {
+    padding: 2rem;
+}
+
+#confirmModal .fa-question-circle {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+#confirmModal .btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 0.5rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+#confirmModal .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Dark mode support for modal */
+.dark-mode #confirmModal .modal-content {
+    background-color: #2d3748;
+    color: #e2e8f0;
+}
+
+.dark-mode #confirmModal .modal-header {
+    background-color: #4a5568 !important;
+    color: #e2e8f0 !important;
+    border-bottom-color: #4a5568;
+}
+
+.dark-mode #confirmModal .modal-footer {
+    border-top-color: #4a5568;
+}
+
+.dark-mode #confirmModal .btn-close {
+    filter: invert(1);
+}
+
 /* Modo escuro para página de produtos */
 .dark-mode .produtos-header {
     background: linear-gradient(135deg, #2d3748, #4a5568);

@@ -70,18 +70,71 @@
                                     Categoria
                                 </label>
                                 <div class="input-group">
-                                    <span class="input-group-text">
+                                    <span class="input-group-text bg-info text-white">
                                         <i class="fas fa-folder"></i>
                                     </span>
                                     <select class="form-select" id="categoria" name="categoria">
                                         <option value="">Selecione uma categoria</option>
-                                        <option value="Eletrônicos" {% if produto and produto.categoria == 'Eletrônicos' %}selected{% endif %}>📱 Eletrônicos</option>
-                                        <option value="Roupas" {% if produto and produto.categoria == 'Roupas' %}selected{% endif %}>👕 Roupas</option>
-                                        <option value="Alimentícios" {% if produto and produto.categoria == 'Alimentícios' %}selected{% endif %}>🍎 Alimentícios</option>
-                                        <option value="Casa e Jardim" {% if produto and produto.categoria == 'Casa e Jardim' %}selected{% endif %}>🏠 Casa e Jardim</option>
-                                        <option value="Livros" {% if produto and produto.categoria == 'Livros' %}selected{% endif %}>📚 Livros</option>
-                                        <option value="Outros" {% if produto and produto.categoria == 'Outros' %}selected{% endif %}>📦 Outros</option>
+                                        
+                                        <!-- Categorias padrão -->
+                                        <option value="Eletrônicos" {% if produto and produto.categoria == 'Eletrônicos' %}selected{% endif %}>Eletrônicos</option>
+                                        <option value="Roupas" {% if produto and produto.categoria == 'Roupas' %}selected{% endif %}>Roupas</option>
+                                        <option value="Alimentícios" {% if produto and produto.categoria == 'Alimentícios' %}selected{% endif %}>Alimentícios</option>
+                                        <option value="Casa e Jardim" {% if produto and produto.categoria == 'Casa e Jardim' %}selected{% endif %}>Casa e Jardim</option>
+                                        <option value="Livros" {% if produto and produto.categoria == 'Livros' %}selected{% endif %}>Livros</option>
+                                        <option value="Beleza e Saúde" {% if produto and produto.categoria == 'Beleza e Saúde' %}selected{% endif %}>Beleza e Saúde</option>
+                                        <option value="Esportes" {% if produto and produto.categoria == 'Esportes' %}selected{% endif %}>Esportes</option>
+                                        <option value="Automotivo" {% if produto and produto.categoria == 'Automotivo' %}selected{% endif %}>Automotivo</option>
+                                        <option value="Ferramentas" {% if produto and produto.categoria == 'Ferramentas' %}selected{% endif %}>Ferramentas</option>
+                                        <option value="Brinquedos" {% if produto and produto.categoria == 'Brinquedos' %}selected{% endif %}>Brinquedos</option>
+                                        <option value="Pet Shop" {% if produto and produto.categoria == 'Pet Shop' %}selected{% endif %}>Pet Shop</option>
+                                        <option value="Outros" {% if produto and produto.categoria == 'Outros' %}selected{% endif %}>Outros</option>
+                                        
+                                        <!-- Separador para categorias existentes -->
+                                        {% if categorias_existentes %}
+                                            <option disabled>──────────</option>
+                                            {% for categoria in categorias_existentes %}
+                                                {% if categoria not in ['Eletrônicos', 'Roupas', 'Alimentícios', 'Casa e Jardim', 'Livros', 'Beleza e Saúde', 'Esportes', 'Automotivo', 'Ferramentas', 'Brinquedos', 'Pet Shop', 'Outros'] %}
+                                                <option value="{{ categoria }}" {% if produto and produto.categoria == categoria %}selected{% endif %}>{{ categoria }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                        
+                                        <!-- Opção para adicionar nova categoria -->
+                                        <option disabled>──────────</option>
+                                        <option value="__NOVA_CATEGORIA__">+ Adicionar Nova Categoria</option>
                                     </select>
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-plus me-1"></i>Selecione uma categoria ou escolha "Adicionar Nova Categoria"
+                                </div>
+                                
+                                <!-- Campo para nova categoria (inicialmente oculto) -->
+                                <div id="nova-categoria-container" class="mt-3" style="display: none;">
+                                    <label for="nova-categoria" class="form-label">
+                                        <i class="fas fa-plus text-success me-2"></i>
+                                        Nova Categoria
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-success text-white">
+                                            <i class="fas fa-plus"></i>
+                                        </span>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="nova-categoria" 
+                                               placeholder="Digite o nome da nova categoria"
+                                               autocomplete="off">
+                                        <button type="button" 
+                                                class="btn btn-success" 
+                                                id="adicionar-categoria">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button type="button" 
+                                                class="btn btn-outline-secondary" 
+                                                id="cancelar-nova-categoria">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -336,6 +389,87 @@
         // Add event listeners
         Object.values(inputs).forEach(input => {
             input.addEventListener('input', updatePreview);
+        });
+
+        // Enhanced category functionality
+        const categoriaSelect = document.getElementById('categoria');
+        const novaCategoriaContainer = document.getElementById('nova-categoria-container');
+        const novaCategoriaInput = document.getElementById('nova-categoria');
+        const adicionarCategoriaBtn = document.getElementById('adicionar-categoria');
+        const cancelarNovaCategoriaBtn = document.getElementById('cancelar-nova-categoria');
+        
+        // Show new category field when "Adicionar Nova Categoria" is selected
+        categoriaSelect.addEventListener('change', function() {
+            if (this.value === '__NOVA_CATEGORIA__') {
+                novaCategoriaContainer.style.display = 'block';
+                novaCategoriaInput.focus();
+                this.value = ''; // Reset select value
+            } else {
+                novaCategoriaContainer.style.display = 'none';
+                novaCategoriaInput.value = '';
+            }
+        });
+        
+        // Add new category to select
+        function addNewCategory(categoria) {
+            if (categoria && !Array.from(categoriaSelect.options).some(option => option.value === categoria)) {
+                // Find the position before the separator and "Adicionar Nova Categoria" option
+                const separadorIndex = Array.from(categoriaSelect.options).findIndex(option => option.disabled && option.textContent.includes('──────────'));
+                const insertIndex = separadorIndex > 0 ? separadorIndex : categoriaSelect.options.length - 2;
+                
+                // Create new option
+                const newOption = document.createElement('option');
+                newOption.value = categoria;
+                newOption.textContent = categoria;
+                
+                // Insert before the separators and "Adicionar Nova Categoria" option
+                categoriaSelect.insertBefore(newOption, categoriaSelect.options[insertIndex]);
+                
+                // Select the new category
+                categoriaSelect.value = categoria;
+                
+                // Hide the new category container
+                novaCategoriaContainer.style.display = 'none';
+                novaCategoriaInput.value = '';
+                
+                // Show success feedback
+                categoriaSelect.style.borderColor = '#28a745';
+                setTimeout(() => {
+                    categoriaSelect.style.borderColor = '';
+                }, 1000);
+                
+                return true;
+            }
+            return false;
+        }
+        
+        // Add category button click
+        adicionarCategoriaBtn.addEventListener('click', function() {
+            const categoria = novaCategoriaInput.value.trim();
+            if (categoria) {
+                addNewCategory(categoria);
+            }
+        });
+        
+        // Cancel new category
+        cancelarNovaCategoriaBtn.addEventListener('click', function() {
+            novaCategoriaContainer.style.display = 'none';
+            novaCategoriaInput.value = '';
+            categoriaSelect.value = '';
+        });
+        
+        // Allow Enter key to add category
+        novaCategoriaInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const categoria = this.value.trim();
+                if (categoria) {
+                    addNewCategory(categoria);
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                cancelarNovaCategoriaBtn.click();
+            }
         });
 
         // Currency formatting for price field

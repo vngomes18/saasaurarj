@@ -60,71 +60,65 @@
     <!-- Sales Table -->
     <div class="row">
         <div class="col-12">
-            <div class="table-responsive">
-                <table class="table table-hover">
+            <div class="vendas-table-container">
+                <table class="vendas-table" id="salesTable">
                     <thead>
                         <tr>
-                            <th>
-                                <i class="fas fa-hashtag me-1"></i>
-                                ID
-                            </th>
-                            <th>
-                                <i class="fas fa-calendar me-1"></i>
-                                Data/Hora
-                            </th>
-                            <th>
-                                <i class="fas fa-user me-1"></i>
-                                Cliente
-                            </th>
-                            <th>
-                                <i class="fas fa-dollar-sign me-1"></i>
-                                Valor Total
-                            </th>
-                            <th>
-                                <i class="fas fa-credit-card me-1"></i>
-                                Pagamento
-                            </th>
-                            <th>
-                                <i class="fas fa-info-circle me-1"></i>
-                                Status
-                            </th>
-                            <th>
-                                <i class="fas fa-box me-1"></i>
-                                Itens
-                            </th>
-                            <th class="text-center">
-                                <i class="fas fa-cogs me-1"></i>
-                                Ações
-                            </th>
+                            <th class="text-center">Venda</th>
+                            <th class="text-center">Data/Hora</th>
+                            <th class="text-center">Cliente</th>
+                            <th class="text-center">Valor Total</th>
+                            <th class="text-center">Pagamento</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Itens</th>
+                            <th class="text-center">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% if vendas %}
                             {% for venda in vendas %}
-                            <tr>
+                            <tr class="venda-row" 
+                                data-id="{{ venda.id }}" 
+                                data-status="{{ venda.status }}"
+                                data-value="{{ venda.valor_total }}">
                                 <td>
-                                    <strong>#{{ venda.id }}</strong>
+                                    <div class="venda-info">
+                                        <div class="venda-avatar">
+                                            <i class="fas fa-shopping-cart"></i>
+                                        </div>
+                                        <div class="venda-details">
+                                            <h6>#{{ venda.id }}</h6>
+                                            {% if venda.observacoes %}
+                                                <small>{{ venda.observacoes[:40] }}{% if venda.observacoes|length > 40 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
                                 </td>
                                 <td>
-                                    <div>
+                                    <div class="text-center">
                                         <strong>{{ venda.data_venda.strftime('%d/%m/%Y') }}</strong>
                                         <br><small class="text-muted">{{ venda.data_venda.strftime('%H:%M') }}</small>
                                     </div>
                                 </td>
                                 <td>
                                     {% if venda.cliente %}
-                                        <div>
+                                        <div class="text-center">
+                                            <div class="cliente-avatar-sm">
+                                                <i class="fas fa-user"></i>
+                                            </div>
                                             <strong>{{ venda.cliente.nome }}</strong>
                                             {% if venda.cliente.telefone %}
                                                 <br><small class="text-muted">{{ venda.cliente.telefone }}</small>
                                             {% endif %}
                                         </div>
                                     {% else %}
-                                        <span class="text-muted">Cliente Avulso</span>
+                                        <div class="text-center">
+                                            <span class="badge bg-secondary">Cliente Avulso</span>
+                                        </div>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <span class="badge bg-success fs-6">
+                                    <span class="badge bg-success">
                                         R$ {{ "%.2f"|format(venda.valor_total) }}
                                     </span>
                                 </td>
@@ -151,11 +145,11 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    <span class="badge bg-secondary">
+                                    <span class="badge bg-primary">
                                         {{ venda.itens|length }} item(s)
                                     </span>
                                 </td>
-                                <td class="text-center">
+                                <td>
                                     <div class="btn-group" role="group">
                                         <a href="{{ url_for('detalhes_venda', id=venda.id) }}" 
                                            class="btn btn-sm btn-outline-primary"

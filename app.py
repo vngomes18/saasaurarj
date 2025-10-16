@@ -523,7 +523,17 @@ def novo_produto():
         flash('Produto cadastrado com sucesso!', 'success')
         return redirect(url_for('produtos'))
     
-    return render_template('produtos/form.html')
+    # Buscar categorias existentes para sugestões
+    user_id = session['user_id']
+    categorias_existentes = db.session.query(Produto.categoria).filter(
+        Produto.user_id == user_id,
+        Produto.categoria.isnot(None),
+        Produto.categoria != ''
+    ).distinct().all()
+    
+    categorias = [cat[0] for cat in categorias_existentes]
+    
+    return render_template('produtos/form.html', categorias_existentes=categorias)
 
 @app.route('/produtos/editar/<int:id>', methods=['GET', 'POST'])
 @login_required
@@ -546,7 +556,17 @@ def editar_produto(id):
         flash('Produto atualizado com sucesso!', 'success')
         return redirect(url_for('produtos'))
     
-    return render_template('produtos/form.html', produto=produto)
+    # Buscar categorias existentes para sugestões
+    user_id = session['user_id']
+    categorias_existentes = db.session.query(Produto.categoria).filter(
+        Produto.user_id == user_id,
+        Produto.categoria.isnot(None),
+        Produto.categoria != ''
+    ).distinct().all()
+    
+    categorias = [cat[0] for cat in categorias_existentes]
+    
+    return render_template('produtos/form.html', produto=produto, categorias_existentes=categorias)
 
 @app.route('/produtos/excluir/<int:id>')
 @login_required
