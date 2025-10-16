@@ -730,24 +730,65 @@ def produtos_auxiliares():
 @login_required
 def novo_produto_auxiliar():
     if request.method == 'POST':
-        produto = ProdutoAuxiliar(
-            nome=request.form['nome'],
-            descricao=request.form.get('descricao'),
-            categoria=request.form.get('categoria'),
-            unidade=request.form.get('unidade'),
-            preco_unitario=float(request.form['preco_unitario']),
-            estoque_atual=float(request.form['estoque_atual']),
-            estoque_minimo=float(request.form['estoque_minimo']),
-            codigo_interno=request.form.get('codigo_interno'),
-            observacoes=request.form.get('observacoes'),
-            user_id=session['user_id']
-        )
-        
-        db.session.add(produto)
-        db.session.commit()
-        
-        flash('Produto auxiliar cadastrado com sucesso!', 'success')
-        return redirect(url_for('produtos_auxiliares'))
+        try:
+            # Debug: imprimir dados do formulário
+            print("Dados do formulário:", request.form.to_dict())
+            
+            # Validar campos obrigatórios
+            if not request.form.get('nome'):
+                flash('Nome do produto é obrigatório!', 'error')
+                return render_template('produtos_auxiliares/form.html')
+            
+            if not request.form.get('preco_unitario'):
+                flash('Preço unitário é obrigatório!', 'error')
+                return render_template('produtos_auxiliares/form.html')
+            
+            # Converter valores com tratamento de erro
+            preco_unitario = 0.0
+            estoque_atual = 0.0
+            estoque_minimo = 0.0
+            
+            try:
+                preco_unitario = float(request.form['preco_unitario'])
+            except (ValueError, TypeError):
+                preco_unitario = 0.0
+            
+            try:
+                estoque_atual = float(request.form.get('estoque_atual', 0))
+            except (ValueError, TypeError):
+                estoque_atual = 0.0
+            
+            try:
+                estoque_minimo = float(request.form.get('estoque_minimo', 0))
+            except (ValueError, TypeError):
+                estoque_minimo = 0.0
+            
+            produto = ProdutoAuxiliar(
+                nome=request.form['nome'].strip(),
+                descricao=request.form.get('descricao', '').strip(),
+                categoria=request.form.get('categoria', '').strip(),
+                unidade=request.form.get('unidade', '').strip(),
+                preco_unitario=preco_unitario,
+                estoque_atual=estoque_atual,
+                estoque_minimo=estoque_minimo,
+                codigo_interno=request.form.get('codigo_interno', '').strip(),
+                observacoes=request.form.get('observacoes', '').strip(),
+                user_id=session['user_id']
+            )
+            
+            print("Produto criado:", produto.nome, produto.preco_unitario)
+            
+            db.session.add(produto)
+            db.session.commit()
+            
+            flash('Produto auxiliar cadastrado com sucesso!', 'success')
+            return redirect(url_for('produtos_auxiliares'))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"Erro ao cadastrar produto auxiliar: {str(e)}")
+            flash(f'Erro ao cadastrar produto auxiliar: {str(e)}', 'error')
+            return render_template('produtos_auxiliares/form.html')
     
     return render_template('produtos_auxiliares/form.html')
 

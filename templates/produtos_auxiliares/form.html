@@ -1,126 +1,203 @@
 {% extends "layout/base.html" %}
 
-{% block title %}{{ 'Editar' if produto else 'Novo' }} Produto Auxiliar - SaaS Sistema{% endblock %}
+{% block title %}{{ 'Editar' if produto else 'Novo' }} Produto Auxiliar{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
+<div class="container-fluid py-4">
+    <!-- Header da página -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h2 class="mb-1">
-                        <i class="fas fa-{{ 'edit' if produto else 'plus' }} text-primary me-2"></i>
+                    <h1 class="h3 mb-1">
+                        <i class="fas fa-tools text-primary me-2"></i>
                         {{ 'Editar' if produto else 'Novo' }} Produto Auxiliar
-                    </h2>
+                    </h1>
                     <p class="text-muted mb-0">
                         {{ 'Atualize as informações do produto auxiliar' if produto else 'Cadastre um novo produto auxiliar' }}
                     </p>
                 </div>
-                <a href="{{ url_for('produtos_auxiliares') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left me-2"></i>
-                    Voltar
-                </a>
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('produtos_auxiliares') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Voltar
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Form -->
     <div class="row">
+        <!-- Formulário Principal -->
         <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header bg-white border-0">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-info-circle text-primary me-2"></i>
-                        Informações do Produto
+                        <i class="fas fa-info-circle me-2"></i>
+                        Informações do Produto Auxiliar
                     </h5>
                 </div>
                 <div class="card-body">
                     <form method="POST">
-                        <div class="row">
-                            <div class="col-md-8 mb-3">
-                                <label for="nome" class="form-label">Nome do Produto *</label>
-                                <input type="text" class="form-control" id="nome" name="nome" 
-                                       value="{{ produto.nome if produto else '' }}" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="codigo_interno" class="form-label">Código Interno</label>
-                                <input type="text" class="form-control" id="codigo_interno" name="codigo_interno"
-                                       value="{{ produto.codigo_interno if produto else '' }}">
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="categoria" class="form-label">Categoria</label>
-                                <select class="form-select" id="categoria" name="categoria">
-                                    <option value="">Selecione uma categoria</option>
-                                    <option value="material" {{ 'selected' if produto and produto.categoria == 'material' else '' }}>Material</option>
-                                    <option value="ferramenta" {{ 'selected' if produto and produto.categoria == 'ferramenta' else '' }}>Ferramenta</option>
-                                    <option value="insumo" {{ 'selected' if produto and produto.categoria == 'insumo' else '' }}>Insumo</option>
-                                    <option value="equipamento" {{ 'selected' if produto and produto.categoria == 'equipamento' else '' }}>Equipamento</option>
-                                    <option value="limpeza" {{ 'selected' if produto and produto.categoria == 'limpeza' else '' }}>Limpeza</option>
-                                    <option value="seguranca" {{ 'selected' if produto and produto.categoria == 'seguranca' else '' }}>Segurança</option>
-                                    <option value="outros" {{ 'selected' if produto and produto.categoria == 'outros' else '' }}>Outros</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="unidade" class="form-label">Unidade de Medida</label>
-                                <select class="form-select" id="unidade" name="unidade">
-                                    <option value="">Selecione</option>
-                                    <option value="unidade" {{ 'selected' if produto and produto.unidade == 'unidade' else '' }}>Unidade</option>
-                                    <option value="kg" {{ 'selected' if produto and produto.unidade == 'kg' else '' }}>Quilograma (kg)</option>
-                                    <option value="g" {{ 'selected' if produto and produto.unidade == 'g' else '' }}>Grama (g)</option>
-                                    <option value="litros" {{ 'selected' if produto and produto.unidade == 'litros' else '' }}>Litros (L)</option>
-                                    <option value="metros" {{ 'selected' if produto and produto.unidade == 'metros' else '' }}>Metros (m)</option>
-                                    <option value="cm" {{ 'selected' if produto and produto.unidade == 'cm' else '' }}>Centímetros (cm)</option>
-                                    <option value="caixa" {{ 'selected' if produto and produto.unidade == 'caixa' else '' }}>Caixa</option>
-                                    <option value="pacote" {{ 'selected' if produto and produto.unidade == 'pacote' else '' }}>Pacote</option>
-                                    <option value="rolo" {{ 'selected' if produto and produto.unidade == 'rolo' else '' }}>Rolo</option>
-                                    <option value="fardo" {{ 'selected' if produto and produto.unidade == 'fardo' else '' }}>Fardo</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label for="descricao" class="form-label">Descrição</label>
-                            <textarea class="form-control" id="descricao" name="descricao" rows="3">{{ produto.descricao if produto else '' }}</textarea>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label for="preco_unitario" class="form-label">Preço Unitário *</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">R$</span>
-                                    <input type="number" class="form-control" id="preco_unitario" name="preco_unitario" 
-                                           step="0.01" min="0" value="{{ produto.preco_unitario if produto else '' }}" required>
+                        <!-- Nome e Código -->
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <label for="nome" class="form-label fw-bold">
+                                    <i class="fas fa-tag me-1 text-primary"></i>
+                                    Nome do Produto *
+                                </label>
+                                <input type="text" class="form-control form-control-lg" id="nome" name="nome" 
+                                       value="{{ produto.nome if produto else '' }}" required
+                                       placeholder="Ex: Parafuso M6 x 20mm">
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Nome descritivo do produto auxiliar
                                 </div>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="estoque_atual" class="form-label">Estoque Atual</label>
-                                <input type="number" class="form-control" id="estoque_atual" name="estoque_atual" 
-                                       step="0.01" min="0" value="{{ produto.estoque_atual if produto else '0' }}">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label for="estoque_minimo" class="form-label">Estoque Mínimo</label>
-                                <input type="number" class="form-control" id="estoque_minimo" name="estoque_minimo" 
-                                       step="0.01" min="0" value="{{ produto.estoque_minimo if produto else '0' }}">
+                            <div class="col-md-4">
+                                <label for="codigo_interno" class="form-label fw-bold">
+                                    <i class="fas fa-barcode me-1 text-primary"></i>
+                                    Código Interno
+                                </label>
+                                <input type="text" class="form-control form-control-lg" id="codigo_interno" name="codigo_interno"
+                                       value="{{ produto.codigo_interno if produto else '' }}"
+                                       placeholder="Ex: PA001">
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Código interno para identificação
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="observacoes" class="form-label">Observações</label>
-                            <textarea class="form-control" id="observacoes" name="observacoes" rows="3">{{ produto.observacoes if produto else '' }}</textarea>
+                        <!-- Categoria e Unidade -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="categoria" class="form-label fw-bold">
+                                    <i class="fas fa-folder me-1 text-primary"></i>
+                                    Categoria
+                                </label>
+                                <select class="form-select form-select-lg" id="categoria" name="categoria">
+                                    <option value="">Selecione uma categoria</option>
+                                    <option value="Ferramentas" {{ 'selected' if produto and produto.categoria == 'Ferramentas' else '' }}>🔧 Ferramentas</option>
+                                    <option value="Materiais" {{ 'selected' if produto and produto.categoria == 'Materiais' else '' }}>📦 Materiais</option>
+                                    <option value="Insumos" {{ 'selected' if produto and produto.categoria == 'Insumos' else '' }}>⚗️ Insumos</option>
+                                    <option value="Equipamentos" {{ 'selected' if produto and produto.categoria == 'Equipamentos' else '' }}>⚙️ Equipamentos</option>
+                                    <option value="Limpeza" {{ 'selected' if produto and produto.categoria == 'Limpeza' else '' }}>🧽 Limpeza</option>
+                                    <option value="Segurança" {{ 'selected' if produto and produto.categoria == 'Segurança' else '' }}>🛡️ Segurança</option>
+                                    <option value="Outros" {{ 'selected' if produto and produto.categoria == 'Outros' else '' }}>📋 Outros</option>
+                                </select>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Categoria para organização
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="unidade" class="form-label fw-bold">
+                                    <i class="fas fa-ruler me-1 text-primary"></i>
+                                    Unidade de Medida
+                                </label>
+                                <select class="form-select form-select-lg" id="unidade" name="unidade">
+                                    <option value="">Selecione a unidade</option>
+                                    <option value="Unidade" {{ 'selected' if produto and produto.unidade == 'Unidade' else '' }}>📦 Unidade</option>
+                                    <option value="kg" {{ 'selected' if produto and produto.unidade == 'kg' else '' }}>⚖️ Quilograma (kg)</option>
+                                    <option value="g" {{ 'selected' if produto and produto.unidade == 'g' else '' }}>⚖️ Grama (g)</option>
+                                    <option value="L" {{ 'selected' if produto and produto.unidade == 'L' else '' }}>🥤 Litros (L)</option>
+                                    <option value="m" {{ 'selected' if produto and produto.unidade == 'm' else '' }}>📏 Metros (m)</option>
+                                    <option value="cm" {{ 'selected' if produto and produto.unidade == 'cm' else '' }}>📏 Centímetros (cm)</option>
+                                    <option value="Caixa" {{ 'selected' if produto and produto.unidade == 'Caixa' else '' }}>📦 Caixa</option>
+                                    <option value="Pacote" {{ 'selected' if produto and produto.unidade == 'Pacote' else '' }}>📦 Pacote</option>
+                                    <option value="Rolo" {{ 'selected' if produto and produto.unidade == 'Rolo' else '' }}>🧻 Rolo</option>
+                                </select>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Unidade de medida do produto
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="d-flex justify-content-end gap-2">
-                            <a href="{{ url_for('produtos_auxiliares') }}" class="btn btn-secondary">
+                        <!-- Descrição -->
+                        <div class="mb-4">
+                            <label for="descricao" class="form-label fw-bold">
+                                <i class="fas fa-align-left me-1 text-primary"></i>
+                                Descrição
+                            </label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="3" 
+                                      placeholder="Descreva o produto auxiliar...">{{ produto.descricao if produto else '' }}</textarea>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Descrição detalhada do produto
+                            </div>
+                        </div>
+
+                        <!-- Preço e Estoque -->
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label for="preco_unitario" class="form-label fw-bold">
+                                    <i class="fas fa-dollar-sign me-1 text-primary"></i>
+                                    Preço Unitário *
+                                </label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" id="preco_unitario" name="preco_unitario" 
+                                           step="0.01" min="0" value="{{ produto.preco_unitario if produto else '' }}" required
+                                           placeholder="0,00">
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Preço por unidade do produto
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="estoque_atual" class="form-label fw-bold">
+                                    <i class="fas fa-boxes me-1 text-primary"></i>
+                                    Estoque Atual
+                                </label>
+                                <input type="number" class="form-control form-control-lg" id="estoque_atual" name="estoque_atual" 
+                                       step="0.01" min="0" value="{{ produto.estoque_atual if produto else '0' }}"
+                                       placeholder="0">
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Quantidade atual em estoque
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="estoque_minimo" class="form-label fw-bold">
+                                    <i class="fas fa-exclamation-triangle me-1 text-primary"></i>
+                                    Estoque Mínimo
+                                </label>
+                                <input type="number" class="form-control form-control-lg" id="estoque_minimo" name="estoque_minimo" 
+                                       step="0.01" min="0" value="{{ produto.estoque_minimo if produto else '0' }}"
+                                       placeholder="0">
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Quantidade mínima para alerta
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Observações -->
+                        <div class="mb-4">
+                            <label for="observacoes" class="form-label fw-bold">
+                                <i class="fas fa-sticky-note me-1 text-primary"></i>
+                                Observações
+                            </label>
+                            <textarea class="form-control" id="observacoes" name="observacoes" rows="3" 
+                                      placeholder="Observações adicionais...">{{ produto.observacoes if produto else '' }}</textarea>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Observações importantes sobre o produto
+                            </div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-flex justify-content-end gap-3">
+                            <a href="{{ url_for('produtos_auxiliares') }}" class="btn btn-outline-secondary btn-lg">
                                 <i class="fas fa-times me-2"></i>
                                 Cancelar
                             </a>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="fas fa-save me-2"></i>
-                                {{ 'Atualizar' if produto else 'Salvar' }} Produto
+                                {{ 'Atualizar' if produto else 'Cadastrar' }} Produto Auxiliar
                             </button>
                         </div>
                     </form>
@@ -128,52 +205,74 @@
             </div>
         </div>
 
-        <!-- Info Card -->
+        <!-- Card de Informações -->
         <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header bg-white border-0">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
                     <h5 class="mb-0">
-                        <i class="fas fa-info-circle text-info me-2"></i>
-                        Informações
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Informações Úteis
                     </h5>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-info">
-                        <i class="fas fa-lightbulb me-2"></i>
-                        <strong>Dica:</strong> Produtos auxiliares são materiais, ferramentas e insumos utilizados no seu negócio.
+                    <div class="alert alert-info border-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Produtos Auxiliares</strong> são materiais, ferramentas e insumos utilizados no seu negócio.
                     </div>
                     
-                    <div class="alert alert-warning">
+                    <div class="alert alert-warning border-0">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Estoque:</strong> O sistema alertará quando o estoque estiver abaixo do mínimo definido.
+                        <strong>Controle de Estoque:</strong> O sistema alertará quando o estoque estiver abaixo do mínimo.
                     </div>
 
-                    <div class="alert alert-success">
+                    <div class="alert alert-success border-0">
                         <i class="fas fa-check-circle me-2"></i>
-                        <strong>Categorias:</strong> Organize seus produtos por categoria para facilitar a gestão.
+                        <strong>Organização:</strong> Use categorias para facilitar a gestão dos produtos.
                     </div>
 
-                    <div class="list-group">
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Material</h6>
-                                <small class="text-muted">Matéria-prima</small>
+                    <hr>
+
+                    <h6 class="fw-bold mb-3">
+                        <i class="fas fa-list me-2"></i>
+                        Categorias Disponíveis
+                    </h6>
+                    
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item border-0 px-0">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-primary me-3">🔧</span>
+                                <div>
+                                    <strong>Ferramentas</strong>
+                                    <br><small class="text-muted">Ferramentas e equipamentos</small>
+                                </div>
                             </div>
-                            <p class="mb-1">Materiais básicos para produção</p>
                         </div>
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Ferramenta</h6>
-                                <small class="text-muted">Equipamentos</small>
+                        <div class="list-group-item border-0 px-0">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-success me-3">📦</span>
+                                <div>
+                                    <strong>Materiais</strong>
+                                    <br><small class="text-muted">Materiais básicos</small>
+                                </div>
                             </div>
-                            <p class="mb-1">Ferramentas e equipamentos</p>
                         </div>
-                        <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">Insumo</h6>
-                                <small class="text-muted">Consumíveis</small>
+                        <div class="list-group-item border-0 px-0">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-warning me-3">⚗️</span>
+                                <div>
+                                    <strong>Insumos</strong>
+                                    <br><small class="text-muted">Insumos consumíveis</small>
+                                </div>
                             </div>
-                            <p class="mb-1">Insumos e materiais consumíveis</p>
+                        </div>
+                        <div class="list-group-item border-0 px-0">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-info me-3">⚙️</span>
+                                <div>
+                                    <strong>Equipamentos</strong>
+                                    <br><small class="text-muted">Equipamentos diversos</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -181,18 +280,68 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add animation classes
-        document.querySelectorAll('.card').forEach((el, index) => {
-            setTimeout(() => {
-                el.classList.add('fade-in');
-            }, index * 100);
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Formulário de produto auxiliar carregado');
+    
+    // Formatação de preço
+    const precoInput = document.getElementById('preco_unitario');
+    
+    if (precoInput) {
+        precoInput.addEventListener('input', function() {
+            let value = this.value.replace(/[^\d,]/g, '');
+            value = value.replace(',', '.');
+            if (value && !isNaN(value)) {
+                this.value = parseFloat(value).toFixed(2);
+            }
         });
+    }
+
+    // Validação do formulário
+    const form = document.querySelector('form');
+    if (form) {
+        console.log('Formulário encontrado, adicionando event listener');
+        
+        form.addEventListener('submit', function(e) {
+            console.log('Formulário sendo enviado...');
+            
+            const nome = document.getElementById('nome').value.trim();
+            const preco = document.getElementById('preco_unitario').value;
+            
+            console.log('Nome:', nome);
+            console.log('Preço:', preco);
+            
+            if (!nome) {
+                e.preventDefault();
+                alert('Por favor, preencha o nome do produto.');
+                document.getElementById('nome').focus();
+                return false;
+            }
+            
+            if (!preco || parseFloat(preco) < 0) {
+                e.preventDefault();
+                alert('Por favor, insira um preço válido.');
+                document.getElementById('preco_unitario').focus();
+                return false;
+            }
+            
+            console.log('Formulário válido, enviando...');
+        });
+    } else {
+        console.log('Formulário não encontrado!');
+    }
+    
+    // Debug: verificar se todos os campos estão presentes
+    const campos = ['nome', 'preco_unitario', 'estoque_atual', 'estoque_minimo'];
+    campos.forEach(campo => {
+        const elemento = document.getElementById(campo);
+        if (elemento) {
+            console.log(`Campo ${campo} encontrado`);
+        } else {
+            console.log(`Campo ${campo} NÃO encontrado!`);
+        }
     });
+});
 </script>
 {% endblock %}
-

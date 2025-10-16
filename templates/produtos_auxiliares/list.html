@@ -1,141 +1,308 @@
 {% extends "layout/base.html" %}
 
-{% block title %}Produtos Auxiliares - SaaS Sistema{% endblock %}
+{% block title %}Produtos Auxiliares{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="mb-1">
-                        <i class="fas fa-tools text-primary me-2"></i>
-                        Produtos Auxiliares
-                    </h2>
-                    <p class="text-muted mb-0">Gerencie produtos auxiliares como materiais, ferramentas e insumos</p>
+<div class="produtos-container">
+    <!-- Header da página -->
+    <div class="container-fluid">
+        <div class="produtos-header">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1>
+                            <i class="fas fa-tools me-2"></i>
+                            Produtos Auxiliares
+                        </h1>
+                        <p>Gerencie materiais, ferramentas e insumos auxiliares</p>
+                    </div>
+                    <a href="{{ url_for('novo_produto_auxiliar') }}" class="btn-novo-produto">
+                        <i class="fas fa-plus me-2" style="font-size: 0.9rem;"></i>
+                        Novo Produto Auxiliar
+                    </a>
                 </div>
-                <a href="{{ url_for('novo_produto_auxiliar') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i>
-                    Novo Produto
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Filtros e busca -->
+        <div class="filtros-container">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar produtos auxiliares...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="categoryFilter">
+                        <option value="">Todas as categorias</option>
+                        <option value="Ferramentas">Ferramentas</option>
+                        <option value="Materiais">Materiais</option>
+                        <option value="Insumos">Insumos</option>
+                        <option value="Equipamentos">Equipamentos</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">Todos os status</option>
+                        <option value="ativo">Ativo</option>
+                        <option value="inativo">Inativo</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-select" id="stockFilter">
+                        <option value="">Todos os estoques</option>
+                        <option value="low">Estoque baixo</option>
+                        <option value="normal">Estoque normal</option>
+                        <option value="out">Sem estoque</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabela de produtos auxiliares -->
+        <div class="produtos-table-container">
+            {% if produtos %}
+            <table class="produtos-table" id="productsTable">
+                <thead>
+                    <tr>
+                        <th>Produto Auxiliar</th>
+                        <th class="text-center">Categoria</th>
+                        <th class="text-center">Unidade</th>
+                        <th class="text-center">Preço Unitário</th>
+                        <th class="text-center">Estoque Atual</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for produto in produtos %}
+                    <tr class="product-row" 
+                        data-name="{{ produto.nome|lower }}" 
+                        data-category="{{ produto.categoria|lower if produto.categoria else '' }}"
+                        data-status="{{ produto.status|lower }}"
+                        data-stock="{{ produto.estoque_atual }}"
+                        data-min-stock="{{ produto.estoque_minimo }}">
+                        <td>
+                            <div class="produto-info">
+                                <div class="produto-avatar" style="background: linear-gradient(135deg, #ffc107, #fd7e14);">
+                                    <i class="fas fa-tools"></i>
+                                </div>
+                                <div class="produto-details">
+                                    <h6>{{ produto.nome }}</h6>
+                                    {% if produto.codigo_interno %}
+                                        <small>Código: {{ produto.codigo_interno }}</small>
+                                    {% else %}
+                                        <small>Sem código interno</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if produto.categoria %}
+                                <span class="badge bg-info">{{ produto.categoria }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if produto.unidade %}
+                                <span class="badge bg-secondary">{{ produto.unidade }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-success">
+                                R$ {{ "%.2f"|format(produto.preco_unitario) }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if produto.estoque_atual <= 0 %}
+                                <span class="badge bg-danger">
+                                    {{ produto.estoque_atual }}
+                                </span>
+                                <br><small class="text-muted">(mín: {{ produto.estoque_minimo }})</small>
+                            {% elif produto.estoque_atual <= produto.estoque_minimo %}
+                                <span class="badge bg-warning">
+                                    {{ produto.estoque_atual }}
+                                </span>
+                                <i class="fas fa-exclamation-triangle text-warning ms-1" 
+                                   data-bs-toggle="tooltip" 
+                                   title="Estoque baixo!"></i>
+                                <br><small class="text-muted">(mín: {{ produto.estoque_minimo }})</small>
+                            {% else %}
+                                <span class="badge bg-primary">
+                                    {{ produto.estoque_atual }}
+                                </span>
+                                <br><small class="text-muted">(mín: {{ produto.estoque_minimo }})</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if produto.status == 'ativo' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    Ativo
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-pause-circle me-1"></i>
+                                    Inativo
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('editar_produto_auxiliar', id=produto.id) }}" 
+                                   class="btn btn-sm btn-outline-primary"
+                                   data-bs-toggle="tooltip" 
+                                   title="Editar produto auxiliar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{{ url_for('excluir_produto_auxiliar', id=produto.id) }}" 
+                                   class="btn btn-sm btn-outline-danger"
+                                   data-bs-toggle="tooltip" 
+                                   title="Excluir produto auxiliar"
+                                   onclick="return confirm('Tem certeza que deseja excluir este produto auxiliar?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <!-- Estado vazio -->
+            <div class="empty-state">
+                <i class="fas fa-tools"></i>
+                <h4>Nenhum produto auxiliar cadastrado</h4>
+                <p>Comece adicionando materiais, ferramentas e insumos auxiliares</p>
+                <a href="{{ url_for('novo_produto_auxiliar') }}" class="btn-novo-produto">
+                    <i class="fas fa-plus me-2" style="font-size: 0.9rem;"></i>
+                    Cadastrar Primeiro Produto Auxiliar
                 </a>
             </div>
+            {% endif %}
         </div>
-    </div>
 
-    <!-- Produtos List -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-white border-0">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list text-primary me-2"></i>
-                        Lista de Produtos Auxiliares
-                    </h5>
+        <!-- Estatísticas rápidas -->
+        {% if produtos %}
+        {% set total_produtos = produtos|length %}
+        {% set produtos_ativos = [] %}
+        {% set sem_estoque = [] %}
+        {% set estoque_baixo = [] %}
+        {% set valor_total = 0 %}
+        {% for produto in produtos %}
+            {% if produto.status == 'ativo' %}
+                {% set _ = produtos_ativos.append(produto) %}
+            {% endif %}
+            {% if produto.estoque_atual <= 0 %}
+                {% set _ = sem_estoque.append(produto) %}
+            {% elif produto.estoque_atual <= produto.estoque_minimo %}
+                {% set _ = estoque_baixo.append(produto) %}
+            {% endif %}
+            {% set valor_total = valor_total + (produto.preco_unitario * produto.estoque_atual) %}
+        {% endfor %}
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="stats-card bg-primary">
+                    <h3>{{ total_produtos }}</h3>
+                    <p>Total de Produtos</p>
                 </div>
-                <div class="card-body p-0">
-                    {% if produtos %}
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>Nome</th>
-                                        <th>Categoria</th>
-                                        <th>Unidade</th>
-                                        <th>Preço Unit.</th>
-                                        <th>Estoque</th>
-                                        <th>Status</th>
-                                        <th>Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for produto in produtos %}
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar-sm bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3">
-                                                    <i class="fas fa-tools"></i>
-                                                </div>
-                                                <div>
-                                                    <h6 class="mb-0">{{ produto.nome }}</h6>
-                                                    <small class="text-muted">{{ produto.codigo_interno or 'Sem código' }}</small>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="text-dark">{{ produto.categoria or '-' }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-secondary">{{ produto.unidade or '-' }}</span>
-                                        </td>
-                                        <td>
-                                            <span class="text-success fw-bold">
-                                                R$ {{ "%.2f"|format(produto.preco_unitario) }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <span class="badge bg-{{ 'danger' if produto.estoque_atual <= produto.estoque_minimo else 'success' }} me-2">
-                                                    {{ produto.estoque_atual }}
-                                                </span>
-                                                <small class="text-muted">
-                                                    (mín: {{ produto.estoque_minimo }})
-                                                </small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-{{ 'success' if produto.status == 'ativo' else 'secondary' }}">
-                                                {{ produto.status.title() }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group" role="group">
-                                                <a href="{{ url_for('editar_produto_auxiliar', id=produto.id) }}" 
-                                                   class="btn btn-sm btn-outline-primary" 
-                                                   title="Editar">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
-                                                <a href="{{ url_for('excluir_produto_auxiliar', id=produto.id) }}" 
-                                                   class="btn btn-sm btn-outline-danger" 
-                                                   title="Excluir"
-                                                   onclick="return confirm('Tem certeza que deseja excluir este produto auxiliar?')">
-                                                    <i class="fas fa-trash"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="text-center p-5">
-                            <i class="fas fa-tools fa-4x text-muted mb-3"></i>
-                            <h5 class="text-muted">Nenhum produto auxiliar cadastrado</h5>
-                            <p class="text-muted">Comece adicionando produtos auxiliares como materiais e ferramentas</p>
-                            <a href="{{ url_for('novo_produto_auxiliar') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-2"></i>
-                                Adicionar Produto
-                            </a>
-                        </div>
-                    {% endif %}
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card bg-success">
+                    <h3>{{ produtos_ativos|length }}</h3>
+                    <p>Produtos Ativos</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card bg-warning">
+                    <h3>{{ sem_estoque|length }}</h3>
+                    <p>Sem Estoque</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card bg-info">
+                    <h3>R$ {{ "%.2f"|format(valor_total) }}</h3>
+                    <p>Valor Total em Estoque</p>
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add animation classes
-        document.querySelectorAll('.card, .table').forEach((el, index) => {
-            setTimeout(() => {
-                el.classList.add('fade-in');
-            }, index * 100);
-        });
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+
+    // Funcionalidade de busca e filtros
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const stockFilter = document.getElementById('stockFilter');
+    const productRows = document.querySelectorAll('.product-row');
+
+    function filterProducts() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedCategory = categoryFilter.value.toLowerCase();
+        const selectedStatus = statusFilter.value.toLowerCase();
+        const selectedStock = stockFilter.value;
+
+        productRows.forEach(row => {
+            const name = row.dataset.name;
+            const category = row.dataset.category;
+            const status = row.dataset.status;
+            const stock = parseInt(row.dataset.stock);
+            const minStock = parseInt(row.dataset.minStock);
+
+            let showRow = true;
+
+            // Filtro por busca
+            if (searchTerm && !name.includes(searchTerm)) {
+                showRow = false;
+            }
+
+            // Filtro por categoria
+            if (selectedCategory && category !== selectedCategory) {
+                showRow = false;
+            }
+
+            // Filtro por status
+            if (selectedStatus && status !== selectedStatus) {
+                showRow = false;
+            }
+
+            // Filtro por estoque
+            if (selectedStock) {
+                if (selectedStock === 'low' && stock > minStock) {
+                    showRow = false;
+                } else if (selectedStock === 'normal' && (stock <= minStock || stock <= 0)) {
+                    showRow = false;
+                } else if (selectedStock === 'out' && stock > 0) {
+                    showRow = false;
+                }
+            }
+
+            row.style.display = showRow ? '' : 'none';
+        });
+    }
+
+    // Event listeners para filtros
+    if (searchInput) searchInput.addEventListener('input', filterProducts);
+    if (categoryFilter) categoryFilter.addEventListener('change', filterProducts);
+    if (statusFilter) statusFilter.addEventListener('change', filterProducts);
+    if (stockFilter) stockFilter.addEventListener('change', filterProducts);
+});
 </script>
 {% endblock %}
-
