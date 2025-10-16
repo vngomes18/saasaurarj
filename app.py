@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -6,6 +6,14 @@ from datetime import datetime, timedelta
 import os
 from functools import wraps
 from config import config
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+from io import BytesIO
+import pandas as pd
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
 
 app = Flask(__name__)
 
@@ -1008,6 +1016,473 @@ def toggle_dark_mode():
         'dark_mode': new_dark_mode,
         'message': 'Modo escuro ' + ('ativado' if new_dark_mode else 'desativado')
     })
+
+# ==================== RELATÓRIOS E ANALYTICS ====================
+
+# Página principal de relatórios
+@app.route('/relatorios')
+@login_required
+def relatorios():
+    user_id = session['user_id']
+    
+    # KPIs rápidos para o dashboard de relatórios
+    total_produtos = Produto.query.filter_by(user_id=user_id).count()
+    total_clientes = Cliente.query.filter_by(user_id=user_id).count()
+    
+    # Vendas do mês atual
+    inicio_mes = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    vendas_mes = Venda.query.filter(
+        Venda.user_id == user_id,
+        Venda.data_venda >= inicio_mes,
+        Venda.status == 'finalizada'
+    ).all()
+    
+    receita_mes = sum(venda.valor_total for venda in vendas_mes)
+    
+    # Produtos com estoque baixo
+    produtos_estoque_baixo = Produto.query.filter(
+        Produto.user_id == user_id,
+        Produto.estoque_atual <= Produto.estoque_minimo
+    ).count()
+    
+    return render_template('relatorios/index.html',
+                         total_produtos=total_produtos,
+                         total_clientes=total_clientes,
+                         receita_mes=receita_mes,
+                         produtos_estoque_baixo=produtos_estoque_baixo)
+
+# ==================== RELATÓRIOS FINANCEIROS ====================
+
+# P&L (Profit & Loss)
+@app.route('/relatorios/pl')
+@login_required
+def relatorio_pl():
+    user_id = session['user_id']
+    
+    # Período (padrão: mês atual)
+    inicio = request.args.get('inicio', datetime.now().replace(day=1).strftime('%Y-%m-%d'))
+    fim = request.args.get('fim', datetime.now().strftime('%Y-%m-%d'))
+    
+    # Receitas
+    vendas = Venda.query.filter(
+        Venda.user_id == user_id,
+        Venda.data_venda.between(inicio, fim),
+        Venda.status == 'finalizada'
+    ).all()
+    
+    receita_total = sum(v.valor_total for v in vendas)
+    
+    # Custos
+    compras = Compra.query.filter(
+        Compra.user_id == user_id,
+        Compra.data_compra.between(inicio, fim)
+    ).all()
+    
+    custo_total = sum(c.valor_total for c in compras)
+    
+    # Margem de lucro
+    margem_lucro = receita_total - custo_total
+    margem_percentual = (margem_lucro / receita_total * 100) if receita_total > 0 else 0
+    
+    return render_template('relatorios/pl.html', 
+                         receita_total=receita_total,
+                         custo_total=custo_total,
+                         margem_lucro=margem_lucro,
+                         margem_percentual=margem_percentual,
+                         periodo={'inicio': inicio, 'fim': fim})
+
+# Fluxo de Caixa
+@app.route('/relatorios/fluxo-caixa')
+@login_required
+def relatorio_fluxo_caixa():
+    user_id = session['user_id']
+    
+    # Últimos 12 meses
+    fluxo_mensal = []
+    for i in range(12):
+        mes = datetime.now() - timedelta(days=30*i)
+        inicio_mes = mes.replace(day=1)
+        fim_mes = (inicio_mes + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        
+        # Entradas (vendas)
+        vendas_mes = Venda.query.filter(
+            Venda.user_id == user_id,
+            Venda.data_venda.between(inicio_mes, fim_mes),
+            Venda.status == 'finalizada'
+        ).all()
+        
+        entradas = sum(v.valor_total for v in vendas_mes)
+        
+        # Saídas (compras)
+        compras_mes = Compra.query.filter(
+            Compra.user_id == user_id,
+            Compra.data_compra.between(inicio_mes, fim_mes)
+        ).all()
+        
+        saidas = sum(c.valor_total for c in compras_mes)
+        
+        fluxo_mensal.append({
+            'mes': inicio_mes.strftime('%Y-%m'),
+            'entradas': entradas,
+            'saidas': saidas,
+            'saldo': entradas - saidas
+        })
+    
+    return render_template('relatorios/fluxo_caixa.html', fluxo_mensal=fluxo_mensal)
+
+# ==================== ANÁLISE DE VENDAS ====================
+
+# Top Produtos
+@app.route('/relatorios/top-produtos')
+@login_required
+def relatorio_top_produtos():
+    user_id = session['user_id']
+    
+    # Query para produtos mais vendidos
+    top_produtos = db.session.query(
+        Produto.nome,
+        db.func.sum(ItemVenda.quantidade).label('total_vendido'),
+        db.func.sum(ItemVenda.quantidade * ItemVenda.preco_unitario).label('receita_total')
+    ).join(ItemVenda).join(Venda).filter(
+        Venda.user_id == user_id,
+        Venda.status == 'finalizada'
+    ).group_by(Produto.id, Produto.nome).order_by(
+        db.func.sum(ItemVenda.quantidade).desc()
+    ).limit(10).all()
+    
+    return render_template('relatorios/top_produtos.html', top_produtos=top_produtos)
+
+# Análise de Sazonalidade
+@app.route('/relatorios/sazonalidade')
+@login_required
+def relatorio_sazonalidade():
+    user_id = session['user_id']
+    
+    # Vendas por mês (últimos 12 meses)
+    vendas_por_mes = []
+    for i in range(12):
+        mes = datetime.now() - timedelta(days=30*i)
+        inicio_mes = mes.replace(day=1)
+        fim_mes = (inicio_mes + timedelta(days=32)).replace(day=1) - timedelta(days=1)
+        
+        vendas_mes = Venda.query.filter(
+            Venda.user_id == user_id,
+            Venda.data_venda.between(inicio_mes, fim_mes),
+            Venda.status == 'finalizada'
+        ).all()
+        
+        vendas_por_mes.append({
+            'mes': inicio_mes.strftime('%Y-%m'),
+            'total': sum(v.valor_total for v in vendas_mes),
+            'quantidade': len(vendas_mes)
+        })
+    
+    return render_template('relatorios/sazonalidade.html', vendas_por_mes=vendas_por_mes)
+
+# ==================== RELATÓRIOS DE ESTOQUE ====================
+
+# Rotatividade de Produtos
+@app.route('/relatorios/rotatividade-estoque')
+@login_required
+def relatorio_rotatividade_estoque():
+    user_id = session['user_id']
+    
+    produtos_rotatividade = []
+    produtos = Produto.query.filter_by(user_id=user_id).all()
+    
+    for produto in produtos:
+        # Vendas do produto nos últimos 30 dias
+        inicio = datetime.now() - timedelta(days=30)
+        vendas_produto = db.session.query(
+            db.func.sum(ItemVenda.quantidade)
+        ).join(Venda).filter(
+            ItemVenda.produto_id == produto.id,
+            Venda.user_id == user_id,
+            Venda.data_venda >= inicio,
+            Venda.status == 'finalizada'
+        ).scalar() or 0
+        
+        # Rotatividade = vendas / estoque médio
+        estoque_medio = produto.estoque_atual
+        rotatividade = (vendas_produto / estoque_medio) if estoque_medio > 0 else 0
+        
+        produtos_rotatividade.append({
+            'produto': produto,
+            'vendas_30_dias': vendas_produto,
+            'estoque_atual': produto.estoque_atual,
+            'rotatividade': rotatividade
+        })
+    
+    # Ordenar por rotatividade
+    produtos_rotatividade.sort(key=lambda x: x['rotatividade'], reverse=True)
+    
+    return render_template('relatorios/rotatividade_estoque.html', 
+                         produtos_rotatividade=produtos_rotatividade)
+
+# Produtos Parados
+@app.route('/relatorios/produtos-parados')
+@login_required
+def relatorio_produtos_parados():
+    user_id = session['user_id']
+    
+    # Produtos sem vendas nos últimos 90 dias
+    inicio = datetime.now() - timedelta(days=90)
+    
+    produtos_parados = []
+    produtos = Produto.query.filter_by(user_id=user_id).all()
+    
+    for produto in produtos:
+        # Verificar se teve vendas nos últimos 90 dias
+        vendas_recentes = db.session.query(ItemVenda).join(Venda).filter(
+            ItemVenda.produto_id == produto.id,
+            Venda.user_id == user_id,
+            Venda.data_venda >= inicio,
+            Venda.status == 'finalizada'
+        ).first()
+        
+        if not vendas_recentes and produto.estoque_atual > 0:
+            # Última venda
+            ultima_venda = db.session.query(Venda.data_venda).join(ItemVenda).filter(
+                ItemVenda.produto_id == produto.id,
+                Venda.user_id == user_id,
+                Venda.status == 'finalizada'
+            ).order_by(Venda.data_venda.desc()).first()
+            
+            produtos_parados.append({
+                'produto': produto,
+                'ultima_venda': ultima_venda[0] if ultima_venda else None,
+                'dias_sem_venda': (datetime.now() - ultima_venda[0]).days if ultima_venda else 999
+            })
+    
+    # Ordenar por dias sem venda
+    produtos_parados.sort(key=lambda x: x['dias_sem_venda'], reverse=True)
+    
+    return render_template('relatorios/produtos_parados.html', 
+                         produtos_parados=produtos_parados)
+
+# ==================== DASHBOARD EXECUTIVO ====================
+
+# API para KPIs em tempo real
+@app.route('/api/dashboard-kpis')
+@login_required
+def api_dashboard_kpis():
+    user_id = session['user_id']
+    
+    # Período atual vs anterior
+    hoje = datetime.now().date()
+    inicio_mes_atual = hoje.replace(day=1)
+    inicio_mes_anterior = (inicio_mes_atual - timedelta(days=1)).replace(day=1)
+    fim_mes_anterior = inicio_mes_atual - timedelta(days=1)
+    
+    # Vendas do mês atual
+    vendas_atual = Venda.query.filter(
+        Venda.user_id == user_id,
+        Venda.data_venda >= inicio_mes_atual,
+        Venda.status == 'finalizada'
+    ).all()
+    
+    # Vendas do mês anterior
+    vendas_anterior = Venda.query.filter(
+        Venda.user_id == user_id,
+        Venda.data_venda.between(inicio_mes_anterior, fim_mes_anterior),
+        Venda.status == 'finalizada'
+    ).all()
+    
+    receita_atual = sum(v.valor_total for v in vendas_atual)
+    receita_anterior = sum(v.valor_total for v in vendas_anterior)
+    
+    # Crescimento percentual
+    crescimento = ((receita_atual - receita_anterior) / receita_anterior * 100) if receita_anterior > 0 else 0
+    
+    # Outros KPIs
+    total_clientes = Cliente.query.filter_by(user_id=user_id).count()
+    produtos_estoque_baixo = Produto.query.filter(
+        Produto.user_id == user_id,
+        Produto.estoque_atual <= Produto.estoque_minimo
+    ).count()
+    
+    return jsonify({
+        'receita_atual': receita_atual,
+        'receita_anterior': receita_anterior,
+        'crescimento': crescimento,
+        'total_clientes': total_clientes,
+        'produtos_estoque_baixo': produtos_estoque_baixo,
+        'ticket_medio': receita_atual / len(vendas_atual) if vendas_atual else 0
+    })
+
+# ==================== SISTEMA DE EXPORTAÇÃO ====================
+
+# Exportação para PDF
+@app.route('/relatorios/exportar/<tipo>/<formato>')
+@login_required
+def exportar_relatorio(tipo, formato):
+    user_id = session['user_id']
+    
+    if formato == 'pdf':
+        return exportar_pdf(tipo, user_id)
+    elif formato == 'excel':
+        return exportar_excel(tipo, user_id)
+    elif formato == 'csv':
+        return exportar_csv(tipo, user_id)
+
+def exportar_pdf(tipo, user_id):
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    story = []
+    
+    # Título
+    title = Paragraph(f"Relatório de {tipo.title()}", styles['Title'])
+    story.append(title)
+    story.append(Spacer(1, 12))
+    
+    # Dados baseados no tipo
+    if tipo == 'vendas':
+        vendas = Venda.query.filter_by(user_id=user_id).all()
+        data = [['Data', 'Cliente', 'Valor', 'Status']]
+        for venda in vendas:
+            data.append([
+                venda.data_venda.strftime('%d/%m/%Y'),
+                venda.cliente.nome if venda.cliente else 'N/A',
+                f"R$ {venda.valor_total:.2f}",
+                venda.status
+            ])
+    elif tipo == 'produtos':
+        produtos = Produto.query.filter_by(user_id=user_id).all()
+        data = [['Nome', 'Preço', 'Estoque', 'Categoria']]
+        for produto in produtos:
+            data.append([
+                produto.nome,
+                f"R$ {produto.preco:.2f}",
+                str(produto.estoque_atual),
+                produto.categoria or 'N/A'
+            ])
+    
+    # Criar tabela
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 14),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black)
+    ]))
+    
+    story.append(table)
+    doc.build(story)
+    
+    buffer.seek(0)
+    response = make_response(buffer.getvalue())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename=relatorio_{tipo}.pdf'
+    
+    return response
+
+def exportar_excel(tipo, user_id):
+    buffer = BytesIO()
+    
+    # Criar workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"Relatório {tipo.title()}"
+    
+    # Estilo do cabeçalho
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center")
+    
+    # Dados baseados no tipo
+    if tipo == 'vendas':
+        vendas = Venda.query.filter_by(user_id=user_id).all()
+        headers = ['Data', 'Cliente', 'Valor', 'Status']
+        ws.append(headers)
+        
+        for venda in vendas:
+            ws.append([
+                venda.data_venda.strftime('%d/%m/%Y'),
+                venda.cliente.nome if venda.cliente else 'N/A',
+                venda.valor_total,
+                venda.status
+            ])
+    elif tipo == 'produtos':
+        produtos = Produto.query.filter_by(user_id=user_id).all()
+        headers = ['Nome', 'Preço', 'Estoque', 'Categoria']
+        ws.append(headers)
+        
+        for produto in produtos:
+            ws.append([
+                produto.nome,
+                produto.preco,
+                produto.estoque_atual,
+                produto.categoria or 'N/A'
+            ])
+    
+    # Aplicar estilo ao cabeçalho
+    for col in range(1, len(headers) + 1):
+        cell = ws.cell(row=1, column=col)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+    
+    # Ajustar largura das colunas
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column_letter].width = adjusted_width
+    
+    wb.save(buffer)
+    buffer.seek(0)
+    
+    response = make_response(buffer.getvalue())
+    response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    response.headers['Content-Disposition'] = f'attachment; filename=relatorio_{tipo}.xlsx'
+    
+    return response
+
+def exportar_csv(tipo, user_id):
+    buffer = BytesIO()
+    
+    # Dados baseados no tipo
+    if tipo == 'vendas':
+        vendas = Venda.query.filter_by(user_id=user_id).all()
+        data = []
+        for venda in vendas:
+            data.append({
+                'Data': venda.data_venda.strftime('%d/%m/%Y'),
+                'Cliente': venda.cliente.nome if venda.cliente else 'N/A',
+                'Valor': venda.valor_total,
+                'Status': venda.status
+            })
+    elif tipo == 'produtos':
+        produtos = Produto.query.filter_by(user_id=user_id).all()
+        data = []
+        for produto in produtos:
+            data.append({
+                'Nome': produto.nome,
+                'Preço': produto.preco,
+                'Estoque': produto.estoque_atual,
+                'Categoria': produto.categoria or 'N/A'
+            })
+    
+    # Converter para DataFrame e depois para CSV
+    df = pd.DataFrame(data)
+    csv_string = df.to_csv(index=False, encoding='utf-8-sig')
+    
+    response = make_response(csv_string)
+    response.headers['Content-Type'] = 'text/csv; charset=utf-8-sig'
+    response.headers['Content-Disposition'] = f'attachment; filename=relatorio_{tipo}.csv'
+    
+    return response
 
 if __name__ == '__main__':
     with app.app_context():

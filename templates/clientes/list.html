@@ -1,6 +1,7 @@
 {% extends "layout/base.html" %}
 
 {% block title %}Clientes - SaaS Sistema{% endblock %}
+<!-- Cache bust: {{ range(1000, 9999) | random }} -->
 
 {% block content %}
 <div class="container-fluid">
@@ -78,52 +79,12 @@
                         {% if clientes %}
                             {% for cliente in clientes %}
                             <tr>
-                                <td>
-                                    <div>
-                                        <strong>{{ cliente.nome }}</strong>
-                                    </div>
-                                </td>
-                                <td>
-                                    {% if cliente.email %}
-                                        <a href="mailto:{{ cliente.email }}" class="text-decoration-none">
-                                            {{ cliente.email }}
-                                        </a>
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if cliente.telefone %}
-                                        <a href="tel:{{ cliente.telefone }}" class="text-decoration-none">
-                                            {{ cliente.telefone }}
-                                        </a>
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if cliente.endereco %}
-                                        <span data-bs-toggle="tooltip" 
-                                              title="{{ cliente.endereco }}"
-                                              style="cursor: help;">
-                                            {{ cliente.endereco[:30] }}{% if cliente.endereco|length > 30 %}...{% endif %}
-                                        </span>
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if cliente.cpf_cnpj %}
-                                        <code>{{ cliente.cpf_cnpj }}</code>
-                                    {% else %}
-                                        <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <small class="text-muted">
-                                        {{ cliente.created_at.strftime('%d/%m/%Y') }}
-                                    </small>
-                                </td>
+                                <td><strong>{{ cliente.nome }}</strong></td>
+                                <td>{{ cliente.email or '-' }}</td>
+                                <td>{{ cliente.telefone or '-' }}</td>
+                                <td>{{ cliente.endereco or '-' }}</td>
+                                <td>{{ cliente.cpf_cnpj or '-' }}</td>
+                                <td>{{ cliente.created_at.strftime('%d/%m/%Y') }}</td>
                                 <td class="text-center">
                                     <div class="btn-group" role="group">
                                         <a href="{{ url_for('editar_cliente', id=cliente.id) }}" 

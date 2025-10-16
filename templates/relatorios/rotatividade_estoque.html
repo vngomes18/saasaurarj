@@ -1,0 +1,187 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Rotatividade de Estoque - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                <i class="fas fa-sync-alt text-info me-2"></i>
+                Rotatividade de Estoque
+            </h2>
+            <p class="text-muted">
+                Análise da velocidade de giro dos produtos nos últimos 30 dias
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('relatorios') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Voltar
+                </a>
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-download me-2"></i>
+                    Exportar
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='rotatividade', formato='pdf') }}">
+                        <i class="fas fa-file-pdf me-2"></i>PDF
+                    </a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='rotatividade', formato='excel') }}">
+                        <i class="fas fa-file-excel me-2"></i>Excel
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela de Rotatividade -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-table me-2"></i>
+                        Rotatividade de Produtos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if produtos_rotatividade %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th class="text-center">Estoque Atual</th>
+                                        <th class="text-center">Vendas (30 dias)</th>
+                                        <th class="text-center">Rotatividade</th>
+                                        <th class="text-center">Classificação</th>
+                                        <th class="text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in produtos_rotatividade %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ item.produto.nome }}</strong>
+                                            {% if item.produto.categoria %}
+                                                <br><small class="text-muted">{{ item.produto.categoria }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-info">{{ item.estoque_atual }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-success">{{ item.vendas_30_dias }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge {% if item.rotatividade >= 1 %}bg-success{% elif item.rotatividade >= 0.5 %}bg-warning{% else %}bg-danger{% endif %}">
+                                                {{ "%.2f"|format(item.rotatividade) }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if item.rotatividade >= 1 %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-rocket"></i> Alta
+                                                </span>
+                                            {% elif item.rotatividade >= 0.5 %}
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-chart-line"></i> Média
+                                                </span>
+                                            {% elif item.rotatividade > 0 %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-exclamation-triangle"></i> Baixa
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-pause"></i> Parado
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <a href="{{ url_for('produtos') }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-box fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">Nenhum produto encontrado</h5>
+                            <p class="text-muted">Cadastre produtos para analisar a rotatividade.</p>
+                            <a href="{{ url_for('novo_produto') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>
+                                Novo Produto
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legenda -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Como Interpretar a Rotatividade
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <span class="badge bg-success fs-6 mb-2">
+                                    <i class="fas fa-rocket"></i> Alta (≥ 1.0)
+                                </span>
+                                <p class="text-muted small">
+                                    Produto com excelente giro. Considere aumentar o estoque.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <span class="badge bg-warning fs-6 mb-2">
+                                    <i class="fas fa-chart-line"></i> Média (0.5 - 0.9)
+                                </span>
+                                <p class="text-muted small">
+                                    Produto com giro regular. Mantenha o estoque atual.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <span class="badge bg-danger fs-6 mb-2">
+                                    <i class="fas fa-exclamation-triangle"></i> Baixa (0.1 - 0.4)
+                                </span>
+                                <p class="text-muted small">
+                                    Produto com giro lento. Reduza o estoque.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <span class="badge bg-secondary fs-6 mb-2">
+                                    <i class="fas fa-pause"></i> Parado (0.0)
+                                </span>
+                                <p class="text-muted small">
+                                    Produto sem vendas. Considere promoções ou descarte.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
