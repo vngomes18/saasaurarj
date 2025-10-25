@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: saasaurarj
+    env: python
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: gunicorn -w 2 -b 0.0.0.0:$PORT app:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: false
+      - key: PYTHONPATH
+        value: /opt/render/project/src
+      - key: DATABASE_URL
+        fromDatabase:
+          name: saasaurarj-db
+          property: connectionString
+      - key: GOOGLE_CLIENT_ID
+        fromService:
+          type: env_var_group
+          name: google_oauth
+          property: client_id
+      - key: GOOGLE_CLIENT_SECRET
+        fromService:
+          type: env_var_group
+          name: google_oauth
+          property: client_secret
+  - type: pserv
+    name: saasaurarj-db
+    env: postgresql
+    plan: free

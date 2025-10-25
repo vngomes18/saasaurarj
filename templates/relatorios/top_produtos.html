@@ -1,0 +1,243 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Top Produtos - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                
+                Top Produtos
+            </h2>
+            <p class="text-muted">
+                Ranking dos produtos mais vendidos
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('relatorios') }}" class="btn btn-outline-secondary">
+                    
+                    Voltar
+                </a>
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    
+                    Exportar
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='top-produtos', formato='pdf') }}">
+                        PDF
+                    </a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='top-produtos', formato='excel') }}">
+                        Excel
+                    </a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='top-produtos', formato='csv') }}">
+                        CSV
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ranking de Produtos -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        
+                        Ranking de Produtos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if top_produtos %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th width="50">#</th>
+                                        <th>Produto</th>
+                                        <th class="text-center">Quantidade Vendida</th>
+                                        <th class="text-end">Receita Total</th>
+                                        <th class="text-center">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for produto in top_produtos %}
+                                    <tr>
+                                        <td>
+                                            {% if loop.index == 1 %}
+                                                <span class="badge bg-warning text-dark">
+                                                     1º
+                                                </span>
+                                            {% elif loop.index == 2 %}
+                                                <span class="badge bg-secondary">
+                                                     2º
+                                                </span>
+                                            {% elif loop.index == 3 %}
+                                                <span class="badge bg-warning">
+                                                     3º
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-light text-dark">{{ loop.index }}º</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong>{{ produto.nome }}</strong>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary">{{ produto.total_vendido }}</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <strong>R$ {{ "%.2f"|format(produto.receita_total) }}</strong>
+                                        </td>
+                                        <td class="text-center">
+                                            <a href="{{ url_for('produtos') }}" class="btn btn-sm btn-outline-primary">
+                                                
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            
+                            <h5 class="text-muted">Nenhum produto vendido ainda</h5>
+                            <p class="text-muted">Comece a registrar vendas para ver o ranking de produtos.</p>
+                            <a href="{{ url_for('nova_venda') }}" class="btn btn-primary">
+                                
+                                Nova Venda
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráfico -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        
+                        Gráfico de Vendas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if top_produtos %}
+                        <canvas id="topProdutosChart" width="400" height="300"></canvas>
+                    {% else %}
+                        <div class="text-center py-4">
+                            
+                            <p class="text-muted mt-2">Sem dados para exibir</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Estatísticas -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        
+                        Estatísticas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if top_produtos %}
+                        {% set total_vendido = top_produtos | sum(attribute='total_vendido') %}
+                        {% set total_receita = top_produtos | sum(attribute='receita_total') %}
+                        {% set produto_mais_vendido = top_produtos[0] %}
+                        
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <h4 class="text-primary">{{ total_vendido }}</h4>
+                                <small class="text-muted">Total Vendido</small>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <h4 class="text-success">R$ {{ "%.2f"|format(total_receita) }}</h4>
+                                <small class="text-muted">Receita Total</small>
+                            </div>
+                            <div class="col-12">
+                                <h6 class="text-warning">{{ produto_mais_vendido.nome }}</h6>
+                                <small class="text-muted">Produto #1</small>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <p class="text-muted">Sem estatísticas disponíveis</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if top_produtos %}
+    // Dados do gráfico
+    const produtos = {{ top_produtos | map(attribute='nome') | list | tojson }};
+    const vendas = {{ top_produtos | map(attribute='total_vendido') | list | tojson }};
+    
+    // Gráfico de barras horizontais
+    const ctx = document.getElementById('topProdutosChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: produtos,
+            datasets: [{
+                label: 'Quantidade Vendida',
+                data: vendas,
+                backgroundColor: [
+                    '#ffc107',
+                    '#6c757d',
+                    '#fd7e14',
+                    '#20c997',
+                    '#6f42c1',
+                    '#e83e8c',
+                    '#17a2b8',
+                    '#28a745',
+                    '#dc3545',
+                    '#343a40'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Vendido: ' + context.parsed.x + ' unidades';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}

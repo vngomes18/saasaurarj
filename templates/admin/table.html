@@ -1,0 +1,536 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Admin - Tabela {{ table_name|title }} - SaaS Sistema de Gestão{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-table-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 15px 15px 0 0;
+    margin-bottom: 0;
+}
+
+.admin-table-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.admin-table-body {
+    padding: 0;
+}
+
+.back-btn {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+    color: white;
+}
+
+.export-btn {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.export-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    color: white;
+}
+
+.table-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.table-subtitle {
+    opacity: 1;
+    font-size: 0.9rem;
+    margin: 0.5rem 0 0 0;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 500;
+}
+
+/* Usar estilos das tabelas de produtos */
+
+.table-stats {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-top: 1px solid #dee2e6;
+    border-radius: 0 0 15px 15px;
+}
+
+.no-data {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.no-data i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.breadcrumb-custom {
+    background: none;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-custom .breadcrumb-item {
+    font-size: 0.9rem;
+}
+
+.breadcrumb-custom .breadcrumb-item + .breadcrumb-item::before {
+    content: "›";
+    color: #6c757d;
+}
+
+.breadcrumb-custom .breadcrumb-item.active {
+    color: #667eea;
+    font-weight: 600;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb breadcrumb-custom">
+            <li class="breadcrumb-item">
+                <a href="{{ url_for('admin_home') }}" class="text-decoration-none">
+                    
+                    Painel Admin
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                
+                Tabela {{ table_name|title }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Botão de Voltar Fixo -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <a href="{{ url_for('admin_home') }}" class="btn btn-outline-primary">
+                
+                Voltar ao Painel Administrativo
+            </a>
+        </div>
+    </div>
+
+    <!-- Header da Tabela -->
+    <div class="card admin-table-card">
+        <div class="admin-table-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="table-title">
+                        
+                        Tabela: {{ table_name|title }}
+                    </h4>
+                    <p class="table-subtitle">
+                        {% if items %}
+                            <strong>{{ items|length }}</strong> registro(s) encontrado(s)
+                        {% else %}
+                            Nenhum registro encontrado
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="admin-table-body">
+            <!-- Ações Rápidas -->
+            <div class="p-3 bg-light border-bottom">
+                <div class="row">
+                    <div class="col-md-4 mb-2">
+                        <a href="{{ url_for('admin_home') }}" class="btn btn-outline-primary btn-sm w-100">
+                            
+                            Painel Principal
+                        </a>
+                    </div>
+                    {% if items %}
+                    <div class="col-md-4 mb-2">
+                        <button onclick="window.print()" class="btn btn-outline-info btn-sm w-100">
+                            
+                            Imprimir
+                        </button>
+                    </div>
+                    {% endif %}
+                    <div class="col-md-4 mb-2">
+                        <button onclick="location.reload()" class="btn btn-outline-secondary btn-sm w-100">
+                            
+                            Atualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {% if items %}
+                <div class="produtos-table-container">
+                    <table class="produtos-table">
+                        <thead>
+                            <tr>
+                                {% for col in columns %}
+                                <th>
+                                    
+                                    {{ col|replace('_', ' ')|title }}
+                                </th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in items %}
+                            <tr class="product-row">
+                                {% for col in columns %}
+                                <td>
+                                    {% set value = row.get(col) %}
+                                    {% if value is none %}
+                                        <span class="text-muted">-</span>
+                                    {% elif value is string and value|length > 50 %}
+                                        <span title="{{ value }}">{{ value[:50] }}...</span>
+                                    {% elif col == 'created_at' or col == 'updated_at' or col == 'data_venda' or col == 'data_compra' or col == 'data_abertura' or col == 'data_fechamento' %}
+                                        {% if value %}
+                                            <span class="text-muted">{{ value[:19] if value|length > 19 else value }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    {% elif col == 'valor_total' or col == 'preco' or col == 'preco_unitario' or col == 'subtotal' %}
+                                        {% if value %}
+                                            <span class="text-success fw-bold">R$ {{ "%.2f"|format(value) }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    {% elif col == 'role' %}
+                                        {% if value == 'admin' %}
+                                            <span class="badge bg-danger">
+                                                Admin
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                User
+                                            </span>
+                                        {% endif %}
+                                    {% elif col == 'status' %}
+                                        {% if value == 'ativo' or value == 'confirmada' or value == 'emitida' or value == 'resolvido' %}
+                                            <span class="badge bg-success">
+                                                {{ value|title }}
+                                            </span>
+                                        {% elif value == 'pendente' or value == 'aberto' or value == 'em_andamento' %}
+                                            <span class="badge bg-warning">
+                                                {{ value|title }}
+                                            </span>
+                                        {% elif value == 'inativo' or value == 'cancelada' or value == 'fechado' %}
+                                            <span class="badge bg-danger">
+                                                {{ value|title }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-info">
+                                                {{ value|title if value else '-' }}
+                                            </span>
+                                        {% endif %}
+                                    {% elif col == 'prioridade' %}
+                                        {% if value == 'urgente' %}
+                                            <span class="badge bg-danger">
+                                                Urgente
+                                            </span>
+                                        {% elif value == 'alta' %}
+                                            <span class="badge bg-warning">
+                                                Alta
+                                            </span>
+                                        {% elif value == 'media' %}
+                                            <span class="badge bg-info">
+                                                Média
+                                            </span>
+                                        {% elif value == 'baixa' %}
+                                            <span class="badge bg-secondary">
+                                                Baixa
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-light text-dark">{{ value|title if value else '-' }}</span>
+                                        {% endif %}
+                                    {% elif col == 'nome' or col == 'username' or col == 'razao_social' %}
+                                        <div class="d-flex align-items-center">
+                                            <div class="produto-avatar me-3">
+                                                {% if table_name == 'user' %}
+                                                    
+                                                {% elif table_name == 'cliente' %}
+                                                    
+                                                {% elif table_name == 'fornecedor' %}
+                                                    
+                                                {% elif table_name == 'produto' %}
+                                                    
+                                                {% elif table_name == 'venda' %}
+                                                    
+                                                {% elif table_name == 'compra' %}
+                                                    
+                                                {% else %}
+                                                    
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <strong>{{ value }}</strong>
+                                            </div>
+                                        </div>
+                                    {% elif col == 'estoque_atual' %}
+                                        {% if value <= 0 %}
+                                            <span class="badge bg-danger">{{ value }}</span>
+                                        {% elif value <= 10 %}
+                                            <span class="badge bg-warning">{{ value }}</span>
+                                        {% else %}
+                                            <span class="badge bg-primary">{{ value }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        {{ value if value else '-' }}
+                                    {% endif %}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Estatísticas da Tabela -->
+                <div class="table-stats">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="text-primary fw-bold">{{ items|length }}</div>
+                            <small class="text-muted">Total de Registros</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-info fw-bold">{{ columns|length }}</div>
+                            <small class="text-muted">Colunas</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-success fw-bold">
+                                {% set non_empty = items|selectattr('id')|list|length %}
+                                {{ non_empty }}
+                            </div>
+                            <small class="text-muted">Registros Válidos</small>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-warning fw-bold">
+                                {% if table_name == 'venda' %}
+                                    {% set total_value = items|sum(attribute='valor_total') %}
+                                    R$ {{ "%.2f"|format(total_value) }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">
+                                {% if table_name == 'venda' %}Valor Total{% else %}N/A{% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="no-data">
+                    
+                    <h5>Nenhum registro encontrado</h5>
+                    <p>A tabela <strong>{{ table_name|title }}</strong> não possui registros no momento.</p>
+                    <div class="mt-3">
+                        <a href="{{ url_for('admin_home') }}" class="btn btn-primary me-2">
+                            
+                            Voltar ao Painel
+                        </a>
+                        <button onclick="location.reload()" class="btn btn-outline-secondary">
+                            
+                            Atualizar
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Paginação -->
+    {% if pagination and pagination.pages > 1 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Navegação da tabela">
+                <ul class="pagination justify-content-center">
+                    <!-- Botão Anterior -->
+                    {% if pagination.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin_table', table_name=table_name, page=pagination.prev_num, per_page=request.args.get('per_page', 20)) }}">
+                                 Anterior
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                 Anterior
+                            </span>
+                        </li>
+                    {% endif %}
+
+                    <!-- Páginas -->
+                    {% for page_num in pagination.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != pagination.page %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin_table', table_name=table_name, page=page_num, per_page=request.args.get('per_page', 20)) }}">
+                                        {{ page_num }}
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page_num }}</span>
+                                </li>
+                            {% endif %}
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Botão Próximo -->
+                    {% if pagination.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin_table', table_name=table_name, page=pagination.next_num, per_page=request.args.get('per_page', 20)) }}">
+                                Próximo 
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Próximo 
+                            </span>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Informações de paginação -->
+    <div class="row">
+        <div class="col-12 text-center">
+            <div class="pagination-info">
+                <small class="text-muted">
+                    Mostrando {{ ((pagination.page - 1) * pagination.per_page) + 1 }} a 
+                    {{ pagination.page * pagination.per_page if pagination.page * pagination.per_page < pagination.total else pagination.total }} 
+                    de {{ pagination.total }} registros
+                    | Página {{ pagination.page }} de {{ pagination.pages }}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seletor de itens por página -->
+    <div class="row mt-3">
+        <div class="col-12 text-center">
+            <div class="items-per-page-selector">
+                <small class="text-muted me-2">Itens por página:</small>
+                <div class="btn-group btn-group-sm" role="group">
+                    <a href="{{ url_for('admin_table', table_name=table_name, page=1, per_page=10) }}" 
+                       class="btn btn-outline-secondary {% if request.args.get('per_page', 20)|int == 10 %}active{% endif %}">10</a>
+                    <a href="{{ url_for('admin_table', table_name=table_name, page=1, per_page=20) }}" 
+                       class="btn btn-outline-secondary {% if request.args.get('per_page', 20)|int == 20 %}active{% endif %}">20</a>
+                    <a href="{{ url_for('admin_table', table_name=table_name, page=1, per_page=50) }}" 
+                       class="btn btn-outline-secondary {% if request.args.get('per_page', 20)|int == 50 %}active{% endif %}">50</a>
+                    <a href="{{ url_for('admin_table', table_name=table_name, page=1, per_page=100) }}" 
+                       class="btn btn-outline-secondary {% if request.args.get('per_page', 20)|int == 100 %}active{% endif %}">100</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Script para melhorar a experiência -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Adicionar tooltip para valores truncados
+    const truncatedElements = document.querySelectorAll('[title]');
+    truncatedElements.forEach(element => {
+        element.setAttribute('data-bs-toggle', 'tooltip');
+        element.setAttribute('data-bs-placement', 'top');
+    });
+    
+    // Inicializar tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Adicionar animação de entrada para a tabela
+    const tableCard = document.querySelector('.admin-table-card');
+    if (tableCard) {
+        tableCard.style.opacity = '0';
+        tableCard.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            tableCard.style.transition = 'all 0.5s ease';
+            tableCard.style.opacity = '1';
+            tableCard.style.transform = 'translateY(0)';
+        }, 100);
+    }
+});
+</script>
+
+<style>
+.pagination-info {
+    padding: 1rem 0;
+}
+
+.items-per-page-selector {
+    padding: 0.5rem 0;
+}
+
+.page-link {
+    color: #667eea;
+    border-color: #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.page-link:hover {
+    color: #764ba2;
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+}
+
+.page-item.active .page-link {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.page-item.disabled .page-link {
+    color: #6c757d;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+.btn-outline-secondary.active {
+    background-color: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+</style>
+{% endblock %}
+
+

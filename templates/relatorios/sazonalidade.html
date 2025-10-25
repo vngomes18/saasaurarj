@@ -1,0 +1,305 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Análise de Sazonalidade - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                
+                Análise de Sazonalidade
+            </h2>
+            <p class="text-muted">
+                Tendências de vendas nos últimos 12 meses
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('relatorios') }}" class="btn btn-outline-secondary">
+                    
+                    Voltar
+                </a>
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    
+                    Exportar
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='sazonalidade', formato='pdf') }}">
+                        PDF
+                    </a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='sazonalidade', formato='excel') }}">
+                        Excel
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Sazonalidade -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        
+                        Evolução das Vendas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="sazonalidadeChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h4>{{ vendas_por_mes | sum(attribute='total') | round(2) }}</h4>
+                    <p class="mb-0">Receita Total (12 meses)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h4>{{ vendas_por_mes | sum(attribute='quantidade') }}</h4>
+                    <p class="mb-0">Total de Vendas</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h4>{{ (vendas_por_mes | sum(attribute='total') / 12) | round(2) }}</h4>
+                    <p class="mb-0">Média Mensal</p>
+                </div>
+            </div>
+        </div>
+                            <div class="col-md-3">
+                                <div class="card bg-warning text-white">
+                                    <div class="card-body text-center">
+                                        <h4>{{ (vendas_por_mes | max(attribute='total')).total | round(2) }}</h4>
+                                        <p class="mb-0">Melhor Mês</p>
+                                    </div>
+                                </div>
+                            </div>
+    </div>
+
+    <!-- Tabela Detalhada -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        
+                        Vendas por Mês
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Mês</th>
+                                    <th class="text-end">Receita</th>
+                                    <th class="text-center">Quantidade de Vendas</th>
+                                    <th class="text-end">Ticket Médio</th>
+                                    <th class="text-center">Performance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set media_mensal = (vendas_por_mes | sum(attribute='total') / 12) %}
+                                {% for venda in vendas_por_mes %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ venda.mes }}</strong>
+                                    </td>
+                                    <td class="text-end">
+                                        <strong>R$ {{ "%.2f"|format(venda.total) }}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge bg-primary">{{ venda.quantidade }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        {% if venda.quantidade > 0 %}
+                                            R$ {{ "%.2f"|format(venda.total / venda.quantidade) }}
+                                        {% else %}
+                                            R$ 0,00
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% set performance = (venda.total / media_mensal * 100) if media_mensal > 0 else 0 %}
+                                        {% if performance >= 120 %}
+                                            <span class="badge bg-success">
+                                                 {{ "%.0f"|format(performance) }}%
+                                            </span>
+                                        {% elif performance >= 80 %}
+                                            <span class="badge bg-info">
+                                                 {{ "%.0f"|format(performance) }}%
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning">
+                                                 {{ "%.0f"|format(performance) }}%
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        
+                        Insights de Sazonalidade
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Melhores Períodos</h6>
+                            <ul class="list-unstyled">
+                                {% set melhores_meses = vendas_por_mes | sort(attribute='total', reverse=true) | list %}
+                                {% for mes in melhores_meses[:3] %}
+                                <li class="mb-2">
+                                    <span class="badge bg-success me-2">{{ loop.index }}º</span>
+                                    <strong>{{ mes.mes }}</strong> - R$ {{ "%.2f"|format(mes.total) }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Recomendações</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    
+                                    Prepare campanhas para os meses de maior performance
+                                </li>
+                                <li class="mb-2">
+                                    
+                                    Analise os fatores que impulsionam as vendas nos melhores períodos
+                                </li>
+                                <li class="mb-2">
+                                    
+                                    Crie estratégias para melhorar os meses de menor performance
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dados do gráfico
+    const meses = {{ vendas_por_mes | map(attribute='mes') | list | tojson }};
+    const receitas = {{ vendas_por_mes | map(attribute='total') | list | tojson }};
+    const quantidades = {{ vendas_por_mes | map(attribute='quantidade') | list | tojson }};
+    
+    // Gráfico de linha
+    const ctx = document.getElementById('sazonalidadeChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: meses,
+            datasets: [
+                {
+                    label: 'Receita (R$)',
+                    data: receitas,
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    yAxisID: 'y',
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Quantidade de Vendas',
+                    data: quantidades,
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    yAxisID: 'y1',
+                    tension: 0.4,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Mês'
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Receita (R$)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(2);
+                        }
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Quantidade de Vendas'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            if (context.datasetIndex === 0) {
+                                return 'Receita: R$ ' + context.parsed.y.toFixed(2);
+                            } else {
+                                return 'Vendas: ' + context.parsed.y + ' unidades';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

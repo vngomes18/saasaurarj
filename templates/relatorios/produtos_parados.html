@@ -1,0 +1,314 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Produtos Parados - SaaS Sistema{% endblock %}
+
+{% block extra_css %}
+<style>
+.report-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 15px 15px 0 0;
+    margin-bottom: 0;
+}
+
+.report-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.report-body {
+    padding: 0;
+}
+
+.enhanced-table {
+    margin: 0;
+}
+
+.enhanced-table th {
+    background-color: #f8f9fa;
+    border: none;
+    font-weight: 600;
+    color: #495057;
+    padding: 1rem 0.75rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.enhanced-table td {
+    border: none;
+    padding: 0.75rem;
+    border-bottom: 1px solid #f1f3f4;
+    vertical-align: middle;
+}
+
+.enhanced-table tbody tr:hover {
+    background-color: #f8f9fa;
+    transition: background-color 0.2s ease;
+}
+
+.product-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.9rem;
+}
+
+.suggestion-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.suggestion-card:hover {
+    transform: translateY(-5px);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                
+                Produtos Parados
+            </h2>
+            <p class="text-muted">
+                Produtos sem vendas nos últimos 90 dias
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('relatorios') }}" class="btn btn-outline-secondary">
+                    
+                    Voltar
+                </a>
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    
+                    Exportar
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='produtos-parados', formato='pdf') }}">
+                        PDF
+                    </a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='produtos-parados', formato='excel') }}">
+                        Excel
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas -->
+    {% if produtos_parados %}
+        <div class="alert alert-warning" role="alert">
+            
+            <strong>Atenção!</strong> Encontrados {{ produtos_parados|length }} produtos sem vendas nos últimos 90 dias.
+            Considere ações para movimentar o estoque.
+        </div>
+    {% endif %}
+
+    <!-- Tabela de Produtos Parados -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card report-card">
+                <div class="report-header">
+                    <h5 class="mb-0">
+                        
+                        Produtos Sem Movimentação
+                    </h5>
+                </div>
+                <div class="report-body">
+                    {% if produtos_parados %}
+                        <div class="table-responsive">
+                            <table class="table enhanced-table">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            
+                                            Produto
+                                        </th>
+                                        <th class="text-center">
+                                            
+                                            Estoque Atual
+                                        </th>
+                                        <th class="text-center">
+                                            
+                                            Valor em Estoque
+                                        </th>
+                                        <th class="text-center">
+                                            
+                                            Última Venda
+                                        </th>
+                                        <th class="text-center">
+                                            
+                                            Dias Parado
+                                        </th>
+                                        <th class="text-center">
+                                            
+                                            Ações Sugeridas
+                                        </th>
+                                        <th class="text-center">
+                                            
+                                            Ações
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in produtos_parados %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="product-avatar me-3">
+                                                    
+                                                </div>
+                                                <div>
+                                                    <strong>{{ item.produto.nome }}</strong>
+                                                    {% if item.produto.categoria %}
+                                                        <br><small class="text-muted">{{ item.produto.categoria }}</small>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-info fs-6">{{ item.produto.estoque_atual }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <strong class="text-success">R$ {{ "%.2f"|format(item.produto.estoque_atual * item.produto.preco) }}</strong>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if item.ultima_venda %}
+                                                <span class="text-muted">{{ item.media_venda.strftime('%d/%m/%Y') }}</span>
+                                            {% else %}
+                                                <span class="text-danger">Nunca vendido</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if item.dias_sem_venda >= 365 %}
+                                                <span class="badge bg-danger fs-6">
+                                                     {{ item.dias_sem_venda }} dias
+                                                </span>
+                                            {% elif item.dias_sem_venda >= 180 %}
+                                                <span class="badge bg-warning fs-6">
+                                                     {{ item.dias_sem_venda }} dias
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary fs-6">
+                                                     {{ item.dias_sem_venda }} dias
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if item.dias_sem_venda >= 365 %}
+                                                <span class="badge bg-danger">Promoção Urgente</span>
+                                            {% elif item.dias_sem_venda >= 180 %}
+                                                <span class="badge bg-warning">Promoção</span>
+                                            {% else %}
+                                                <span class="badge bg-info">Campanha</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('produtos') }}" class="btn btn-sm btn-outline-primary">
+                                                    
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                        data-bs-toggle="tooltip" title="Criar Promoção">
+                                                    
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            
+                            <h5 class="text-success">Excelente!</h5>
+                            <p class="text-muted">Todos os produtos tiveram movimentação nos últimos 90 dias.</p>
+                            <p class="text-muted">Seu estoque está bem gerenciado!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sugestões de Ações -->
+    {% if produtos_parados %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card report-card">
+                <div class="report-header">
+                    <h5 class="mb-0">
+                        
+                        Sugestões de Ações
+                    </h5>
+                </div>
+                <div class="report-body p-4">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="suggestion-card">
+                                <div class="card-body text-center p-4">
+                                    
+                                    <h6>Promoções</h6>
+                                    <p class="text-muted small">
+                                        Crie campanhas promocionais para produtos parados há mais de 180 dias.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="suggestion-card">
+                                <div class="card-body text-center p-4">
+                                    
+                                    <h6>Marketing</h6>
+                                    <p class="text-muted small">
+                                        Invista em marketing direcionado para produtos com baixa rotatividade.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="suggestion-card">
+                                <div class="card-body text-center p-4">
+                                    
+                                    <h6>Descarte</h6>
+                                    <p class="text-muted small">
+                                        Considere descartar produtos parados há mais de 1 ano.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,117 @@
+{
+  "timestamp": "2025-10-20T20:53:39.251169",
+  "checks": [
+    {
+      "name": "Secret Keys",
+      "status": "FAIL",
+      "details": [
+        "SECRET_KEY n\u00e3o configurada",
+        "JWT_SECRET_KEY n\u00e3o configurada"
+      ],
+      "score": 0
+    },
+    {
+      "name": "HTTPS Configuration",
+      "status": "PASS",
+      "details": [
+        "Ambiente de desenvolvimento - HTTPS n\u00e3o obrigat\u00f3rio"
+      ],
+      "score": 3
+    },
+    {
+      "name": "Session Security",
+      "status": "PASS",
+      "details": [
+        "HTTPOnly cookies habilitados",
+        "SameSite cookies configurados como Lax",
+        "Tempo de sess\u00e3o adequado: 28800s"
+      ],
+      "score": 6
+    },
+    {
+      "name": "CSRF Protection",
+      "status": "PASS",
+      "details": [
+        "CSRF protection habilitado"
+      ],
+      "score": 3
+    },
+    {
+      "name": "Rate Limiting",
+      "status": "WARN",
+      "details": [
+        "Rate limiting n\u00e3o configurado",
+        "Usando storage em mem\u00f3ria para rate limiting"
+      ],
+      "score": 2
+    },
+    {
+      "name": "Input Validation",
+      "status": "PASS",
+      "details": [
+        "Validadores de seguran\u00e7a implementados",
+        "Middleware de seguran\u00e7a implementado"
+      ],
+      "score": 6
+    },
+    {
+      "name": "File Upload Security",
+      "status": "PASS",
+      "details": [
+        "Tamanho m\u00e1ximo de upload adequado: 16777216 bytes",
+        "Extens\u00f5es permitidas configuradas: txt,pdf,png,jpg,jpeg,gif,csv,xlsx"
+      ],
+      "score": 4
+    },
+    {
+      "name": "Database Security",
+      "status": "WARN",
+      "details": [
+        "DATABASE_URL n\u00e3o configurada"
+      ],
+      "score": 1
+    },
+    {
+      "name": "Dependencies Security",
+      "status": "WARN",
+      "details": [
+        "requirements.txt encontrado",
+        "Flask-WTF inclu\u00eddo",
+        "Flask-Limiter inclu\u00eddo",
+        "bleach inclu\u00eddo",
+        "werkzeug n\u00e3o encontrado"
+      ],
+      "score": 4
+    },
+    {
+      "name": "Security Headers",
+      "status": "PASS",
+      "details": [
+        "X-Content-Type-Options configurado",
+        "X-Frame-Options configurado",
+        "X-XSS-Protection configurado",
+        "Strict-Transport-Security configurado"
+      ],
+      "score": 4
+    },
+    {
+      "name": "Security Logging",
+      "status": "WARN",
+      "details": [
+        "Log level configurado: INFO",
+        "Arquivo de log n\u00e3o configurado"
+      ],
+      "score": 3
+    }
+  ],
+  "score": 65.45,
+  "recommendations": [
+    "[FAIL] Secret Keys: SECRET_KEY n\u00e3o configurada",
+    "[WARN] Rate Limiting: Rate limiting n\u00e3o configurado",
+    "[WARN] Database Security: DATABASE_URL n\u00e3o configurada",
+    "[WARN] Dependencies Security: requirements.txt encontrado",
+    "[WARN] Security Logging: Log level configurado: INFO"
+  ],
+  "status": "GOOD",
+  "color": "\ud83d\udfe1"
+}

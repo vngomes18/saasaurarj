@@ -1,0 +1,267 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Clientes - SaaS Sistema{% endblock %}
+<!-- Cache bust: {{ range(1000, 9999) | random }} -->
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                Cadastro de Clientes
+            </h2>
+            <p class="text-muted">Gerencie sua base de clientes</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('novo_cliente') }}" class="btn btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Novo Cliente
+            </a>
+            <button class="btn btn-outline-secondary btn-export-csv">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7,10 12,15 17,10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Exportar CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Search -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="M21 21l-4.35-4.35"></path>
+                    </svg>
+                </span>
+                <input type="text" class="form-control table-search" placeholder="Buscar clientes...">
+            </div>
+        </div>
+    </div>
+
+    <!-- Clients Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="clientes-table-container d-none d-md-block">
+                <table class="clientes-table" id="clientsTable">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Cliente</th>
+                            <th class="text-center">Contato</th>
+                            <th class="text-center">Endereço</th>
+                            <th class="text-center">Documento</th>
+                            <th class="text-center">Cadastro</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if clientes %}
+                            {% for cliente in clientes %}
+                            <tr class="cliente-row" 
+                                data-name="{{ cliente.nome|lower }}" 
+                                data-email="{{ cliente.email|lower if cliente.email else '' }}"
+                                data-phone="{{ cliente.telefone }}">
+                                <td>
+                                    <div class="cliente-info">
+                                        <div class="cliente-avatar">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                        </div>
+                                        <div class="cliente-details">
+                                            <h6>{{ cliente.nome }}</h6>
+                                            {% if cliente.endereco %}
+                                                <small>{{ cliente.endereco[:50] }}{% if cliente.endereco|length > 50 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-center">
+                                        {% if cliente.email %}
+                                            <div class="mb-1">
+                                                <span class="badge bg-primary">
+                                                    {{ cliente.email }}
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                        {% if cliente.telefone %}
+                                            <span class="badge bg-info">
+                                                {{ cliente.telefone }}
+                                            </span>
+                                        {% endif %}
+                                        {% if not cliente.email and not cliente.telefone %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if cliente.endereco %}
+                                        <span class="badge bg-secondary">{{ cliente.endereco[:30] }}{% if cliente.endereco|length > 30 %}...{% endif %}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if cliente.cpf_cnpj %}
+                                        <code>{{ cliente.cpf_cnpj }}</code>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ cliente.created_at.strftime('%d/%m/%Y') }}</span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('editar_cliente', id=cliente.id) }}" 
+                                           class="btn btn-sm btn-outline-primary"
+                                           data-bs-toggle="tooltip" 
+                                           title="Editar">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </a>
+                                        <a href="#" 
+                                           class="btn btn-sm btn-outline-danger btn-delete"
+                                           data-bs-toggle="tooltip" 
+                                           title="Excluir"
+                                           onclick="showConfirm('Tem certeza que deseja excluir este cliente?', function() { window.location.href = '{{ url_for('excluir_cliente', id=cliente.id) }}'; }); return false;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="3,6 5,6 21,6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-3">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                    <h5 class="text-muted">Nenhum cliente cadastrado</h5>
+                                    <p class="text-muted">Comece cadastrando seu primeiro cliente</p>
+                                    <a href="{{ url_for('novo_cliente') }}" class="btn btn-primary">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        </svg>
+                                        Cadastrar Primeiro Cliente
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Lista em cards (mobile) -->
+            <div class="d-md-none">
+                {% if clientes %}
+                <div class="mobile-list">
+                    {% for cliente in clientes %}
+                    <div class="mobile-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="title">{{ cliente.nome }}</div>
+                                {% if cliente.email %}
+                                    <small class="text-muted">{{ cliente.email }}</small>
+                                {% elif cliente.telefone %}
+                                    <small class="text-muted">{{ cliente.telefone }}</small>
+                                {% endif %}
+                            </div>
+                            <span class="badge bg-light text-dark">{{ cliente.created_at.strftime('%d/%m/%Y') }}</span>
+                        </div>
+                        <div class="meta mt-2">
+                            {% if cliente.endereco %}
+                                <span class="badge bg-secondary">{{ cliente.endereco[:40] }}{% if cliente.endereco|length > 40 %}...{% endif %}</span>
+                            {% endif %}
+                            {% if cliente.cpf_cnpj %}
+                                <span class="badge bg-info">Doc: {{ cliente.cpf_cnpj }}</span>
+                            {% endif %}
+                        </div>
+                        <div class="actions mt-2">
+                            <a href="{{ url_for('editar_cliente', id=cliente.id) }}" class="btn btn-sm btn-primary" aria-label="Editar">
+                                Editar
+                            </a>
+                            <a href="#" class="btn btn-sm btn-outline-danger" aria-label="Excluir"
+                               onclick="showConfirm('Tem certeza que deseja excluir este cliente?', function() { window.location.href = '{{ url_for('excluir_cliente', id=cliente.id) }}'; }); return false;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                    <polyline points="3,6 5,6 21,6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                                </svg>
+                                Excluir
+                            </a>
+                            <a href="{{ url_for('nova_venda') }}?cliente_id={{ cliente.id }}" class="btn btn-sm btn-success" aria-label="Nova venda">
+                                Venda
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state text-center py-5">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-3">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <h5 class="text-muted">Nenhum cliente cadastrado</h5>
+                    <p class="text-muted">Comece cadastrando seu primeiro cliente</p>
+                    <a href="{{ url_for('novo_cliente') }}" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Cadastrar Primeiro Cliente
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- FAB Adicionar Cliente -->
+                <a href="{{ url_for('novo_cliente') }}" class="btn btn-primary rounded-circle position-fixed bottom-0 end-0 m-3 shadow" aria-label="Adicionar cliente">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation to table rows
+        document.querySelectorAll('tbody tr').forEach((row, index) => {
+            setTimeout(() => {
+                row.classList.add('fade-in');
+            }, index * 50);
+        });
+    });
+</script>
+{% endblock %}
+

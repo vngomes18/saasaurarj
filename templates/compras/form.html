@@ -1,0 +1,362 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Nova Compra - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        
+                        Nova Compra
+                    </h2>
+                    <p class="text-muted mb-0">Cadastre uma nova compra de produtos</p>
+                </div>
+                <a href="{{ url_for('compras') }}" class="btn btn-secondary">
+                    
+                    Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <form method="POST">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="card mb-4">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0">
+                            
+                            Informações da Compra
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="fornecedor_id" class="form-label">Fornecedor *</label>
+                                <select class="form-select" id="fornecedor_id" name="fornecedor_id" required>
+                                    <option value="">Selecione um fornecedor</option>
+                                    {% for fornecedor in fornecedores %}
+                                    <option value="{{ fornecedor.id }}">{{ fornecedor.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="data_entrega" class="form-label">Data de Entrega</label>
+                                <input type="date" class="form-control" id="data_entrega" name="data_entrega">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="forma_pagamento" class="form-label">Forma de Pagamento</label>
+                                <select class="form-select" id="forma_pagamento" name="forma_pagamento">
+                                    <option value="">Selecione</option>
+                                    <option value="dinheiro">Dinheiro</option>
+                                    <option value="cartao_debito">Cartão de Débito</option>
+                                    <option value="cartao_credito">Cartão de Crédito</option>
+                                    <option value="pix">PIX</option>
+                                    <option value="transferencia">Transferência</option>
+                                    <option value="boleto">Boleto</option>
+                                    <option value="cheque">Cheque</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="observacoes" class="form-label">Observações</label>
+                                <textarea class="form-control" id="observacoes" name="observacoes" rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Produtos -->
+                <div class="card">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                <polyline points="3.27,6.96 12,12.01 20.73,6.96"></polyline>
+                                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                            </svg>
+                            Produtos do Fornecedor
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="produtos-container">
+                            <div class="text-center p-4" id="selecione-fornecedor">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-3">
+                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                    <polyline points="3.27,6.96 12,12.01 20.73,6.96"></polyline>
+                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                </svg>
+                                <h5 class="text-muted">Selecione um fornecedor</h5>
+                                <p class="text-muted">Escolha um fornecedor para ver os produtos disponíveis</p>
+                            </div>
+                            </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <a href="{{ url_for('compras') }}" class="btn btn-secondary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12,19 5,12 12,5"></polyline>
+                        </svg>
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17,21 17,13 7,13 7,21"></polyline>
+                            <polyline points="7,3 7,8 15,8"></polyline>
+                        </svg>
+                        Salvar Compra
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Info Card -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Informações
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        
+                        <strong>Dica:</strong> Após salvar a compra, você poderá confirmá-la para atualizar o estoque dos produtos.
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        
+                        <strong>Importante:</strong> Apenas fornecedores ativos aparecem na lista.
+                    </div>
+
+                    <div class="alert alert-success">
+                        
+                        <strong>Processo:</strong> Compra → Confirmação → Atualização do Estoque
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.card').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+
+        // Event listener para mudança de fornecedor
+        const fornecedorSelect = document.getElementById('fornecedor_id');
+        const produtosContainer = document.getElementById('produtos-container');
+        
+        fornecedorSelect.addEventListener('change', function() {
+            const fornecedorId = this.value;
+            
+            if (fornecedorId) {
+                carregarProdutosFornecedor(fornecedorId);
+            } else {
+                mostrarSelecioneFornecedor();
+            }
+        });
+    });
+
+    function carregarProdutosFornecedor(fornecedorId) {
+        const produtosContainer = document.getElementById('produtos-container');
+        
+        // Mostrar loading
+        produtosContainer.innerHTML = `
+            <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <p class="mt-2 text-muted">Carregando produtos do fornecedor...</p>
+            </div>
+        `;
+        
+        // Fazer requisição AJAX
+        fetch(`/api/produtos-por-fornecedor/${fornecedorId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.data.length > 0) {
+                        mostrarProdutos(data.data);
+                    } else {
+                        mostrarNenhumProduto();
+                    }
+                } else {
+                    mostrarErro(data.error || 'Erro ao carregar produtos');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                mostrarErro('Erro ao carregar produtos');
+            });
+    }
+
+    function mostrarProdutos(produtos) {
+        const produtosContainer = document.getElementById('produtos-container');
+        
+        let html = `
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Preço Unit.</th>
+                            <th>Estoque Atual</th>
+                            <th>Quantidade</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        produtos.forEach(produto => {
+            const precoCompra = produto.preco_compra || produto.preco;
+            html += `
+                <tr>
+                    <td>
+                        <div>
+                            <h6 class="mb-0">${produto.nome}</h6>
+                            <small class="text-muted">${produto.categoria || 'Sem categoria'}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="fw-bold text-success">
+                            R$ ${precoCompra.toFixed(2).replace('.', ',')}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-${produto.estoque_atual <= 0 ? 'danger' : 'success'}">
+                            ${produto.estoque_atual}
+                        </span>
+                    </td>
+                    <td>
+                        <input type="number" 
+                               class="form-control quantidade-input" 
+                               name="produto_${produto.id}" 
+                               min="0" 
+                               data-preco="${precoCompra}"
+                               onchange="calcularSubtotal(this)">
+                    </td>
+                    <td>
+                        <span class="subtotal text-success fw-bold">R$ 0,00</span>
+                    </td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-primary">
+                            <th colspan="4" class="text-end">Total da Compra:</th>
+                            <th>
+                                <span id="total-compra" class="text-success fw-bold fs-5">R$ 0,00</span>
+                            </th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+        
+        produtosContainer.innerHTML = html;
+    }
+
+    function mostrarNenhumProduto() {
+        const produtosContainer = document.getElementById('produtos-container');
+        produtosContainer.innerHTML = `
+            <div class="text-center p-4">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-3">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27,6.96 12,12.01 20.73,6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                <h5 class="text-muted">Nenhum produto encontrado</h5>
+                <p class="text-muted">Este fornecedor não possui produtos cadastrados</p>
+                <a href="{{ url_for('novo_produto') }}" class="btn btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Cadastrar Produto
+                </a>
+            </div>
+        `;
+    }
+
+    function mostrarSelecioneFornecedor() {
+        const produtosContainer = document.getElementById('produtos-container');
+        produtosContainer.innerHTML = `
+            <div class="text-center p-4">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-3">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27,6.96 12,12.01 20.73,6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                <h5 class="text-muted">Selecione um fornecedor</h5>
+                <p class="text-muted">Escolha um fornecedor para ver os produtos disponíveis</p>
+            </div>
+        `;
+    }
+
+    function mostrarErro(mensagem) {
+        const produtosContainer = document.getElementById('produtos-container');
+        produtosContainer.innerHTML = `
+            <div class="text-center p-4">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-danger mb-3">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="15" y1="9" x2="9" y2="15"></line>
+                    <line x1="9" y1="9" x2="15" y2="15"></line>
+                </svg>
+                <h5 class="text-danger">Erro</h5>
+                <p class="text-muted">${mensagem}</p>
+            </div>
+        `;
+    }
+
+    function calcularSubtotal(input) {
+        const quantidade = parseFloat(input.value) || 0;
+        const preco = parseFloat(input.dataset.preco) || 0;
+        const subtotal = quantidade * preco;
+        
+        const row = input.closest('tr');
+        const subtotalElement = row.querySelector('.subtotal');
+        subtotalElement.textContent = `R$ ${subtotal.toFixed(2).replace('.', ',')}`;
+        
+        calcularTotal();
+    }
+
+    function calcularTotal() {
+        let total = 0;
+        document.querySelectorAll('.subtotal').forEach(element => {
+            const valor = element.textContent.replace('R$ ', '').replace(',', '.');
+            total += parseFloat(valor) || 0;
+        });
+        
+        const totalElement = document.getElementById('total-compra');
+        if (totalElement) {
+            totalElement.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+        }
+    }
+</script>
+{% endblock %}
+

@@ -1,0 +1,266 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Relatórios e Analytics - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                
+                Relatórios e Analytics
+            </h2>
+            <p class="text-muted">
+                Análises avançadas e relatórios detalhados do seu negócio
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    
+                    Exportar
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='vendas', formato='pdf') }}">
+                        Vendas (PDF)
+                    </a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='produtos', formato='excel') }}">
+                        Produtos (Excel)
+                    </a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='clientes', formato='csv') }}">
+                        Clientes (CSV)
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ total_produtos }}</h4>
+                            <p class="card-text">Total de Produtos</p>
+                        </div>
+                        <div class="align-self-center">
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ total_clientes }}</h4>
+                            <p class="card-text">Total de Clientes</p>
+                        </div>
+                        <div class="align-self-center">
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">R$ {{ "%.2f"|format(receita_mes) }}</h4>
+                            <p class="card-text">Receita do Mês</p>
+                        </div>
+                        <div class="align-self-center">
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title">{{ produtos_estoque_baixo }}</h4>
+                            <p class="card-text">Estoque Baixo</p>
+                        </div>
+                        <div class="align-self-center">
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatórios por Categoria -->
+    <div class="row">
+        <!-- Relatórios Financeiros -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        
+                        Relatórios Financeiros
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('relatorio_pl') }}" class="list-group-item list-group-item-action">
+                            
+                            P&L (Profit & Loss)
+                            <small class="text-muted d-block">Demonstrativo de resultados</small>
+                        </a>
+                        <a href="{{ url_for('relatorio_fluxo_caixa') }}" class="list-group-item list-group-item-action">
+                            
+                            Fluxo de Caixa
+                            <small class="text-muted d-block">Entradas e saídas mensais</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Análise de Vendas -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        
+                        Análise de Vendas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('relatorio_top_produtos') }}" class="list-group-item list-group-item-action">
+                            
+                            Top Produtos
+                            <small class="text-muted d-block">Produtos mais vendidos</small>
+                        </a>
+                        <a href="{{ url_for('relatorio_sazonalidade') }}" class="list-group-item list-group-item-action">
+                            
+                            Sazonalidade
+                            <small class="text-muted d-block">Tendências mensais</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Relatórios de Estoque -->
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">
+                        
+                        Relatórios de Estoque
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('relatorio_rotatividade_estoque') }}" class="list-group-item list-group-item-action">
+                            
+                            Rotatividade
+                            <small class="text-muted d-block">Velocidade de giro dos produtos</small>
+                        </a>
+                        <a href="{{ url_for('relatorio_produtos_parados') }}" class="list-group-item list-group-item-action">
+                            
+                            Produtos Parados
+                            <small class="text-muted d-block">Produtos sem vendas recentes</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Executivo -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        
+                        Dashboard Executivo - KPIs em Tempo Real
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="kpis-container">
+                        <div class="col-md-3 text-center">
+                            <div class="kpi-card">
+                                <h3 id="receita-atual" class="text-primary">R$ 0,00</h3>
+                                <p class="text-muted">Receita Atual</p>
+                                <small id="crescimento" class="text-success">+0%</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="kpi-card">
+                                <h3 id="ticket-medio" class="text-info">R$ 0,00</h3>
+                                <p class="text-muted">Ticket Médio</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="kpi-card">
+                                <h3 id="total-clientes" class="text-success">0</h3>
+                                <p class="text-muted">Total Clientes</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="kpi-card">
+                                <h3 id="produtos-estoque-baixo" class="text-warning">0</h3>
+                                <p class="text-muted">Estoque Baixo</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Carregar KPIs em tempo real
+    loadKPIs();
+    
+    // Atualizar KPIs a cada 30 segundos
+    setInterval(loadKPIs, 30000);
+});
+
+function loadKPIs() {
+    fetch('/api/dashboard-kpis')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('receita-atual').textContent = 'R$ ' + data.receita_atual.toFixed(2);
+            document.getElementById('ticket-medio').textContent = 'R$ ' + data.ticket_medio.toFixed(2);
+            document.getElementById('total-clientes').textContent = data.total_clientes;
+            document.getElementById('produtos-estoque-baixo').textContent = data.produtos_estoque_baixo;
+            
+            const crescimentoElement = document.getElementById('crescimento');
+            const crescimento = data.crescimento;
+            if (crescimento > 0) {
+                crescimentoElement.textContent = '+' + crescimento.toFixed(1) + '%';
+                crescimentoElement.className = 'text-success';
+            } else if (crescimento < 0) {
+                crescimentoElement.textContent = crescimento.toFixed(1) + '%';
+                crescimentoElement.className = 'text-danger';
+            } else {
+                crescimentoElement.textContent = '0%';
+                crescimentoElement.className = 'text-muted';
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar KPIs:', error);
+        });
+}
+</script>
+{% endblock %}

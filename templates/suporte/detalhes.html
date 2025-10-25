@@ -1,0 +1,227 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Detalhes do Ticket - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        
+                        {{ ticket.titulo }}
+                    </h2>
+                    <p class="text-muted mb-0">Ticket #{{ ticket.id }}</p>
+                </div>
+                <a href="{{ url_for('suporte') }}" class="btn btn-secondary">
+                    
+                    Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informações do Ticket -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Informações do Ticket
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>ID:</strong>
+                        </div>
+                        <div class="col-6">
+                            #{{ ticket.id }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Status:</strong>
+                        </div>
+                        <div class="col-6">
+                            {% if ticket.status == 'aberto' %}
+                                <span class="badge bg-warning">Aberto</span>
+                            {% elif ticket.status == 'em_andamento' %}
+                                <span class="badge bg-info">Em Andamento</span>
+                            {% elif ticket.status == 'resolvido' %}
+                                <span class="badge bg-success">Resolvido</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Fechado</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Categoria:</strong>
+                        </div>
+                        <div class="col-6">
+                            <span class="badge bg-secondary">{{ ticket.categoria or 'Geral' }}</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Prioridade:</strong>
+                        </div>
+                        <div class="col-6">
+                            {% if ticket.prioridade == 'urgente' %}
+                                <span class="badge bg-danger">Urgente</span>
+                            {% elif ticket.prioridade == 'alta' %}
+                                <span class="badge bg-warning">Alta</span>
+                            {% elif ticket.prioridade == 'media' %}
+                                <span class="badge bg-info">Média</span>
+                            {% else %}
+                                <span class="badge bg-success">Baixa</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Data Abertura:</strong>
+                        </div>
+                        <div class="col-6">
+                            {{ ticket.data_abertura.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                    </div>
+
+                    {% if ticket.data_fechamento %}
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Data Fechamento:</strong>
+                        </div>
+                        <div class="col-6">
+                            {{ ticket.data_fechamento.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Estatísticas -->
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Estatísticas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Respostas:</span>
+                        <span class="fw-bold">{{ ticket.respostas|length }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Tempo Aberto:</span>
+                        <span class="fw-bold">
+                            {% set diff = (datetime.utcnow() - ticket.data_abertura).days %}
+                            {{ diff }} dia(s)
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversa -->
+        <div class="col-lg-8">
+            <!-- Descrição Original -->
+            <div class="card mb-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Descrição Original
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ ticket.descricao }}</p>
+                </div>
+            </div>
+
+            <!-- Respostas -->
+            {% if ticket.respostas %}
+            <div class="card mb-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Conversa
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for resposta in ticket.respostas %}
+                    <div class="d-flex mb-4">
+                        <div class="avatar-sm bg-{{ 'primary' if resposta.is_admin else 'secondary' }} text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                            
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">
+                                    {{ 'Equipe de Suporte' if resposta.is_admin else 'Você' }}
+                                </h6>
+                                <small class="text-muted">
+                                    {{ resposta.data_resposta.strftime('%d/%m/%Y %H:%M') }}
+                                </small>
+                            </div>
+                            <div class="bg-light p-3 rounded">
+                                <p class="mb-0">{{ resposta.mensagem }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Nova Resposta -->
+            {% if ticket.status in ['aberto', 'em_andamento'] %}
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Adicionar Resposta
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('responder_ticket', id=ticket.id) }}">
+                        <div class="mb-3">
+                            <label for="mensagem" class="form-label">Sua mensagem</label>
+                            <textarea class="form-control" id="mensagem" name="mensagem" rows="4" 
+                                      placeholder="Digite sua resposta aqui..." required></textarea>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                
+                                Enviar Resposta
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.card').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,176 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Novo Ticket - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        
+                        Novo Ticket de Suporte
+                    </h2>
+                    <p class="text-muted mb-0">Descreva seu problema ou dúvida para nossa equipe</p>
+                </div>
+                <a href="{{ url_for('suporte') }}" class="btn btn-secondary">
+                    
+                    Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <form method="POST">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="card">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0">
+                            
+                            Informações do Ticket
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">Título *</label>
+                            <input type="text" class="form-control" id="titulo" name="titulo" 
+                                   placeholder="Resumo do problema ou dúvida" required>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="categoria" class="form-label">Categoria</label>
+                                <select class="form-select" id="categoria" name="categoria">
+                                    <option value="">Selecione uma categoria</option>
+                                    <option value="bug">Bug/Erro</option>
+                                    <option value="melhoria">Sugestão de Melhoria</option>
+                                    <option value="duvida">Dúvida</option>
+                                    <option value="configuracao">Configuração</option>
+                                    <option value="integracao">Integração</option>
+                                    <option value="billing">Faturamento</option>
+                                    <option value="outros">Outros</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="prioridade" class="form-label">Prioridade</label>
+                                <select class="form-select" id="prioridade" name="prioridade">
+                                    <option value="baixa">Baixa</option>
+                                    <option value="media" selected>Média</option>
+                                    <option value="alta">Alta</option>
+                                    <option value="urgente">Urgente</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição Detalhada *</label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="6" 
+                                      placeholder="Descreva detalhadamente o problema, dúvida ou sugestão. Inclua passos para reproduzir o problema, se aplicável." required></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('suporte') }}" class="btn btn-secondary">
+                                
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                
+                                Enviar Ticket
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Info Card -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Como Funciona
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        
+                        <strong>Dica:</strong> Seja o mais específico possível na descrição para agilizar o atendimento.
+                    </div>
+                    
+                    <div class="alert alert-success">
+                        
+                        <strong>Resposta:</strong> Nossa equipe responderá em até 24 horas.
+                    </div>
+
+                    <div class="list-group">
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Bug/Erro</h6>
+                                <small class="text-muted">Problema técnico</small>
+                            </div>
+                            <p class="mb-1">Relate problemas ou erros no sistema</p>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Dúvida</h6>
+                                <small class="text-muted">Ajuda</small>
+                            </div>
+                            <p class="mb-1">Tire suas dúvidas sobre o sistema</p>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">Melhoria</h6>
+                                <small class="text-muted">Sugestão</small>
+                            </div>
+                            <p class="mb-1">Sugira melhorias para o sistema</p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h6 class="mb-3">Prioridades</h6>
+                        <div class="d-flex flex-column gap-2">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-danger me-2">Urgente</span>
+                                <small>Sistema fora do ar</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-warning me-2">Alta</span>
+                                <small>Funcionalidade crítica</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-info me-2">Média</span>
+                                <small>Problema comum</small>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-success me-2">Baixa</span>
+                                <small>Dúvida geral</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.card').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}
+
