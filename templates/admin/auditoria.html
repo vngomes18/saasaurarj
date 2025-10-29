@@ -1,0 +1,84 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Auditoria - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+      <h1 class="h4 mb-0">Auditoria</h1>
+      <a href="{{ url_for('admin.admin_auditoria') }}" class="btn btn-outline-secondary btn-sm">Limpar Filtros</a>
+    </div>
+  </div>
+
+  <form class="row g-2 mb-3" method="get" action="{{ url_for('admin.admin_auditoria') }}">
+    <div class="col-md-2">
+      <input type="text" class="form-control" name="entidade" placeholder="Entidade" value="{{ entidade or '' }}" />
+    </div>
+    <div class="col-md-2">
+      <input type="text" class="form-control" name="acao" placeholder="Ação" value="{{ acao or '' }}" />
+    </div>
+    <div class="col-md-2">
+      <input type="number" class="form-control" name="user_id" placeholder="User ID" value="{{ uid or '' }}" />
+    </div>
+    <div class="col-md-2">
+      <input type="date" class="form-control" name="start" value="{{ start or '' }}" />
+    </div>
+    <div class="col-md-2">
+      <input type="date" class="form-control" name="end" value="{{ end or '' }}" />
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary w-100">Filtrar</button>
+    </div>
+  </form>
+
+  <div class="card">
+    <div class="card-body">
+      {% if pagination.items %}
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Usuário</th>
+                <th>Entidade</th>
+                <th>ID</th>
+                <th>Ação</th>
+                <th>Changes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for log in pagination.items %}
+              <tr>
+                <td>{{ log.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td>{{ log.user_id }}</td>
+                <td>{{ log.entidade }}</td>
+                <td>{{ log.entidade_id or '-' }}</td>
+                <td>{{ log.acao }}</td>
+                <td><code class="small">{{ log.changes }}</code></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <nav aria-label="Paginação">
+          <ul class="pagination">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for('admin.admin_auditoria', page=pagination.prev_num, entidade=entidade, acao=acao, user_id=uid, start=start, end=end) }}">Anterior</a>
+            </li>
+            <li class="page-item disabled"><span class="page-link">Página {{ pagination.page }} / {{ pagination.pages }}</span></li>
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+              <a class="page-link" href="{{ url_for('admin.admin_auditoria', page=pagination.next_num, entidade=entidade, acao=acao, user_id=uid, start=start, end=end) }}">Próxima</a>
+            </li>
+          </ul>
+        </nav>
+      {% else %}
+        <div class="text-center text-muted">Nenhum registro encontrado.</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="mt-3">
+    <small class="text-muted">Dica: ações típicas são create, update, delete, add_sale, update_stock.</small>
+  </div>
+</div>
+{% endblock %}

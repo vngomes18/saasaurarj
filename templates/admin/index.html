@@ -657,6 +657,39 @@
         </div>
     </div>
 
+    <!-- Auditoria Recente -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card admin-card">
+                <div class="admin-card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Atividades Recentes (Auditoria)</h5>
+                    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('admin.admin_auditoria') }}">Ver Auditoria</a>
+                </div>
+                <div class="admin-card-body">
+                    {% if audit_logs_recentes %}
+                        {% for log in audit_logs_recentes %}
+                        <div class="recent-item">
+                            <div class="recent-item-icon bg-info">⚙️</div>
+                            <div class="recent-item-content">
+                                <div class="recent-item-title">
+                                    {{ log.acao|capitalize }} • {{ log.entidade }} {% if log.entidade_id %}#{{ log.entidade_id }}{% endif %}
+                                </div>
+                                <div class="recent-item-subtitle">
+                                    Usuário ID {{ log.user_id }} • {{ log.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted">
+                            <p>Nenhuma atividade registrada</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Ações Rápidas -->
     <div class="row">
         <div class="col-12">

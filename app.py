@@ -17,6 +17,7 @@ import bleach
 import pyotp
 import qrcode
 from io import BytesIO
+import json
 import base64
 import csv
 import hashlib
@@ -665,6 +666,37 @@ class Empresa(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, index=True)
     users = db.relationship('User', backref='empresa_ref', lazy=True)
 
+class AuditLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False, index=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=True, index=True)
+    entidade = db.Column(db.String(50), nullable=False, index=True)
+    entidade_id = db.Column(db.Integer, nullable=True, index=True)
+    acao = db.Column(db.String(30), nullable=False, index=True)  # create | update | delete | update_stock | add_sale
+    changes = db.Column(db.Text, nullable=True)  # JSON de mudanças
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+
+def log_audit(user_id: int, entidade: str, entidade_id: int, acao: str, changes: dict | None = None):
+    try:
+        user = User.query.get(user_id)
+        empresa_id = getattr(user, 'empresa_id', None) if user else None
+        payload = AuditLog(
+            user_id=user_id,
+            empresa_id=empresa_id,
+            entidade=entidade,
+            entidade_id=entidade_id,
+            acao=acao,
+            changes=json.dumps(changes or {})
+        )
+        db.session.add(payload)
+        db.session.commit()
+    except Exception as e:
+        try:
+            db.session.rollback()
+        except Exception:
+            pass
+        print(f"AVISO: falha ao registrar auditoria: {e}")
+
 class Produto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False, index=True)
@@ -1103,6 +1135,8 @@ def admin_home():
     
     # Tickets recentes
     tickets_recentes = TicketSuporte.query.filter(TicketSuporte.user_id.in_(company_user_ids)).order_by(TicketSuporte.data_abertura.desc()).limit(5).all()
+    # Auditoria recente
+    audit_logs_recentes = AuditLog.query.filter(AuditLog.empresa_id == admin_user.empresa_id).order_by(AuditLog.created_at.desc()).limit(10).all()
     
     return render_template('admin/index.html', 
                          stats=stats,
@@ -1117,7 +1151,8 @@ def admin_home():
                          vendas_7_dias=vendas_7_dias,
                          top_produtos=top_produtos,
                          usuarios_recentes=usuarios_recentes,
-                         tickets_recentes=tickets_recentes)
+                         tickets_recentes=tickets_recentes,
+                         audit_logs_recentes=audit_logs_recentes)
 
 
 MODEL_MAP = {
@@ -2025,6 +2060,14 @@ def novo_produto():
         
         db.session.add(produto)
         db.session.commit()
+        try:
+            log_audit(session['user_id'], 'produto', produto.id, 'create', {
+                'nome': produto.nome,
+                'preco': produto.preco,
+                'estoque_atual': produto.estoque_atual
+            })
+        except Exception as _:
+            pass
         
         flash('Produto cadastrado com sucesso!', 'success')
         return redirect(url_for('produtos'))
@@ -2074,6 +2117,14 @@ def editar_produto(id):
         produto.observacoes_fornecedor = request.form.get('observacoes_fornecedor')
         
         db.session.commit()
+        try:
+            log_audit(session['user_id'], 'produto', produto.id, 'update', {
+                'nome': produto.nome,
+                'preco': produto.preco,
+                'estoque_atual': produto.estoque_atual
+            })
+        except Exception as _:
+            pass
         flash('Produto atualizado com sucesso!', 'success')
         return redirect(url_for('produtos'))
     
@@ -2095,6 +2146,12 @@ def excluir_produto(id):
     produto = Produto.query.filter_by(id=id, user_id=session['user_id']).first_or_404()
     db.session.delete(produto)
     db.session.commit()
+    try:
+        log_audit(session['user_id'], 'produto', id, 'delete', {
+            'nome': produto.nome
+        })
+    except Exception as _:
+        pass
     flash('Produto excluído com sucesso!', 'success')
     return redirect(url_for('produtos'))
 
@@ -2458,6 +2515,17 @@ def nova_venda():
         venda.cupom_id = cupom_id
         
         db.session.commit()
+        try:
+            log_audit(session['user_id'], 'venda', venda.id, 'add_sale', {
+                'valor_total': venda.valor_total,
+                'valor_final': venda.valor_final,
+                'itens': [
+                    {'produto_id': it.produto_id, 'quantidade': it.quantidade, 'subtotal': it.subtotal}
+                    for it in ItemVenda.query.filter_by(venda_id=venda.id).all()
+                ]
+            })
+        except Exception as _:
+            pass
         flash('Venda realizada com sucesso!', 'success')
         return redirect(url_for('vendas'))
     
@@ -4453,6 +4521,41 @@ def exportar_pdf(tipo, user_id):
     response.headers['Content-Disposition'] = f'attachment; filename=relatorio_{tipo}.pdf'
     
     return response
+
+@admin_bp.route('/auditoria', methods=['GET'], endpoint='admin_auditoria')
+@login_required
+@admin_required
+def admin_auditoria():
+    admin_user = User.query.get(session['user_id'])
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    entidade = request.args.get('entidade')
+    acao = request.args.get('acao')
+    uid = request.args.get('user_id', type=int)
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    query = AuditLog.query.filter(AuditLog.empresa_id == admin_user.empresa_id)
+    if entidade:
+        query = query.filter(AuditLog.entidade == entidade)
+    if acao:
+        query = query.filter(AuditLog.acao == acao)
+    if uid:
+        query = query.filter(AuditLog.user_id == uid)
+    # Filtro de período (YYYY-MM-DD)
+    try:
+        if start:
+            start_dt = datetime.strptime(start, '%Y-%m-%d')
+            query = query.filter(AuditLog.created_at >= start_dt)
+        if end:
+            end_dt = datetime.strptime(end, '%Y-%m-%d') + timedelta(days=1)
+            query = query.filter(AuditLog.created_at < end_dt)
+    except Exception:
+        pass
+
+    query = query.order_by(AuditLog.created_at.desc())
+    pagination = query.paginate(page=page, per_page=min(per_page, 100), error_out=False)
+    return render_template('admin/auditoria.html', pagination=pagination, entidade=entidade, acao=acao, uid=uid, start=start, end=end)
 
 def exportar_excel(tipo, user_id):
     buffer = BytesIO()
