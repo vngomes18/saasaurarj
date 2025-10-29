@@ -397,8 +397,8 @@ const autocompleteCSS = `
 `;
 
 // Injetar CSS
-const style = document.createElement('style');
-style.textContent = autocompleteCSS;
-document.head.appendChild(style);
+const styleElAutocomplete = document.createElement('style');
+styleElAutocomplete.textContent = autocompleteCSS;
+document.head.appendChild(styleElAutocomplete);
 
 console.log('🚀 Autocomplete Manager initialized');

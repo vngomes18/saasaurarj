@@ -2,13 +2,29 @@
 {% block title %}Sessões do Caixa{% endblock %}
 
 {% block content %}
-<div class="container py-3">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="mb-0">Sessões do Caixa</h3>
-    <div class="btn-group">
-      <a class="btn btn-outline-secondary {% if not status %}active{% endif %}" href="{{ url_for('caixa_sessoes') }}">Todas</a>
-      <a class="btn btn-outline-success {% if status=='aberto' %}active{% endif %}" href="{{ url_for('caixa_sessoes', status='aberto') }}">Abertas</a>
-      <a class="btn btn-outline-danger {% if status=='fechado' %}active{% endif %}" href="{{ url_for('caixa_sessoes', status='fechado') }}">Fechadas</a>
+<div class="container-fluid dashboard-v2">
+  <!-- Header com barra branca de contraste -->
+  <div class="dashboard-card mb-4">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="mb-2 d-flex align-items-center">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+            <rect x="1" y="3" width="15" height="13"></rect>
+            <path d="M16 8h.01"></path>
+            <path d="M16 8v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8"></path>
+            <path d="M6 21v-4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"></path>
+          </svg>
+          Sessões do Caixa
+        </h1>
+        <p class="mb-0">Acompanhe e gerencie as sessões do caixa</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <div class="btn-group" role="group">
+          <a class="btn btn-outline-secondary {% if not status %}active{% endif %}" href="{{ url_for('caixa_sessoes') }}">Todas</a>
+          <a class="btn btn-outline-success {% if status=='aberto' %}active{% endif %}" href="{{ url_for('caixa_sessoes', status='aberto') }}">Abertas</a>
+          <a class="btn btn-outline-danger {% if status=='fechado' %}active{% endif %}" href="{{ url_for('caixa_sessoes', status='fechado') }}">Fechadas</a>
+        </div>
+      </div>
     </div>
   </div>
 

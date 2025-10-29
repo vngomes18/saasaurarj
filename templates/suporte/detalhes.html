@@ -3,20 +3,24 @@
 {% block title %}Detalhes do Ticket - SaaS Sistema{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="mb-1">
-                        
-                        {{ ticket.titulo }}
-                    </h2>
-                    <p class="text-muted mb-0">Ticket #{{ ticket.id }}</p>
-                </div>
-                <a href="{{ url_for('suporte') }}" class="btn btn-secondary">
-                    
+<div class="container-fluid dashboard-v2">
+    <!-- Header com barra branca de contraste -->
+    <div class="dashboard-card mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2 d-flex align-items-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                        <path d="M9 18v-6h6v6M8 6h8l1 2H7l1-2z"></path>
+                    </svg>
+                    {{ ticket.titulo }}
+                </h1>
+                <p class="mb-0">Ticket #{{ ticket.id }}</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('suporte') }}" class="btn btn-secondary d-inline-flex align-items-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                        <polyline points="15,18 9,12 15,6"></polyline>
+                    </svg>
                     Voltar
                 </a>
             </div>

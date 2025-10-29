@@ -95,8 +95,8 @@ function initializeCardEffects() {
 }
 
 // Add CSS for ripple effect
-const style = document.createElement('style');
-style.textContent = `
+const styleElDarkTheme = document.createElement('style');
+styleElDarkTheme.textContent = `
     .btn {
         position: relative;
         overflow: hidden;
@@ -186,7 +186,7 @@ style.textContent = `
     }
 `;
 
-document.head.appendChild(style);
+document.head.appendChild(styleElDarkTheme);
 
 // Utility functions
 window.showLoading = function() {

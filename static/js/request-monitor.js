@@ -51,8 +51,8 @@ class RequestMonitor {
         `;
         
         // CSS do monitor
-        const style = document.createElement('style');
-        style.textContent = `
+        const styleElRequestMonitor = document.createElement('style');
+        styleElRequestMonitor.textContent = `
             #request-monitor {
                 position: fixed;
                 top: 20px;
@@ -171,7 +171,7 @@ class RequestMonitor {
             }
         `;
         
-        document.head.appendChild(style);
+        document.head.appendChild(styleElRequestMonitor);
         document.body.appendChild(monitor);
         
         this.monitor = monitor;

@@ -3,20 +3,26 @@
 {% block title %}Notas Fiscais - SaaS Sistema{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="mb-1">
-                        
-                        Notas Fiscais
-                    </h2>
-                    <p class="text-muted mb-0">Gerencie suas notas fiscais e documentos fiscais</p>
-                </div>
-                <a href="{{ url_for('nova_nota_fiscal') }}" class="btn btn-primary">
-                    
+<div class="container-fluid dashboard-v2">
+    <!-- Header com barra branca de contraste -->
+    <div class="dashboard-card mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2 d-flex align-items-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14,2 14,8 20,8"></polyline>
+                    </svg>
+                    Notas Fiscais
+                </h1>
+                <p class="mb-0">Gerencie suas notas fiscais e documentos fiscais</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('nova_nota_fiscal') }}" class="btn btn-primary d-inline-flex align-items-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
                     Nova Nota Fiscal
                 </a>
             </div>

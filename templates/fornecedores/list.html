@@ -3,24 +3,24 @@
 {% block title %}Fornecedores - SaaS Sistema{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h2 class="mb-1">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
-                            <rect x="1" y="3" width="15" height="13"></rect>
-                            <path d="M16 8h.01"></path>
-                            <path d="M16 8v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8"></path>
-                            <path d="M6 21v-4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"></path>
-                        </svg>
-                        Fornecedores
-                    </h2>
-                    <p class="text-muted mb-0">Gerencie seus fornecedores e parceiros comerciais</p>
-                </div>
-                <a href="{{ url_for('novo_fornecedor') }}" class="btn btn-primary">
+<div class="container-fluid dashboard-v2">
+    <!-- Header com barra branca de contraste -->
+    <div class="dashboard-card mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2 d-flex align-items-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                        <rect x="1" y="3" width="15" height="13"></rect>
+                        <path d="M16 8h.01"></path>
+                        <path d="M16 8v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8"></path>
+                        <path d="M6 21v-4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"></path>
+                    </svg>
+                    Fornecedores
+                </h1>
+                <p class="mb-0">Gerencie seus fornecedores e parceiros comerciais</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('novo_fornecedor') }}" class="btn btn-primary d-inline-flex align-items-center">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
