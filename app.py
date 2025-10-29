@@ -288,13 +288,16 @@ def csrf_exempt_if_needed(func):
         return csrf.exempt(func)
     return func
 
-# Configuração do Rate Limiting
+# Configuração do Rate Limiting (mais tolerante em desenvolvimento)
 try:
+    dev_mode = os.environ.get('FLASK_ENV', 'development').lower() == 'development' or os.environ.get('FLASK_DEBUG') == '1'
     limiter = Limiter(
         app=app,
         key_func=get_remote_address,
-        default_limits=["200 per day", "50 per hour"],
-        storage_uri="memory://"  # Usar armazenamento em memória explicitamente
+        # Em desenvolvimento, desabilita limites globais; em produção, aumenta tolerância e habilita cabeçalhos
+        default_limits=[] if dev_mode else ["1000 per day", "200 per hour", "40 per minute"],
+        storage_uri="memory://",
+        headers_enabled=True
     )
 except Exception as e:
     print(f"AVISO: Erro ao configurar Rate Limiting: {e}")
@@ -367,12 +370,32 @@ def safe_rate_limit(limit):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if limiter:
+            # Em desenvolvimento, não aplica rate limit para evitar bloqueios enquanto testa
+            if limiter and not (os.environ.get('FLASK_ENV', 'development').lower() == 'development' or os.environ.get('FLASK_DEBUG') == '1'):
                 return limiter.limit(limit)(f)(*args, **kwargs)
             else:
                 return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+# Tratamento amigável para erros de rate limit (HTTP 429)
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    retry = 60
+    try:
+        retry = int(getattr(e, 'description', '').split(' ')[-1])
+    except Exception:
+        pass
+    msg = 'Muitas requisições. Aguarde alguns segundos e tente novamente.'
+    if request.accept_mimetypes.best == 'application/json':
+        return jsonify({
+            'success': False,
+            'error': 'too_many_requests',
+            'message': msg,
+            'retry_after': retry
+        }), 429
+    flash(msg, 'warning')
+    return redirect(request.referrer or url_for('index'))
 
 # Função para obter configurações do usuário
 def get_user_settings(user_id):
