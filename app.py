@@ -18,6 +18,8 @@ import qrcode
 from io import BytesIO
 import base64
 import csv
+import hashlib
+import uuid
 from functools import wraps
 import re
 from dotenv import load_dotenv
@@ -362,6 +364,16 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             return redirect(url_for('login'))
+        # Enforce sessão única
+        try:
+            user = User.query.get(session.get('user_id'))
+            sess_token = session.get('active_session_id')
+            if user and user.active_session_id and sess_token != user.active_session_id:
+                flash('Sua sessão foi substituída por um novo login. Faça login novamente.', 'warning')
+                session.clear()
+                return redirect(url_for('login'))
+        except Exception:
+            pass
         return f(*args, **kwargs)
     return decorated_function
 
@@ -430,6 +442,32 @@ def admin_required(f):
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     return decorated_function
+
+# ===== Dispositivo confiável e sessão única =====
+def get_device_identifier(req: request) -> str:
+    header_id = req.headers.get('X-Device-ID') or req.headers.get('X-Device-Id')
+    if header_id:
+        return header_id.strip()
+    cookie_id = req.cookies.get('device_id')
+    if cookie_id:
+        return cookie_id.strip()
+    user_agent = req.headers.get('User-Agent', '')
+    accept_lang = req.headers.get('Accept-Language', '')
+    remote_ip = req.headers.get('X-Forwarded-For', req.remote_addr or '')
+    raw = f"{user_agent}|{accept_lang}|{remote_ip}|{os.environ.get('DEVICE_SALT','')}"
+    return hashlib.sha256(raw.encode('utf-8')).hexdigest()[:64]
+
+def set_device_cookie(resp, device_id: str):
+    try:
+        resp.set_cookie('device_id', device_id, max_age=60*60*24*365, httponly=True, samesite='Lax')
+    except Exception:
+        pass
+
+def issue_session_token(user) -> str:
+    token = uuid.uuid4().hex
+    user.active_session_id = token
+    user.active_session_updated_at = datetime.utcnow()
+    return token
 
 def serialize_model(instance):
     data = {}
@@ -555,6 +593,11 @@ class User(db.Model):
     google_id = db.Column(db.String(100), unique=True, nullable=True, index=True)  # ID do Google
     avatar_url = db.Column(db.String(200), nullable=True)  # URL do avatar do Google
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    # Dispositivo confiável e sessão única
+    device_fingerprint = db.Column(db.String(128), nullable=True, index=True)
+    device_last_updated = db.Column(db.DateTime, nullable=True)
+    active_session_id = db.Column(db.String(64), nullable=True, index=True)
+    active_session_updated_at = db.Column(db.DateTime, nullable=True)
     
     # Campos para 2FA
     two_factor_enabled = db.Column(db.Boolean, default=False)
@@ -1118,22 +1161,51 @@ def login():
                 session['2fa_required'] = True
                 return redirect(url_for('verify_2fa'))
             else:
-                # Login normal
+                # Login normal com verificação de dispositivo e sessão
+                device_id = get_device_identifier(request)
+                unlink_device = request.form.get('unlink_device') == 'true' or request.args.get('unlink_device') == 'true'
+                is_admin_role = (user.role == 'admin')
+
+                if user.device_fingerprint:
+                    if user.device_fingerprint != device_id:
+                        if is_admin_role and unlink_device:
+                            user.device_fingerprint = device_id
+                            user.device_last_updated = datetime.utcnow()
+                        else:
+                            msg = 'Login bloqueado: dispositivo diferente do vinculado.'
+                            if is_admin_role:
+                                msg += ' Você pode desvincular o dispositivo anterior para prosseguir.'
+                            flash(msg, 'warning')
+                            return render_template('auth/login.html', google_configured=bool(google))
+                else:
+                    # Primeiro login: vincula dispositivo
+                    user.device_fingerprint = device_id
+                    user.device_last_updated = datetime.utcnow()
+
+                # Emitir token de sessão única
+                sess_token = issue_session_token(user)
+
+                # Carregar configurações do usuário
+                settings = get_user_settings(user.id)
+
+                # Resetar tentativas falhadas e atualizar último login
+                reset_failed_login(user)
+                user.last_login = datetime.utcnow()
+                db.session.commit()
+
+                # Setar sessão e cookie
                 session['user_id'] = user.id
                 session['username'] = user.username
                 session['empresa'] = user.empresa
                 session['role'] = user.role
-                session.permanent = True
-                
-                # Carregar configurações do usuário
-                settings = get_user_settings(user.id)
                 session['dark_mode'] = settings.dark_mode
-                
-                # Resetar tentativas falhadas
-                reset_failed_login(user)
-                
+                session['active_session_id'] = sess_token
+                session.permanent = True
+
                 flash('Login realizado com sucesso!', 'success')
-                return redirect(url_for('dashboard'))
+                resp = redirect(url_for('dashboard'))
+                set_device_cookie(resp, device_id)
+                return resp
         else:
             # Incrementar tentativas falhadas
             if user:
@@ -1198,13 +1270,30 @@ def api_login():
                 'requires_2fa': True,
                 'user_id': user.id
             }), 200
-        
+        # Verificar dispositivo
+        device_id = get_device_identifier(request)
+        is_admin_role = (user.role == 'admin')
+        unlink_device = (data.get('unlink_device') in ['true', True]) if data else False
+        if user.device_fingerprint:
+            if user.device_fingerprint != device_id:
+                if is_admin_role and unlink_device:
+                    user.device_fingerprint = device_id
+                    user.device_last_updated = datetime.utcnow()
+                else:
+                    return jsonify({'error': 'device_mismatch', 'message': 'Dispositivo diferente do vinculado', 'can_unlink': is_admin_role}), 403
+        else:
+            user.device_fingerprint = device_id
+            user.device_last_updated = datetime.utcnow()
+
         # Criar tokens JWT
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
         
-        # Atualizar último login
+        # Atualizar último login e sessão
         reset_failed_login(user)
+        user.last_login = datetime.utcnow()
+        issue_session_token(user)
+        db.session.commit()
         
         return jsonify({
             'access_token': access_token,
@@ -1223,6 +1312,22 @@ def api_login():
         if user:
             increment_failed_login(user)
         return jsonify({'error': 'Email ou senha incorretos'}), 401
+
+@app.route('/api/auth/unlink-device', methods=['POST'])
+@csrf.exempt
+@login_required
+def api_unlink_device():
+    """Admin atualiza o dispositivo vinculado para o dispositivo atual."""
+    user = User.query.get(session.get('user_id'))
+    if not user or user.role != 'admin':
+        return jsonify({'success': False, 'message': 'Permissão negada'}), 403
+    new_device_id = get_device_identifier(request)
+    user.device_fingerprint = new_device_id
+    user.device_last_updated = datetime.utcnow()
+    issue_session_token(user)
+    db.session.commit()
+    session['active_session_id'] = user.active_session_id
+    return jsonify({'success': True, 'message': 'Dispositivo atualizado com sucesso'}), 200
 
 @app.route('/api/auth/refresh', methods=['POST'])
 @csrf.exempt
