@@ -1,0 +1,2357 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+    {% if produto %}Editar Produto{% else %}Novo Produto{% endif %} - SaaS Sistema
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                
+                {% if produto %}Editar Produto{% else %}Novo Produto{% endif %}
+            </h2>
+            <p class="text-muted">
+                {% if produto %}Atualize as informações do produto{% else %}Cadastre um novo produto no sistema{% endif %}
+            </p>
+            <div class="mt-3">
+                <span class="badge bg-primary me-2">
+                    
+                    {% if produto %}Edição{% else %}Cadastro{% endif %}
+                </span>
+                <span class="badge bg-info">
+                    Estoque
+                </span>
+            </div>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('produtos') }}" class="btn btn-outline-secondary">
+                
+                Voltar para Produtos
+            </a>
+        </div>
+    </div>
+
+    <!-- Form and Preview Side by Side -->
+    <div class="d-flex gap-3">
+        <!-- Form Container -->
+        <div class="flex-fill" style="flex: 0 0 66.666667%;">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                            <path d="M16 4h2a2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                        </svg>
+                        Dados do Produto
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate data-offline-queue="true">
+                        <!-- CSRF Token -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="row">
+                            <!-- Basic Information -->
+                            <div class="col-md-6 mb-3">
+                                <label for="nome" class="form-label">
+                                    
+                                    Nome do Produto *
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        
+                                    </span>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="nome" 
+                                           name="nome" 
+                                           placeholder="Ex: Produto XYZ"
+                                           value="{{ produto.nome if produto else '' }}"
+                                           required>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Por favor, insira o nome do produto.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="categoria" class="form-label">
+                                    
+                                    Categoria
+                                </label>
+                                <div class="categoria-autocomplete-container">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-info text-white">
+                                        
+                                        </span>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="categoria" 
+                                               name="categoria" 
+                                               value="{{ produto.categoria if produto else '' }}"
+                                               placeholder="Digite para buscar ou criar categoria..."
+                                               autocomplete="off">
+                                        <button type="button" 
+                                                class="btn btn-outline-success" 
+                                                id="adicionar-nova-categoria"
+                                                title="Adicionar nova categoria">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Dropdown de sugestões -->
+                                    <div id="categoria-suggestions" class="categoria-suggestions" style="display: none;">
+                                        <!-- Sugestões serão inseridas aqui via JavaScript -->
+                                    </div>
+                                    
+                                    <!-- Modal para nova categoria -->
+                                    <div class="modal fade" id="novaCategoriaModal" tabindex="-1" aria-labelledby="novaCategoriaModalLabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-success text-white">
+                                                    <h5 class="modal-title" id="novaCategoriaModalLabel">
+                                                        
+                                                        Nova Categoria
+                                                    </h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label for="nova-categoria-nome" class="form-label">
+                                                            
+                                                            Nome da Nova Categoria
+                                                        </label>
+                                                        <input type="text" 
+                                                               class="form-control form-control-lg" 
+                                                               id="nova-categoria-nome" 
+                                                               placeholder="Ex: Eletrônicos, Roupas, etc."
+                                                               autocomplete="off">
+                                                        <div class="form-text">
+                                                            
+                                                            Digite o nome da nova categoria que será salva no sistema
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                        </svg>
+                                                        Cancelar
+                                                    </button>
+                                                    <button type="button" class="btn btn-success" id="salvar-nova-categoria">
+                                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                                            <polyline points="17,21 17,13 7,13 7,21"></polyline>
+                                                            <polyline points="7,3 7,8 15,8"></polyline>
+                                                        </svg>
+                                                        Salvar Categoria
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-text">
+                                    Digite para buscar categorias existentes ou crie uma nova
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="descricao" class="form-label">
+                                    
+                                    Descrição
+                                </label>
+                                <textarea class="form-control" 
+                                          id="descricao" 
+                                          name="descricao" 
+                                          rows="3" 
+                                          placeholder="Descreva o produto...">{{ produto.descricao if produto else '' }}</textarea>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="preco" class="form-label">
+                                    
+                                    Preço de Venda *
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-success text-white">
+                                        
+                                    </span>
+                                    <input type="text" 
+                                           class="form-control currency-input" 
+                                           id="preco" 
+                                           name="preco" 
+                                           placeholder="0,00"
+                                           value="{{ produto.preco|string|replace('.', ',') if produto else '' }}"
+                                           inputmode="decimal" autocomplete="off" enterkeyhint="next"
+                                           pattern="[0-9]+([,][0-9]{1,2})?"
+                                           title="Digite o preço no formato 0,00 (exemplo: 0,50 para 50 centavos)"
+                                           required>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Por favor, insira o preço do produto.
+                                </div>
+                                <div class="form-text">
+                                    Preço de venda ao consumidor. Use vírgula para centavos (ex: 0,50)
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="estoque_atual" class="form-label">
+                                    
+                                    Estoque Atual *
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-primary text-white">
+                                        
+                                    </span>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="estoque_atual" 
+                                           name="estoque_atual" 
+                                           min="0"
+                                           placeholder="0"
+                                           value="{{ produto.estoque_atual if produto else '0' }}"
+                                           inputmode="numeric" enterkeyhint="next"
+                                           required>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Por favor, insira a quantidade em estoque.
+                                </div>
+                                <div class="form-text">
+                                    Quantidade disponível
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="estoque_minimo" class="form-label">
+                                    
+                                    Estoque Mínimo *
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-warning text-white">
+                                        
+                                    </span>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="estoque_minimo" 
+                                           name="estoque_minimo" 
+                                           min="0"
+                                           placeholder="0"
+                                           value="{{ produto.estoque_minimo if produto else '0' }}"
+                                           inputmode="numeric" enterkeyhint="next"
+                                           required>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Por favor, insira o estoque mínimo.
+                                </div>
+                                <div class="form-text">
+                                    Receba alertas quando o estoque estiver baixo
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="codigo_barras" class="form-label">
+                                    
+                                    Código de Barras
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-secondary text-white">
+                                        
+                                    </span>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="codigo_barras" 
+                                           name="codigo_barras" 
+                                           placeholder="Ex: 123456789012"
+                                           value="{{ produto.codigo_barras if produto else '' }}" inputmode="numeric" autocomplete="off" enterkeyhint="done">
+                                </div>
+                                <div class="form-text">
+                                    Código único para identificação do produto
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seção de Dados Fiscais -->
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enable_fiscal_info" onchange="toggleSection('fiscal_info')">
+                                        <label class="form-check-label fw-bold" for="enable_fiscal_info">
+                                            Dados Fiscais do Produto
+                                        </label>
+                                        <small class="text-muted ms-3">(Opcional)</small>
+                                    </div>
+                                </div>
+                                <div class="card-body" id="fiscal_info" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="nfe_numero" class="form-label">Número da NFe</label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="nfe_numero" 
+                                                   name="nfe_numero" 
+                                                   placeholder="Ex: 123456789012345"
+                                                   value="{{ produto.nfe_numero if produto else '' }}">
+                                            <div class="form-text">Número da Nota Fiscal Eletrônica</div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="data_compra" class="form-label">Data da Compra</label>
+                                            <input type="date" 
+                                                   class="form-control" 
+                                                   id="data_compra" 
+                                                   name="data_compra" 
+                                                   value="{{ produto.data_compra if produto else '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="cfop" class="form-label">CFOP</label>
+                                            <div class="cfop-autocomplete-container">
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-info text-white">
+                                                        <i class="fas fa-receipt"></i>
+                                                    </span>
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           id="cfop" 
+                                                           name="cfop" 
+                                                           placeholder="Digite para buscar ou criar CFOP..."
+                                                           value="{{ produto.cfop if produto else '' }}"
+                                                           autocomplete="off">
+                                                    <button type="button" 
+                                                            class="btn btn-outline-success" 
+                                                            id="adicionar-novo-cfop"
+                                                            title="Adicionar novo CFOP">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                                
+                                                <!-- Dropdown de sugestões CFOP -->
+                                                <div id="cfop-suggestions" class="cfop-suggestions" style="display: none;">
+                                                    <!-- Sugestões serão inseridas aqui via JavaScript -->
+                                                </div>
+                                                
+                                                <!-- Modal para novo CFOP -->
+                                                <div class="modal fade" id="novoCfopModal" tabindex="-1" aria-labelledby="novoCfopModalLabel" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header bg-success text-white">
+                                                                <h5 class="modal-title" id="novoCfopModalLabel">
+                                                                    <i class="fas fa-receipt me-2"></i>
+                                                                    Novo CFOP
+                                                                </h5>
+                                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="mb-3">
+                                                                    <label for="novo-cfop-codigo" class="form-label">
+                                                                        <i class="fas fa-hashtag me-1"></i>
+                                                                        Código do CFOP
+                                                                    </label>
+                                                                    <input type="text" 
+                                                                           class="form-control form-control-lg" 
+                                                                           id="novo-cfop-codigo" 
+                                                                           placeholder="Ex: 1102"
+                                                                           autocomplete="off">
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="novo-cfop-descricao" class="form-label">
+                                                                        <i class="fas fa-align-left me-1"></i>
+                                                                        Descrição do CFOP
+                                                                    </label>
+                                                                    <input type="text" 
+                                                                           class="form-control form-control-lg" 
+                                                                           id="novo-cfop-descricao" 
+                                                                           placeholder="Ex: Compra para comercialização"
+                                                                           autocomplete="off">
+                                                                    <div class="form-text">
+                                                                        <i class="fas fa-info-circle me-1"></i>
+                                                                        Digite o código e descrição do novo CFOP
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                                    <i class="fas fa-times me-1"></i>
+                                                                    Cancelar
+                                                                </button>
+                                                                <button type="button" class="btn btn-success" id="salvar-novo-cfop">
+                                                                    <i class="fas fa-save me-1"></i>
+                                                                    Salvar CFOP
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-text">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Digite para buscar CFOPs existentes ou crie um novo
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="ncm" class="form-label">NCM</label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="ncm" 
+                                                   name="ncm" 
+                                                   placeholder="Ex: 12345678"
+                                                   value="{{ produto.ncm if produto else '' }}">
+                                            <div class="form-text">Código NCM (Nomenclatura Comum do Mercosul)</div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="cst" class="form-label">CST</label>
+                                            <div class="cst-autocomplete-container">
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-warning text-white">
+                                                        <i class="fas fa-percentage"></i>
+                                                    </span>
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           id="cst" 
+                                                           name="cst" 
+                                                           placeholder="Digite para buscar ou criar CST..."
+                                                           value="{{ produto.cst if produto else '' }}"
+                                                           autocomplete="off">
+                                                    <button type="button" 
+                                                            class="btn btn-outline-success" 
+                                                            id="adicionar-novo-cst"
+                                                            title="Adicionar novo CST">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                                
+                                                <!-- Dropdown de sugestões CST -->
+                                                <div id="cst-suggestions" class="cst-suggestions" style="display: none;">
+                                                    <!-- Sugestões serão inseridas aqui via JavaScript -->
+                                                </div>
+                                                
+                                                <!-- Modal para novo CST -->
+                                                <div class="modal fade" id="novoCstModal" tabindex="-1" aria-labelledby="novoCstModalLabel" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header bg-success text-white">
+                                                                <h5 class="modal-title" id="novoCstModalLabel">
+                                                                    <i class="fas fa-percentage me-2"></i>
+                                                                    Novo CST
+                                                                </h5>
+                                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="mb-3">
+                                                                    <label for="novo-cst-codigo" class="form-label">
+                                                                        <i class="fas fa-hashtag me-1"></i>
+                                                                        Código do CST
+                                                                    </label>
+                                                                    <input type="text" 
+                                                                           class="form-control form-control-lg" 
+                                                                           id="novo-cst-codigo" 
+                                                                           placeholder="Ex: 00"
+                                                                           autocomplete="off">
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="novo-cst-descricao" class="form-label">
+                                                                        <i class="fas fa-align-left me-1"></i>
+                                                                        Descrição do CST
+                                                                    </label>
+                                                                    <input type="text" 
+                                                                           class="form-control form-control-lg" 
+                                                                           id="novo-cst-descricao" 
+                                                                           placeholder="Ex: Tributada integralmente"
+                                                                           autocomplete="off">
+                                                                    <div class="form-text">
+                                                                        <i class="fas fa-info-circle me-1"></i>
+                                                                        Digite o código e descrição do novo CST
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                                    <i class="fas fa-times me-1"></i>
+                                                                    Cancelar
+                                                                </button>
+                                                                <button type="button" class="btn btn-success" id="salvar-novo-cst">
+                                                                    <i class="fas fa-save me-1"></i>
+                                                                    Salvar CST
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-text">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Digite para buscar CSTs existentes ou crie um novo
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="aliquota_icms" class="form-label">Alíquota ICMS (%)</label>
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   id="aliquota_icms" 
+                                                   name="aliquota_icms" 
+                                                   step="0.01"
+                                                   min="0"
+                                                   max="100"
+                                                   placeholder="Ex: 18.00"
+                                                   value="{{ produto.aliquota_icms if produto else '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="valor_icms" class="form-label">Valor do ICMS (R$)</label>
+                                            <input type="text" 
+                                                   class="form-control currency-input" 
+                                                   id="valor_icms" 
+                                                   name="valor_icms" 
+                                                   placeholder="0,00"
+                                                   value="{{ produto.valor_icms|string|replace('.', ',') if produto and produto.valor_icms else '' }}">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="valor_ipi" class="form-label">Valor do IPI (R$)</label>
+                                            <input type="text" 
+                                                   class="form-control currency-input" 
+                                                   id="valor_ipi" 
+                                                   name="valor_ipi" 
+                                                   placeholder="0,00"
+                                                   value="{{ produto.valor_ipi|string|replace('.', ',') if produto and produto.valor_ipi else '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="observacoes_fiscais" class="form-label">Observações Fiscais</label>
+                                            <textarea class="form-control" 
+                                                      id="observacoes_fiscais" 
+                                                      name="observacoes_fiscais" 
+                                                      rows="3" 
+                                                      placeholder="Observações importantes sobre aspectos fiscais do produto">{{ produto.observacoes_fiscais if produto else '' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Seção de Fornecedor -->
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enable_supplier_info" onchange="toggleSection('supplier_info')">
+                                        <label class="form-check-label fw-bold" for="enable_supplier_info">
+                                            Informações do Fornecedor
+                                        </label>
+                                        <small class="text-muted ms-3">(Opcional)</small>
+                                    </div>
+                                </div>
+                                <div class="card-body" id="supplier_info" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="fornecedor_nome" class="form-label">Nome do Fornecedor</label>
+                                            <div class="fornecedor-autocomplete-container">
+                                                <div class="input-group">
+                                                    <span class="input-group-text bg-info text-white">
+                                                        <i class="fas fa-building"></i>
+                                                    </span>
+                                                    <input type="text" 
+                                                           class="form-control" 
+                                                           id="fornecedor_nome" 
+                                                           name="fornecedor_nome" 
+                                                           placeholder="Digite para buscar ou criar fornecedor..."
+                                                           value="{{ produto.fornecedor_nome if produto else '' }}"
+                                                           autocomplete="off">
+                                                    <button type="button" 
+                                                            class="btn btn-outline-success" 
+                                                            id="adicionar-novo-fornecedor"
+                                                            title="Adicionar novo fornecedor">
+                                                        <i class="fas fa-plus"></i>
+                                                    </button>
+                                                </div>
+                                                
+                                                <!-- Dropdown de sugestões Fornecedor -->
+                                                <div id="fornecedor-suggestions" class="fornecedor-suggestions" style="display: none;">
+                                                    <!-- Sugestões serão inseridas aqui via JavaScript -->
+                                                </div>
+                                                
+                                                <!-- Modal para novo Fornecedor -->
+                                                <div class="modal fade" id="novoFornecedorModal" tabindex="-1" aria-labelledby="novoFornecedorModalLabel" aria-hidden="true">
+                                                    <div class="modal-dialog modal-dialog-centered">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header bg-success text-white">
+                                                                <h5 class="modal-title" id="novoFornecedorModalLabel">
+                                                                    <i class="fas fa-building me-2"></i>
+                                                                    Novo Fornecedor
+                                                                </h5>
+                                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                <div class="mb-3">
+                                                                    <label for="novo-fornecedor-nome" class="form-label">
+                                                                        <i class="fas fa-building me-1"></i>
+                                                                        Nome do Fornecedor
+                                                                    </label>
+                                                                    <input type="text" 
+                                                                           class="form-control form-control-lg" 
+                                                                           id="novo-fornecedor-nome" 
+                                                                           placeholder="Ex: Empresa ABC Ltda"
+                                                                           autocomplete="off">
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="novo-fornecedor-cnpj" class="form-label">
+                                                                        <i class="fas fa-id-card me-1"></i>
+                                                                        CNPJ
+                                                                    </label>
+                                                                    <input type="text" 
+                                                                           class="form-control form-control-lg cnpj-input" 
+                                                                           id="novo-fornecedor-cnpj" 
+                                                                           placeholder="00.000.000/0000-00"
+                                                                           autocomplete="off">
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="novo-fornecedor-contato" class="form-label">
+                                                                        <i class="fas fa-user me-1"></i>
+                                                                        Pessoa de Contato
+                                                                    </label>
+                                                                    <input type="text" 
+                                                                           class="form-control form-control-lg" 
+                                                                           id="novo-fornecedor-contato" 
+                                                                           placeholder="Ex: João Silva"
+                                                                           autocomplete="off">
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="novo-fornecedor-telefone" class="form-label">
+                                                                        <i class="fas fa-phone me-1"></i>
+                                                                        Telefone
+                                                                    </label>
+                                                                    <input type="text" 
+                                                                           class="form-control form-control-lg phone-input" 
+                                                                           id="novo-fornecedor-telefone" 
+                                                                           placeholder="(00) 00000-0000"
+                                                                           autocomplete="off">
+                                                                </div>
+                                                                <div class="mb-3">
+                                                                    <label for="novo-fornecedor-email" class="form-label">
+                                                                        <i class="fas fa-envelope me-1"></i>
+                                                                        E-mail
+                                                                    </label>
+                                                                    <input type="email" 
+                                                                           class="form-control form-control-lg" 
+                                                                           id="novo-fornecedor-email" 
+                                                                           placeholder="contato@empresa.com"
+                                                                           autocomplete="off">
+                                                                </div>
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                                    <i class="fas fa-times me-1"></i>
+                                                                    Cancelar
+                                                                </button>
+                                                                <button type="button" class="btn btn-success" id="salvar-novo-fornecedor">
+                                                                    <i class="fas fa-save me-1"></i>
+                                                                    Salvar Fornecedor
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-text">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                Digite para buscar fornecedores existentes ou crie um novo
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="fornecedor_cnpj" class="form-label">CNPJ do Fornecedor</label>
+                                            <input type="text" 
+                                                   class="form-control cnpj-input" 
+                                                   id="fornecedor_cnpj" 
+                                                   name="fornecedor_cnpj" 
+                                                   placeholder="00.000.000/0000-00"
+                                                   value="{{ produto.fornecedor_cnpj if produto else '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="fornecedor_contato" class="form-label">Pessoa de Contato</label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="fornecedor_contato" 
+                                                   name="fornecedor_contato" 
+                                                   placeholder="Nome do representante"
+                                                   value="{{ produto.fornecedor_contato if produto else '' }}">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="fornecedor_telefone" class="form-label">Telefone</label>
+                                            <input type="text" 
+                                                   class="form-control phone-input" 
+                                                   id="fornecedor_telefone" 
+                                                   name="fornecedor_telefone" 
+                                                   placeholder="(00) 00000-0000"
+                                                   value="{{ produto.fornecedor_telefone if produto else '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="fornecedor_email" class="form-label">E-mail</label>
+                                            <input type="email" 
+                                                   class="form-control" 
+                                                   id="fornecedor_email" 
+                                                   name="fornecedor_email" 
+                                                   placeholder="contato@fornecedor.com"
+                                                   value="{{ produto.fornecedor_email if produto else '' }}">
+                                        </div>
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="fornecedor_endereco" class="form-label">Endereço do Fornecedor</label>
+                                            <textarea class="form-control" 
+                                                      id="fornecedor_endereco" 
+                                                      name="fornecedor_endereco" 
+                                                      rows="2" 
+                                                      placeholder="Endereço completo do fornecedor">{{ produto.fornecedor_endereco if produto else '' }}</textarea>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="observacoes_fornecedor" class="form-label">Observações sobre o Fornecedor</label>
+                                            <textarea class="form-control" 
+                                                      id="observacoes_fornecedor" 
+                                                      name="observacoes_fornecedor" 
+                                                      rows="2" 
+                                                      placeholder="Observações importantes sobre o fornecedor">{{ produto.observacoes_fornecedor if produto else '' }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr class="my-4">
+                                <div class="d-flex justify-content-end">
+                                    <button type="submit" class="btn btn-primary btn-lg px-4">
+                                        
+                                        {% if produto %}Atualizar Produto{% else %}Cadastrar Produto{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Preview Container -->
+        <div class="flex-fill" style="flex: 0 0 33.333333%;">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        Visualização do Produto
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <h4 id="preview-nome">Nome do Produto</h4>
+                            <p id="preview-descricao" class="text-muted">Descrição do produto aparecerá aqui</p>
+                            <div class="d-flex align-items-center gap-2 flex-wrap mb-3">
+                                <span class="badge bg-success fs-6" id="preview-preco">R$ 0,00</span>
+                                <span class="badge bg-primary" id="preview-categoria">Categoria</span>
+                                {% if produto and produto.codigo_barras %}
+                                <code id="preview-codigo">{{ produto.codigo_barras }}</code>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <small class="text-muted d-block">Estoque Atual</small>
+                                <div class="badge bg-primary fs-6" id="preview-estoque-atual">0</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <small class="text-muted d-block">Estoque Mínimo</small>
+                                <div class="badge bg-warning fs-6" id="preview-estoque-minimo">0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-3" id="estoque-status">
+                        <span class="badge bg-success" id="preview-status">Em Estoque</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Layout flexbox lado a lado */
+.d-flex.gap-3 {
+    display: flex !important;
+    gap: 1rem !important;
+    align-items: flex-start;
+}
+
+.d-flex.gap-3 > .flex-fill {
+    flex-shrink: 0;
+}
+
+/* Layout responsivo para formulário lado a lado */
+@media (max-width: 767.98px) {
+    .d-flex.gap-3 {
+        flex-direction: column !important;
+    }
+    
+    .d-flex.gap-3 > .flex-fill {
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
+    }
+    
+    .sticky-top {
+        position: static !important;
+    }
+}
+
+/* Melhorias na visualização */
+.card.sticky-top {
+    transition: all 0.3s ease;
+}
+
+.card.sticky-top:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+#preview-nome {
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+#preview-descricao {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.badge.fs-6 {
+    font-size: 0.875rem !important;
+    padding: 0.5rem 0.75rem;
+}
+.categoria-autocomplete-container,
+.cfop-autocomplete-container,
+.cst-autocomplete-container,
+.fornecedor-autocomplete-container {
+    position: relative;
+}
+
+.categoria-suggestions,
+.cfop-suggestions,
+.cst-suggestions,
+.fornecedor-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 0.375rem 0.375rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f8f9fa;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.suggestion-item:hover {
+    background-color: #f8f9fa;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item .suggestion-icon {
+    margin-right: 0.5rem;
+    color: #6c757d;
+    width: 16px;
+}
+
+.suggestion-item.selected {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.suggestion-item.new-category {
+    background-color: #f8f9fa;
+    font-style: italic;
+    color: #28a745;
+}
+
+.suggestion-item.new-category .suggestion-icon {
+    color: #28a745;
+}
+
+.no-suggestions {
+    padding: 0.75rem 1rem;
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+}
+
+.suggestion-highlight {
+    background-color: #fff3cd;
+    font-weight: 600;
+}
+
+/* Modal específico para nova categoria - CORRIGIDO */
+#novaCategoriaModal {
+    z-index: 9999 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+}
+
+#novaCategoriaModal .modal-backdrop {
+    z-index: 9998 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Garantir que o modal não interfira com outros elementos */
+#novaCategoriaModal .modal-content {
+    position: relative !important;
+    z-index: 10000 !important;
+    pointer-events: auto !important;
+    background: white !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Melhorar acessibilidade do modal */
+#novaCategoriaModal .modal-dialog {
+    z-index: 10000 !important;
+    pointer-events: auto !important;
+    position: relative !important;
+}
+
+/* Garantir que todos os elementos do modal sejam clicáveis */
+#novaCategoriaModal .modal-content * {
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 10001 !important;
+}
+
+/* Garantir que os botões sejam clicáveis */
+#novaCategoriaModal .btn {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    z-index: 10002 !important;
+}
+
+/* Garantir que o input seja clicável */
+#novaCategoriaModal input {
+    pointer-events: auto !important;
+    cursor: text !important;
+    z-index: 10002 !important;
+}
+
+/* Garantir que o body não trave quando o modal é aberto */
+body.modal-open {
+    overflow: hidden !important;
+    padding-right: 0 !important;
+}
+
+/* Remover qualquer overlay que possa estar bloqueando */
+#novaCategoriaModal::before {
+    display: none !important;
+}
+
+#novaCategoriaModal::after {
+    display: none !important;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Função para alternar seções colapsáveis
+function toggleSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (section) {
+        if (section.style.display === 'none' || section.style.display === '') {
+            section.style.display = 'block';
+            section.style.opacity = '0';
+            setTimeout(() => {
+                section.style.opacity = '1';
+            }, 10);
+        } else {
+            section.style.opacity = '0';
+            setTimeout(() => {
+                section.style.display = 'none';
+            }, 300);
+        }
+    }
+}
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Verificar se há dados existentes na seção de dados fiscais e habilitá-la automaticamente
+        const fiscalSection = document.getElementById('fiscal_info');
+        const fiscalCheckbox = document.getElementById('enable_fiscal_info');
+        
+        if (fiscalSection && fiscalCheckbox) {
+            // Verificar se há campos preenchidos na seção
+            const inputs = fiscalSection.querySelectorAll('input, select, textarea');
+            let hasData = false;
+            
+            inputs.forEach(input => {
+                if (input.type === 'checkbox') {
+                    if (input.checked) hasData = true;
+                } else if (input.type === 'radio') {
+                    if (input.checked) hasData = true;
+                } else if (input.value && input.value.trim() !== '') {
+                    hasData = true;
+                }
+            });
+            
+            if (hasData) {
+                fiscalCheckbox.checked = true;
+                fiscalSection.style.display = 'block';
+                fiscalSection.style.opacity = '1';
+            }
+        }
+
+        // Verificar se há dados existentes na seção de fornecedor e habilitá-la automaticamente
+        const supplierSection = document.getElementById('supplier_info');
+        const supplierCheckbox = document.getElementById('enable_supplier_info');
+        
+        if (supplierSection && supplierCheckbox) {
+            // Verificar se há campos preenchidos na seção
+            const inputs = supplierSection.querySelectorAll('input, select, textarea');
+            let hasData = false;
+            
+            inputs.forEach(input => {
+                if (input.type === 'checkbox') {
+                    if (input.checked) hasData = true;
+                } else if (input.type === 'radio') {
+                    if (input.checked) hasData = true;
+                } else if (input.value && input.value.trim() !== '') {
+                    hasData = true;
+                }
+            });
+            
+            if (hasData) {
+                supplierCheckbox.checked = true;
+                supplierSection.style.display = 'block';
+                supplierSection.style.opacity = '1';
+            }
+        }
+        // Real-time preview
+        const inputs = {
+            nome: document.getElementById('nome'),
+            descricao: document.getElementById('descricao'),
+            preco: document.getElementById('preco'),
+            categoria: document.getElementById('categoria'),
+            estoque_atual: document.getElementById('estoque_atual'),
+            estoque_minimo: document.getElementById('estoque_minimo'),
+            codigo_barras: document.getElementById('codigo_barras')
+        };
+
+        const previews = {
+            nome: document.getElementById('preview-nome'),
+            descricao: document.getElementById('preview-descricao'),
+            preco: document.getElementById('preview-preco'),
+            categoria: document.getElementById('preview-categoria'),
+            estoque_atual: document.getElementById('preview-estoque-atual'),
+            estoque_minimo: document.getElementById('preview-estoque-minimo'),
+            codigo: document.getElementById('preview-codigo'),
+            status: document.getElementById('preview-status')
+        };
+
+        // Preview otimizado com throttling
+        let updateScheduled = false;
+        function updatePreview() {
+            // Usar requestAnimationFrame para otimizar atualizações
+            if (!updateScheduled) {
+                updateScheduled = true;
+                requestAnimationFrame(() => {
+                    // Update basic info
+                    previews.nome.textContent = inputs.nome.value || 'Nome do Produto';
+                    previews.descricao.textContent = inputs.descricao.value || 'Descrição do produto aparecerá aqui';
+                    previews.categoria.textContent = inputs.categoria.value || 'Categoria';
+                    
+                    // Update price
+                    let precoValue = inputs.preco.value.replace(',', '.');
+                    const preco = parseFloat(precoValue) || 0;
+                    previews.preco.textContent = 'R$ ' + preco.toFixed(2).replace('.', ',');
+                    
+                    // Update stock
+                    const estoqueAtual = parseInt(inputs.estoque_atual.value) || 0;
+                    const estoqueMinimo = parseInt(inputs.estoque_minimo.value) || 0;
+                    
+                    previews.estoque_atual.textContent = estoqueAtual;
+                    previews.estoque_minimo.textContent = estoqueMinimo;
+                    
+                    // Update status
+                    if (estoqueAtual <= estoqueMinimo && estoqueMinimo > 0) {
+                        previews.status.textContent = 'Estoque Baixo';
+                        previews.status.className = 'badge bg-danger';
+                    } else if (estoqueAtual === 0) {
+                        previews.status.textContent = 'Sem Estoque';
+                        previews.status.className = 'badge bg-danger';
+                    } else {
+                        previews.status.textContent = 'Em Estoque';
+                        previews.status.className = 'badge bg-success';
+                    }
+                    
+                    // Update code if exists
+                    if (inputs.codigo_barras.value) {
+                        if (!previews.codigo) {
+                            const codeElement = document.createElement('code');
+                            codeElement.id = 'preview-codigo';
+                            document.querySelector('#preview-categoria').parentNode.appendChild(codeElement);
+                            previews.codigo = codeElement;
+                        }
+                        previews.codigo.textContent = inputs.codigo_barras.value;
+                    }
+                    
+                    updateScheduled = false;
+                });
+            }
+        }
+
+        // Add event listeners
+        Object.values(inputs).forEach(input => {
+            input.addEventListener('input', updatePreview);
+        });
+
+        // Sistema de Autocomplete para Categorias
+        const categoriaInput = document.getElementById('categoria');
+        const suggestionsContainer = document.getElementById('categoria-suggestions');
+        const adicionarNovaCategoriaBtn = document.getElementById('adicionar-nova-categoria');
+        const novaCategoriaModal = new bootstrap.Modal(document.getElementById('novaCategoriaModal'));
+        const novaCategoriaNome = document.getElementById('nova-categoria-nome');
+        const salvarNovaCategoriaBtn = document.getElementById('salvar-nova-categoria');
+        
+        // Lista de categorias existentes
+        let categoriasExistentes = [
+            'Eletrônicos', 'Roupas', 'Alimentícios', 'Casa e Jardim', 'Livros', 
+            'Beleza e Saúde', 'Esportes', 'Automotivo', 'Ferramentas', 'Brinquedos', 
+            'Pet Shop', 'Outros'
+        ];
+        
+        // Adicionar categorias existentes do sistema (do backend)
+        {% if categorias_existentes %}
+        categoriasExistentes.push(...{{ categorias_existentes|tojson }});
+        {% endif %}
+        
+        // Carregar categorias dinamicamente do backend
+        async function carregarCategorias() {
+            try {
+                const response = await fetch('/api/categorias');
+                if (response.ok) {
+                    const categoriasBackend = await response.json();
+                    // Adicionar categorias do backend sem duplicar
+                    categoriasBackend.forEach(categoria => {
+                        if (!categoriasExistentes.includes(categoria)) {
+                            categoriasExistentes.push(categoria);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.log('Erro ao carregar categorias do backend:', error);
+            }
+        }
+        
+        // Carregar categorias ao inicializar
+        carregarCategorias();
+        
+        // Sistema de Autocomplete para CFOP
+        const cfopInput = document.getElementById('cfop');
+        const cfopSuggestionsContainer = document.getElementById('cfop-suggestions');
+        const adicionarNovoCfopBtn = document.getElementById('adicionar-novo-cfop');
+        const novoCfopModal = new bootstrap.Modal(document.getElementById('novoCfopModal'));
+        const novoCfopCodigo = document.getElementById('novo-cfop-codigo');
+        const novoCfopDescricao = document.getElementById('novo-cfop-descricao');
+        const salvarNovoCfopBtn = document.getElementById('salvar-novo-cfop');
+        
+        // Lista de CFOPs existentes
+        let cfopsExistentes = [
+            '1102 - Compra para comercialização',
+            '1101 - Compra para industrialização',
+            '1202 - Devolução de venda',
+            '1403 - Compra para comercialização em operação com ST',
+            '1949 - Outras entradas não especificadas',
+            '5102 - Venda de mercadoria adquirida ou recebida com entrada',
+            '5101 - Venda de mercadoria adquirida ou recebida com entrada',
+            '6102 - Devolução de compra para comercialização',
+            '6101 - Devolução de compra para industrialização'
+        ];
+        
+        // Sistema de Autocomplete para CST
+        const cstInput = document.getElementById('cst');
+        const cstSuggestionsContainer = document.getElementById('cst-suggestions');
+        const adicionarNovoCstBtn = document.getElementById('adicionar-novo-cst');
+        const novoCstModal = new bootstrap.Modal(document.getElementById('novoCstModal'));
+        const novoCstCodigo = document.getElementById('novo-cst-codigo');
+        const novoCstDescricao = document.getElementById('novo-cst-descricao');
+        const salvarNovoCstBtn = document.getElementById('salvar-novo-cst');
+        
+        // Lista de CSTs existentes
+        let cstsExistentes = [
+            '00 - Tributada integralmente',
+            '10 - Tributada e com cobrança do ICMS por ST',
+            '20 - Com redução de base de cálculo',
+            '30 - Isenta ou não tributada e com cobrança do ICMS por ST',
+            '40 - Isenta',
+            '41 - Não tributada',
+            '50 - Suspensão',
+            '51 - Diferimento',
+            '60 - ICMS cobrado anteriormente por ST',
+            '70 - Com redução de base de cálculo e cobrança do ICMS por ST',
+            '90 - Outras'
+        ];
+        
+        // Sistema de Autocomplete para Fornecedores
+        const fornecedorInput = document.getElementById('fornecedor_nome');
+        const fornecedorSuggestionsContainer = document.getElementById('fornecedor-suggestions');
+        const adicionarNovoFornecedorBtn = document.getElementById('adicionar-novo-fornecedor');
+        const novoFornecedorModal = new bootstrap.Modal(document.getElementById('novoFornecedorModal'));
+        const novoFornecedorNome = document.getElementById('novo-fornecedor-nome');
+        const novoFornecedorCnpj = document.getElementById('novo-fornecedor-cnpj');
+        const novoFornecedorContato = document.getElementById('novo-fornecedor-contato');
+        const novoFornecedorTelefone = document.getElementById('novo-fornecedor-telefone');
+        const novoFornecedorEmail = document.getElementById('novo-fornecedor-email');
+        const salvarNovoFornecedorBtn = document.getElementById('salvar-novo-fornecedor');
+        
+        // Lista de fornecedores existentes (será carregada do backend)
+        let fornecedoresExistentes = [];
+        
+        // Carregar fornecedores do backend
+        async function carregarFornecedores() {
+            try {
+                const response = await fetch('/api/fornecedores');
+                if (response.ok) {
+                    const fornecedores = await response.json();
+                    fornecedoresExistentes = fornecedores.map(f => f.nome);
+                }
+            } catch (error) {
+                console.log('Erro ao carregar fornecedores do backend:', error);
+            }
+        }
+        
+        // Carregar fornecedores ao inicializar
+        carregarFornecedores();
+        
+        let selectedIndex = -1;
+        let suggestions = [];
+        
+        // Função para destacar texto correspondente
+        function highlightText(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            return text.replace(regex, '<span class="suggestion-highlight">$1</span>');
+        }
+        
+        // Função para mostrar sugestões
+        function showSuggestions(query) {
+            let regularSuggestions = [];
+            
+            // Se não há query ou query vazia, mostrar todas as categorias
+            if (!query || query.length < 1) {
+                regularSuggestions = categoriasExistentes
+                    .filter(categoria => categoria !== 'Outros') // Remover "Outros" da lista normal
+                    .map(categoria => ({
+                        text: categoria,
+                        isNew: false,
+                        originalText: categoria
+                    }));
+            } else {
+                // Filtrar categorias que correspondem à query
+                const filteredCategorias = categoriasExistentes
+                    .filter(categoria => categoria !== 'Outros') // Remover "Outros" da lista normal
+                    .filter(categoria => categoria.toLowerCase().includes(query.toLowerCase()));
+                
+                regularSuggestions = filteredCategorias.map(categoria => ({
+                    text: categoria,
+                    isNew: false,
+                    originalText: categoria
+                }));
+            }
+            
+            // Montar lista final com ordem específica
+            suggestions = [...regularSuggestions];
+            
+            // Verificar se "Outros" deve aparecer (se corresponde à query ou se não há query)
+            const shouldShowOutros = !query || 'outros'.includes(query.toLowerCase()) || query.toLowerCase().includes('outros');
+            
+            // Adicionar "Outros" em antepenúltimo (se deve aparecer)
+            if (shouldShowOutros) {
+                suggestions.push({
+                    text: 'Outros',
+                    isNew: false,
+                    originalText: 'Outros'
+                });
+            }
+            
+            // Sempre adicionar "Criar nova categoria" por último
+            if (!query || query.length < 1) {
+                suggestions.push({
+                    text: 'Criar nova categoria...',
+                    isNew: true,
+                    originalText: ''
+                });
+            } else {
+                // Se há query, sempre permitir criar nova categoria
+                suggestions.push({
+                    text: `Criar "${query}"`,
+                    isNew: true,
+                    originalText: query
+                });
+            }
+            
+            renderSuggestions();
+            showSuggestionsContainer();
+        }
+        
+        // Função para renderizar sugestões
+        function renderSuggestions() {
+            suggestionsContainer.innerHTML = '';
+            
+            suggestions.forEach((suggestion, index) => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.dataset.index = index;
+                
+                const icon = document.createElement('i');
+                icon.className = suggestion.isNew ? 'fas fa-plus suggestion-icon' : 'fas fa-folder suggestion-icon';
+                
+                const text = document.createElement('span');
+                const displayText = suggestion.text;
+                text.innerHTML = highlightText(displayText, categoriaInput.value);
+                
+                item.appendChild(icon);
+                item.appendChild(text);
+                
+                if (suggestion.isNew) {
+                    item.classList.add('new-category');
+                }
+                
+                suggestionsContainer.appendChild(item);
+            });
+            
+            selectedIndex = -1;
+        }
+        
+        // Função para mostrar container de sugestões
+        function showSuggestionsContainer() {
+            suggestionsContainer.style.display = 'block';
+        }
+        
+        // Função para esconder container de sugestões
+        function hideSuggestions() {
+            suggestionsContainer.style.display = 'none';
+            selectedIndex = -1;
+        }
+        
+        // Event listeners
+        categoriaInput.addEventListener('input', function() {
+            showSuggestions(this.value);
+        });
+        
+        // Mostrar categorias ao focar no campo (mesmo sem digitar)
+        categoriaInput.addEventListener('focus', function() {
+            showSuggestions(this.value);
+        });
+        
+        categoriaInput.addEventListener('keydown', function(e) {
+            if (suggestionsContainer.style.display === 'none') return;
+            
+            switch(e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    selectedIndex = Math.min(selectedIndex + 1, suggestions.length - 1);
+                    updateSelection();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    selectedIndex = Math.max(selectedIndex - 1, -1);
+                    updateSelection();
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (selectedIndex >= 0) {
+                        selectSuggestion(selectedIndex);
+                    }
+                    break;
+                case 'Escape':
+                    hideSuggestions();
+                    break;
+            }
+        });
+        
+        // Função para atualizar seleção visual
+        function updateSelection() {
+            const items = suggestionsContainer.querySelectorAll('.suggestion-item');
+            items.forEach((item, index) => {
+                item.classList.toggle('selected', index === selectedIndex);
+            });
+        }
+        
+        // Função para selecionar sugestão
+        function selectSuggestion(index) {
+            const suggestion = suggestions[index];
+            if (suggestion.isNew) {
+                // Abrir modal para criar nova categoria
+                novaCategoriaNome.value = suggestion.originalText;
+                novaCategoriaModal.show();
+            } else {
+                categoriaInput.value = suggestion.text;
+                hideSuggestions();
+            }
+        }
+        
+        // Event listener para cliques nas sugestões
+        suggestionsContainer.addEventListener('click', function(e) {
+            const item = e.target.closest('.suggestion-item');
+            if (item) {
+                const index = parseInt(item.dataset.index);
+                selectSuggestion(index);
+            }
+        });
+        
+        // Esconder sugestões quando clicar fora (melhorado para não interferir com modais)
+        document.addEventListener('click', function(e) {
+            // Não esconder se estiver clicando em um modal
+            if (e.target.closest('.modal')) {
+                return;
+            }
+            
+            if (!e.target.closest('.categoria-autocomplete-container')) {
+                hideSuggestions();
+            }
+            
+            if (!e.target.closest('.cfop-autocomplete-container')) {
+                hideCfopSuggestions();
+            }
+            
+            if (!e.target.closest('.cst-autocomplete-container')) {
+                hideCstSuggestions();
+            }
+            
+            if (!e.target.closest('.fornecedor-autocomplete-container')) {
+                hideFornecedorSuggestions();
+            }
+        });
+        
+        // Botão para adicionar nova categoria (MELHORADO)
+        adicionarNovaCategoriaBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Esconder sugestões antes de abrir o modal
+            hideSuggestions();
+            
+            // Definir valor inicial
+            novaCategoriaNome.value = categoriaInput.value || '';
+            
+            // Usar função segura para abrir modal
+            if (window.openCategoryModalSafely) {
+                window.openCategoryModalSafely();
+            } else {
+                // Fallback para método normal
+                novaCategoriaModal.show();
+                
+                // Aplicar correções manualmente
+                setTimeout(() => {
+                    if (window.fixCategoryModalIssues) {
+                        window.fixCategoryModalIssues();
+                    }
+                    
+                    novaCategoriaNome.focus();
+                    novaCategoriaNome.select();
+                }, 100);
+            }
+        });
+        
+        // Salvar nova categoria (melhorado)
+        salvarNovaCategoriaBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const novaCategoria = novaCategoriaNome.value.trim();
+            if (novaCategoria) {
+                // Adicionar à lista de categorias existentes
+                if (!categoriasExistentes.includes(novaCategoria)) {
+                    categoriasExistentes.push(novaCategoria);
+                }
+                
+                // Definir no campo
+                categoriaInput.value = novaCategoria;
+                
+                // Fechar modal
+                novaCategoriaModal.hide();
+                novaCategoriaNome.value = '';
+                
+                // Feedback visual
+                categoriaInput.style.borderColor = '#28a745';
+                setTimeout(() => {
+                    categoriaInput.style.borderColor = '';
+                }, 1000);
+                
+                hideSuggestions();
+                
+                // Salvar no backend e recarregar categorias
+                try {
+                    const response = await fetch('/api/categorias', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ categoria: novaCategoria })
+                    });
+                    
+                    if (response.ok) {
+                        // Recarregar categorias do backend
+                        await carregarCategorias();
+                        
+                        // Notificar outras abas sobre a nova categoria
+                        window.dispatchEvent(new CustomEvent('categoriaCriada', { 
+                            detail: { categoria: novaCategoria } 
+                        }));
+                    }
+                } catch (error) {
+                    console.log('Erro ao salvar categoria no backend:', error);
+                }
+            }
+        });
+        
+        // Permitir Enter no modal (melhorado)
+        novaCategoriaNome.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                salvarNovaCategoriaBtn.click();
+            }
+            
+            // Permitir Escape para fechar
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                novaCategoriaModal.hide();
+            }
+        });
+
+        // ===== SISTEMA DE AUTOCOMPLETE PARA CFOP =====
+        let cfopSelectedIndex = -1;
+        let cfopSuggestions = [];
+
+        // Função para mostrar sugestões CFOP
+        function showCfopSuggestions(query) {
+            if (!query || query.length < 1) {
+                cfopSuggestions = cfopsExistentes.map(cfop => ({
+                    text: cfop,
+                    isNew: false,
+                    originalText: cfop
+                }));
+                cfopSuggestions.push({
+                    text: 'Criar novo CFOP...',
+                    isNew: true,
+                    originalText: ''
+                });
+            } else {
+                const filteredCfops = cfopsExistentes.filter(cfop => 
+                    cfop.toLowerCase().includes(query.toLowerCase())
+                );
+                
+                cfopSuggestions = filteredCfops.map(cfop => ({
+                    text: cfop,
+                    isNew: false,
+                    originalText: cfop
+                }));
+                
+                if (cfopSuggestions.length === 0) {
+                    cfopSuggestions = [{
+                        text: `Criar "${query}"`,
+                        isNew: true,
+                        originalText: query
+                    }];
+                } else {
+                    cfopSuggestions.push({
+                        text: `Criar "${query}"`,
+                        isNew: true,
+                        originalText: query
+                    });
+                }
+            }
+            
+            renderCfopSuggestions();
+            showCfopSuggestionsContainer();
+        }
+
+        // Função para renderizar sugestões CFOP
+        function renderCfopSuggestions() {
+            cfopSuggestionsContainer.innerHTML = '';
+            
+            cfopSuggestions.forEach((suggestion, index) => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.dataset.index = index;
+                
+                const icon = document.createElement('i');
+                icon.className = suggestion.isNew ? 'fas fa-plus suggestion-icon' : 'fas fa-receipt suggestion-icon';
+                
+                const text = document.createElement('span');
+                text.innerHTML = highlightText(suggestion.text, cfopInput.value);
+                
+                item.appendChild(icon);
+                item.appendChild(text);
+                
+                if (suggestion.isNew) {
+                    item.classList.add('new-category');
+                }
+                
+                cfopSuggestionsContainer.appendChild(item);
+            });
+            
+            cfopSelectedIndex = -1;
+        }
+
+        // Função para mostrar container de sugestões CFOP
+        function showCfopSuggestionsContainer() {
+            cfopSuggestionsContainer.style.display = 'block';
+        }
+
+        // Função para esconder container de sugestões CFOP
+        function hideCfopSuggestions() {
+            cfopSuggestionsContainer.style.display = 'none';
+            cfopSelectedIndex = -1;
+        }
+
+        // Event listeners para CFOP
+        cfopInput.addEventListener('input', function() {
+            showCfopSuggestions(this.value);
+        });
+        
+        cfopInput.addEventListener('focus', function() {
+            showCfopSuggestions(this.value);
+        });
+
+        cfopInput.addEventListener('keydown', function(e) {
+            if (cfopSuggestionsContainer.style.display === 'none') return;
+            
+            switch(e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    cfopSelectedIndex = Math.min(cfopSelectedIndex + 1, cfopSuggestions.length - 1);
+                    updateCfopSelection();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    cfopSelectedIndex = Math.max(cfopSelectedIndex - 1, -1);
+                    updateCfopSelection();
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (cfopSelectedIndex >= 0) {
+                        selectCfopSuggestion(cfopSelectedIndex);
+                    }
+                    break;
+                case 'Escape':
+                    hideCfopSuggestions();
+                    break;
+            }
+        });
+
+        // Função para atualizar seleção visual CFOP
+        function updateCfopSelection() {
+            const items = cfopSuggestionsContainer.querySelectorAll('.suggestion-item');
+            items.forEach((item, index) => {
+                item.classList.toggle('selected', index === cfopSelectedIndex);
+            });
+        }
+
+        // Função para selecionar sugestão CFOP
+        function selectCfopSuggestion(index) {
+            const suggestion = cfopSuggestions[index];
+            if (suggestion.isNew) {
+                novoCfopCodigo.value = suggestion.originalText;
+                novoCfopModal.show();
+            } else {
+                cfopInput.value = suggestion.text;
+                hideCfopSuggestions();
+            }
+        }
+
+        // Event listener para cliques nas sugestões CFOP
+        cfopSuggestionsContainer.addEventListener('click', function(e) {
+            const item = e.target.closest('.suggestion-item');
+            if (item) {
+                const index = parseInt(item.dataset.index);
+                selectCfopSuggestion(index);
+            }
+        });
+
+        // Botão para adicionar novo CFOP
+        adicionarNovoCfopBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            hideCfopSuggestions();
+            novoCfopCodigo.value = cfopInput.value || '';
+            novoCfopModal.show();
+        });
+
+        // Salvar novo CFOP
+        salvarNovoCfopBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const codigo = novoCfopCodigo.value.trim();
+            const descricao = novoCfopDescricao.value.trim();
+            
+            if (codigo && descricao) {
+                const novoCfop = `${codigo} - ${descricao}`;
+                
+                if (!cfopsExistentes.includes(novoCfop)) {
+                    cfopsExistentes.push(novoCfop);
+                }
+                
+                cfopInput.value = novoCfop;
+                novoCfopModal.hide();
+                novoCfopCodigo.value = '';
+                novoCfopDescricao.value = '';
+                
+                cfopInput.style.borderColor = '#28a745';
+                setTimeout(() => {
+                    cfopInput.style.borderColor = '';
+                }, 1000);
+                
+                hideCfopSuggestions();
+            }
+        });
+
+        // ===== SISTEMA DE AUTOCOMPLETE PARA CST =====
+        let cstSelectedIndex = -1;
+        let cstSuggestions = [];
+
+        // Função para mostrar sugestões CST
+        function showCstSuggestions(query) {
+            if (!query || query.length < 1) {
+                cstSuggestions = cstsExistentes.map(cst => ({
+                    text: cst,
+                    isNew: false,
+                    originalText: cst
+                }));
+                cstSuggestions.push({
+                    text: 'Criar novo CST...',
+                    isNew: true,
+                    originalText: ''
+                });
+            } else {
+                const filteredCsts = cstsExistentes.filter(cst => 
+                    cst.toLowerCase().includes(query.toLowerCase())
+                );
+                
+                cstSuggestions = filteredCsts.map(cst => ({
+                    text: cst,
+                    isNew: false,
+                    originalText: cst
+                }));
+                
+                if (cstSuggestions.length === 0) {
+                    cstSuggestions = [{
+                        text: `Criar "${query}"`,
+                        isNew: true,
+                        originalText: query
+                    }];
+                } else {
+                    cstSuggestions.push({
+                        text: `Criar "${query}"`,
+                        isNew: true,
+                        originalText: query
+                    });
+                }
+            }
+            
+            renderCstSuggestions();
+            showCstSuggestionsContainer();
+        }
+
+        // Função para renderizar sugestões CST
+        function renderCstSuggestions() {
+            cstSuggestionsContainer.innerHTML = '';
+            
+            cstSuggestions.forEach((suggestion, index) => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.dataset.index = index;
+                
+                const icon = document.createElement('i');
+                icon.className = suggestion.isNew ? 'fas fa-plus suggestion-icon' : 'fas fa-percentage suggestion-icon';
+                
+                const text = document.createElement('span');
+                text.innerHTML = highlightText(suggestion.text, cstInput.value);
+                
+                item.appendChild(icon);
+                item.appendChild(text);
+                
+                if (suggestion.isNew) {
+                    item.classList.add('new-category');
+                }
+                
+                cstSuggestionsContainer.appendChild(item);
+            });
+            
+            cstSelectedIndex = -1;
+        }
+
+        // Função para mostrar container de sugestões CST
+        function showCstSuggestionsContainer() {
+            cstSuggestionsContainer.style.display = 'block';
+        }
+
+        // Função para esconder container de sugestões CST
+        function hideCstSuggestions() {
+            cstSuggestionsContainer.style.display = 'none';
+            cstSelectedIndex = -1;
+        }
+
+        // Event listeners para CST
+        cstInput.addEventListener('input', function() {
+            showCstSuggestions(this.value);
+        });
+        
+        cstInput.addEventListener('focus', function() {
+            showCstSuggestions(this.value);
+        });
+
+        cstInput.addEventListener('keydown', function(e) {
+            if (cstSuggestionsContainer.style.display === 'none') return;
+            
+            switch(e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    cstSelectedIndex = Math.min(cstSelectedIndex + 1, cstSuggestions.length - 1);
+                    updateCstSelection();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    cstSelectedIndex = Math.max(cstSelectedIndex - 1, -1);
+                    updateCstSelection();
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (cstSelectedIndex >= 0) {
+                        selectCstSuggestion(cstSelectedIndex);
+                    }
+                    break;
+                case 'Escape':
+                    hideCstSuggestions();
+                    break;
+            }
+        });
+
+        // Função para atualizar seleção visual CST
+        function updateCstSelection() {
+            const items = cstSuggestionsContainer.querySelectorAll('.suggestion-item');
+            items.forEach((item, index) => {
+                item.classList.toggle('selected', index === cstSelectedIndex);
+            });
+        }
+
+        // Função para selecionar sugestão CST
+        function selectCstSuggestion(index) {
+            const suggestion = cstSuggestions[index];
+            if (suggestion.isNew) {
+                novoCstCodigo.value = suggestion.originalText;
+                novoCstModal.show();
+            } else {
+                cstInput.value = suggestion.text;
+                hideCstSuggestions();
+            }
+        }
+
+        // Event listener para cliques nas sugestões CST
+        cstSuggestionsContainer.addEventListener('click', function(e) {
+            const item = e.target.closest('.suggestion-item');
+            if (item) {
+                const index = parseInt(item.dataset.index);
+                selectCstSuggestion(index);
+            }
+        });
+
+        // Botão para adicionar novo CST
+        adicionarNovoCstBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            hideCstSuggestions();
+            novoCstCodigo.value = cstInput.value || '';
+            novoCstModal.show();
+        });
+
+        // Salvar novo CST
+        salvarNovoCstBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const codigo = novoCstCodigo.value.trim();
+            const descricao = novoCstDescricao.value.trim();
+            
+            if (codigo && descricao) {
+                const novoCst = `${codigo} - ${descricao}`;
+                
+                if (!cstsExistentes.includes(novoCst)) {
+                    cstsExistentes.push(novoCst);
+                }
+                
+                cstInput.value = novoCst;
+                novoCstModal.hide();
+                novoCstCodigo.value = '';
+                novoCstDescricao.value = '';
+                
+                cstInput.style.borderColor = '#28a745';
+                setTimeout(() => {
+                    cstInput.style.borderColor = '';
+                }, 1000);
+                
+                hideCstSuggestions();
+            }
+        });
+
+        // ===== SISTEMA DE AUTOCOMPLETE PARA FORNECEDORES =====
+        let fornecedorSelectedIndex = -1;
+        let fornecedorSuggestions = [];
+
+        // Função para mostrar sugestões de fornecedores
+        function showFornecedorSuggestions(query) {
+            if (!query || query.length < 1) {
+                fornecedorSuggestions = fornecedoresExistentes.map(fornecedor => ({
+                    text: fornecedor,
+                    isNew: false,
+                    originalText: fornecedor
+                }));
+                fornecedorSuggestions.push({
+                    text: 'Criar novo fornecedor...',
+                    isNew: true,
+                    originalText: ''
+                });
+            } else {
+                const filteredFornecedores = fornecedoresExistentes.filter(fornecedor => 
+                    fornecedor.toLowerCase().includes(query.toLowerCase())
+                );
+                
+                fornecedorSuggestions = filteredFornecedores.map(fornecedor => ({
+                    text: fornecedor,
+                    isNew: false,
+                    originalText: fornecedor
+                }));
+                
+                if (fornecedorSuggestions.length === 0) {
+                    fornecedorSuggestions = [{
+                        text: `Criar "${query}"`,
+                        isNew: true,
+                        originalText: query
+                    }];
+                } else {
+                    fornecedorSuggestions.push({
+                        text: `Criar "${query}"`,
+                        isNew: true,
+                        originalText: query
+                    });
+                }
+            }
+            
+            renderFornecedorSuggestions();
+            showFornecedorSuggestionsContainer();
+        }
+
+        // Função para renderizar sugestões de fornecedores
+        function renderFornecedorSuggestions() {
+            fornecedorSuggestionsContainer.innerHTML = '';
+            
+            fornecedorSuggestions.forEach((suggestion, index) => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.dataset.index = index;
+                
+                const icon = document.createElement('i');
+                icon.className = suggestion.isNew ? 'fas fa-plus suggestion-icon' : 'fas fa-building suggestion-icon';
+                
+                const text = document.createElement('span');
+                text.innerHTML = highlightText(suggestion.text, fornecedorInput.value);
+                
+                item.appendChild(icon);
+                item.appendChild(text);
+                
+                if (suggestion.isNew) {
+                    item.classList.add('new-category');
+                }
+                
+                fornecedorSuggestionsContainer.appendChild(item);
+            });
+            
+            fornecedorSelectedIndex = -1;
+        }
+
+        // Função para mostrar container de sugestões de fornecedores
+        function showFornecedorSuggestionsContainer() {
+            fornecedorSuggestionsContainer.style.display = 'block';
+        }
+
+        // Função para esconder container de sugestões de fornecedores
+        function hideFornecedorSuggestions() {
+            fornecedorSuggestionsContainer.style.display = 'none';
+            fornecedorSelectedIndex = -1;
+        }
+
+        // Event listeners para fornecedores
+        fornecedorInput.addEventListener('input', function() {
+            showFornecedorSuggestions(this.value);
+        });
+        
+        fornecedorInput.addEventListener('focus', function() {
+            showFornecedorSuggestions(this.value);
+        });
+
+        fornecedorInput.addEventListener('keydown', function(e) {
+            if (fornecedorSuggestionsContainer.style.display === 'none') return;
+            
+            switch(e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    fornecedorSelectedIndex = Math.min(fornecedorSelectedIndex + 1, fornecedorSuggestions.length - 1);
+                    updateFornecedorSelection();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    fornecedorSelectedIndex = Math.max(fornecedorSelectedIndex - 1, -1);
+                    updateFornecedorSelection();
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (fornecedorSelectedIndex >= 0) {
+                        selectFornecedorSuggestion(fornecedorSelectedIndex);
+                    }
+                    break;
+                case 'Escape':
+                    hideFornecedorSuggestions();
+                    break;
+            }
+        });
+
+        // Função para atualizar seleção visual de fornecedores
+        function updateFornecedorSelection() {
+            const items = fornecedorSuggestionsContainer.querySelectorAll('.suggestion-item');
+            items.forEach((item, index) => {
+                item.classList.toggle('selected', index === fornecedorSelectedIndex);
+            });
+        }
+
+        // Função para selecionar sugestão de fornecedor
+        function selectFornecedorSuggestion(index) {
+            const suggestion = fornecedorSuggestions[index];
+            if (suggestion.isNew) {
+                novoFornecedorNome.value = suggestion.originalText;
+                novoFornecedorModal.show();
+            } else {
+                fornecedorInput.value = suggestion.text;
+                hideFornecedorSuggestions();
+            }
+        }
+
+        // Event listener para cliques nas sugestões de fornecedores
+        fornecedorSuggestionsContainer.addEventListener('click', function(e) {
+            const item = e.target.closest('.suggestion-item');
+            if (item) {
+                const index = parseInt(item.dataset.index);
+                selectFornecedorSuggestion(index);
+            }
+        });
+
+        // Botão para adicionar novo fornecedor
+        adicionarNovoFornecedorBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            hideFornecedorSuggestions();
+            novoFornecedorNome.value = fornecedorInput.value || '';
+            novoFornecedorModal.show();
+        });
+
+        // Salvar novo fornecedor
+        salvarNovoFornecedorBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const nome = novoFornecedorNome.value.trim();
+            const cnpj = novoFornecedorCnpj.value.trim();
+            const contato = novoFornecedorContato.value.trim();
+            const telefone = novoFornecedorTelefone.value.trim();
+            const email = novoFornecedorEmail.value.trim();
+            
+            if (nome) {
+                try {
+                    // Salvar fornecedor no backend
+                    const response = await fetch('/api/fornecedores', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            nome: nome,
+                            cnpj: cnpj,
+                            contato: contato,
+                            telefone: telefone,
+                            email: email
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        // Adicionar à lista local
+                        if (!fornecedoresExistentes.includes(nome)) {
+                            fornecedoresExistentes.push(nome);
+                        }
+                        
+                        // Preencher o campo
+                        fornecedorInput.value = nome;
+                        
+                        // Fechar modal e limpar campos
+                        novoFornecedorModal.hide();
+                        novoFornecedorNome.value = '';
+                        novoFornecedorCnpj.value = '';
+                        novoFornecedorContato.value = '';
+                        novoFornecedorTelefone.value = '';
+                        novoFornecedorEmail.value = '';
+                        
+                        // Feedback visual
+                        fornecedorInput.style.borderColor = '#28a745';
+                        setTimeout(() => {
+                            fornecedorInput.style.borderColor = '';
+                        }, 1000);
+                        
+                        hideFornecedorSuggestions();
+                    } else {
+                        alert('Erro ao salvar fornecedor. Tente novamente.');
+                    }
+                } catch (error) {
+                    console.error('Erro ao salvar fornecedor:', error);
+                    alert('Erro ao salvar fornecedor. Tente novamente.');
+                }
+            }
+        });
+        
+        // Adicionar event listeners para o modal (MELHORADO)
+        const modalElement = document.getElementById('novaCategoriaModal');
+        if (modalElement) {
+            // Quando o modal é mostrado
+            modalElement.addEventListener('shown.bs.modal', function() {
+                // Forçar z-index alto
+                modalElement.style.zIndex = '9999';
+                modalElement.querySelector('.modal-content').style.zIndex = '10000';
+                
+                // Garantir que todos os elementos sejam clicáveis
+                const allElements = modalElement.querySelectorAll('*');
+                allElements.forEach(el => {
+                    el.style.pointerEvents = 'auto';
+                    el.style.position = 'relative';
+                    el.style.zIndex = '10001';
+                });
+                
+                // Focar no campo
+                setTimeout(() => {
+                    novaCategoriaNome.focus();
+                    novaCategoriaNome.select();
+                }, 100);
+            });
+            
+            // Quando o modal é escondido
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                novaCategoriaNome.value = '';
+                
+                // Limpar todos os estilos aplicados
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+                document.body.classList.remove('modal-open');
+                
+                // Remover backdrops duplicados
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(backdrop => backdrop.remove());
+                
+                // Garantir que o site não trave
+                document.body.style.pointerEvents = 'auto';
+            });
+            
+            // Quando o modal está sendo mostrado
+            modalElement.addEventListener('show.bs.modal', function() {
+                // Limpar qualquer problema anterior
+                document.body.style.pointerEvents = 'auto';
+                
+                // Garantir que o modal tenha prioridade
+                modalElement.style.display = 'block';
+                modalElement.style.zIndex = '9999';
+            });
+        }
+
+        // Currency formatting for price field - improved version
+        function formatPriceField(input) {
+            let value = input.value;
+            
+            // Remove tudo exceto números e vírgula
+            value = value.replace(/[^\d,]/g, '');
+            
+            // Garantir apenas uma vírgula
+            const commaCount = (value.match(/,/g) || []).length;
+            if (commaCount > 1) {
+                value = value.replace(/,/g, '');
+                value = value.replace(/(\d{2})$/, ',$1');
+            }
+            
+            // Limitar a 2 casas decimais após a vírgula
+            const parts = value.split(',');
+            if (parts[1] && parts[1].length > 2) {
+                parts[1] = parts[1].substring(0, 2);
+                value = parts.join(',');
+            }
+            
+            input.value = value;
+        }
+
+        // Aplicar formatação de moeda para todos os campos currency-input
+        document.querySelectorAll('.currency-input').forEach(input => {
+            input.addEventListener('input', function(e) {
+                formatPriceField(e.target);
+            });
+        });
+
+        // Remove existing event listeners to avoid conflicts
+        inputs.preco.removeEventListener('input', formatPriceField);
+        inputs.preco.removeEventListener('keydown', handlePriceKeydown);
+        
+        // Add improved event listeners
+        inputs.preco.addEventListener('input', function(e) {
+            formatPriceField(e.target);
+        });
+
+        // Allow proper editing for price field
+        inputs.preco.addEventListener('keydown', function(e) {
+            // Allow backspace, delete, tab, escape, enter, arrow keys
+            if ([8, 46, 9, 27, 13, 37, 38, 39, 40].indexOf(e.keyCode) !== -1 ||
+                // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                (e.keyCode === 65 && e.ctrlKey === true) ||
+                (e.keyCode === 67 && e.ctrlKey === true) ||
+                (e.keyCode === 86 && e.ctrlKey === true) ||
+                (e.keyCode === 88 && e.ctrlKey === true) ||
+                // Allow home, end
+                (e.keyCode >= 35 && e.keyCode <= 36)) {
+                return;
+            }
+            
+            // Allow numbers and comma
+            if ((e.keyCode >= 48 && e.keyCode <= 57) || // numbers
+                (e.keyCode >= 96 && e.keyCode <= 105) || // numpad numbers
+                (e.keyCode === 188 || e.keyCode === 190)) { // comma
+                return;
+            }
+            
+            // Block everything else
+            e.preventDefault();
+        });
+
+        // Initial update
+        updatePreview();
+
+        // Form validation
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(e) {
+            const estoqueAtual = parseInt(inputs.estoque_atual.value) || 0;
+            const estoqueMinimo = parseInt(inputs.estoque_minimo.value) || 0;
+            const precoValue = inputs.preco.value.replace(',', '.');
+            const preco = parseFloat(precoValue) || 0;
+            
+            if (preco <= 0) {
+                e.preventDefault();
+                alert('O preço deve ser maior que zero.');
+                inputs.preco.focus();
+                return;
+            }
+            
+            if (estoqueAtual < 0) {
+                e.preventDefault();
+                alert('O estoque atual não pode ser negativo.');
+                inputs.estoque_atual.focus();
+                return;
+            }
+            
+            if (estoqueMinimo < 0) {
+                e.preventDefault();
+                alert('O estoque mínimo não pode ser negativo.');
+                inputs.estoque_minimo.focus();
+                return;
+            }
+        });
+        
+        // Ensure description textarea is interactive
+        const descricaoTextarea = document.getElementById('descricao');
+        if (descricaoTextarea) {
+            // Remove any potential blocking attributes
+            descricaoTextarea.removeAttribute('disabled');
+            descricaoTextarea.removeAttribute('readonly');
+            
+            // Ensure it's interactive
+            descricaoTextarea.style.pointerEvents = 'auto';
+            descricaoTextarea.style.zIndex = '1';
+            descricaoTextarea.style.position = 'relative';
+            
+            // Add focus event to ensure it's working
+            descricaoTextarea.addEventListener('focus', function() {
+                console.log('Description textarea focused - working correctly');
+            });
+            
+            // Add input event to ensure typing works
+            descricaoTextarea.addEventListener('input', function() {
+                console.log('Description textarea input detected - working correctly');
+            });
+            
+            // Force enable the textarea
+            descricaoTextarea.disabled = false;
+            descricaoTextarea.readOnly = false;
+        }
+    });
+</script>
+{% endblock %}
+

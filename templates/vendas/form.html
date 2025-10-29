@@ -1,0 +1,560 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Nova Venda - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>
+                
+                Nova Venda
+            </h2>
+            <p class="text-muted">Realize uma nova venda</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('vendas') }}" class="btn btn-outline-secondary">
+                
+                Voltar para Vendas
+            </a>
+        </div>
+    </div>
+
+    <!-- Sale Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <form method="POST" id="sale-form" class="needs-validation" novalidate data-offline-queue="true">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <!-- Customer Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            
+                            Informações do Cliente
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cliente_id" class="form-label">
+                                    
+                                    Cliente
+                                </label>
+                                <select class="form-select" id="cliente_id" name="cliente_id">
+                                    <option value="">Cliente Avulso</option>
+                                    {% for cliente in clientes %}
+                                    <option value="{{ cliente.id }}">{{ cliente.nome }} - {{ cliente.telefone or cliente.email or 'Sem contato' }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    Selecione um cliente cadastrado ou deixe em branco para cliente avulso
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Products Section -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            
+                            Produtos da Venda
+                        </h5>
+                        <button type="button" id="add-item-btn" class="btn btn-success btn-sm">
+                            
+                            Adicionar Produto
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="sale-items">
+                            <!-- Items will be added here dynamically -->
+                        </div>
+                        
+                        <div class="text-center mt-3" id="no-items-message">
+                            
+                            <h5 class="text-muted">Nenhum produto adicionado</h5>
+                            <p class="text-muted">Clique em "Adicionar Produto" para começar</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            
+                            Informações de Pagamento
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="forma_pagamento" class="form-label">
+                                    
+                                    Forma de Pagamento
+                                </label>
+                                <select class="form-select" id="forma_pagamento" name="forma_pagamento" required>
+                                    <option value="">Selecione a forma de pagamento</option>
+                                    <option value="dinheiro">Dinheiro</option>
+                                    <option value="cartao_debito">Cartão de Débito</option>
+                                    <option value="cartao_credito">Cartão de Crédito</option>
+                                    <option value="pix">PIX</option>
+                                    <option value="transferencia">Transferência Bancária</option>
+                                    <option value="cheque">Cheque</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Por favor, selecione a forma de pagamento.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="observacoes" class="form-label">
+                                    
+                                    Observações
+                                </label>
+                                <textarea class="form-control" 
+                                          id="observacoes" 
+                                          name="observacoes" 
+                                          rows="3" 
+                                          placeholder="Observações sobre a venda..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('vendas') }}" class="btn btn-outline-secondary">
+                        
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-success" id="submit-btn" disabled>
+                        
+                        Finalizar Venda
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Sale Summary -->
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        
+                        Resumo da Venda
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Campo de Cupom -->
+                    <div class="mb-3">
+                        <label for="cupom_codigo" class="form-label">
+                            
+                            Cupom de Desconto
+                        </label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="cupom_codigo" 
+                                   name="cupom_codigo" 
+                                   placeholder="Digite o código do cupom"
+                                   style="text-transform: uppercase;">
+                            <button class="btn btn-outline-secondary" 
+                                    type="button" 
+                                    id="validar-cupom-btn">
+                                
+                            </button>
+                        </div>
+                        <div id="cupom-message" class="form-text"></div>
+                    </div>
+                    
+                    <div id="sale-summary">
+                        <div class="text-center text-muted py-4">
+                            
+                            <p class="mb-0">Adicione produtos para ver o resumo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let itemCount = 0;
+        let cupomAtivo = null; // Armazenar dados do cupom ativo
+        const itemsContainer = document.getElementById('sale-items');
+        const noItemsMessage = document.getElementById('no-items-message');
+        const submitBtn = document.getElementById('submit-btn');
+        const saleSummary = document.getElementById('sale-summary');
+        const cupomInput = document.getElementById('cupom_codigo');
+        const validarCupomBtn = document.getElementById('validar-cupom-btn');
+        const cupomMessage = document.getElementById('cupom-message');
+        
+        // Add first item automatically
+        addSaleItem();
+        
+        function addSaleItem() {
+            itemCount++;
+            const itemHtml = `
+                <div class="row sale-item mb-3" data-item="${itemCount}">
+                    <div class="col-md-5">
+                        <label class="form-label">Produto</label>
+                        <select class="form-select produto-select" name="produto_${itemCount}" required>
+                            <option value="">Selecione um produto</option>
+                            {% for produto in produtos %}
+                            <option value="{{ produto.id }}" 
+                                    data-preco="{{ produto.preco }}" 
+                                    data-estoque="{{ produto.estoque_atual }}"
+                                    data-nome="{{ produto.nome }}">
+                                {{ produto.nome }} - R$ {{ "%.2f"|format(produto.preco) }} (Estoque: {{ produto.estoque_atual }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Quantidade</label>
+                        <input type="number" class="form-control quantidade-input" name="quantidade_${itemCount}" min="1" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Preço Unit.</label>
+                        <input type="text" class="form-control preco-input" readonly>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Subtotal</label>
+                        <input type="text" class="form-control subtotal-input" readonly>
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="button" class="btn btn-danger btn-sm d-block remove-item-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3,6 5,6 21,6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+            itemsContainer.insertAdjacentHTML('beforeend', itemHtml);
+            noItemsMessage.style.display = 'none';
+            updateSubmitButton();
+        }
+        
+        // Add item button
+        document.getElementById('add-item-btn').addEventListener('click', addSaleItem);
+        
+        // Handle product selection
+        itemsContainer.addEventListener('change', function(e) {
+            if (e.target.classList.contains('produto-select')) {
+                const selectedOption = e.target.selectedOptions[0];
+                const itemRow = e.target.closest('.sale-item');
+                const precoInput = itemRow.querySelector('.preco-input');
+                
+                if (selectedOption && selectedOption.dataset.preco) {
+                    const preco = parseFloat(selectedOption.dataset.preco);
+                    precoInput.value = 'R$ ' + preco.toFixed(2).replace('.', ',');
+                    calculateSubtotal(itemRow);
+                } else {
+                    precoInput.value = '';
+                    itemRow.querySelector('.subtotal-input').value = '';
+                }
+                updateSaleSummary();
+                updateSubmitButton();
+            }
+        });
+        
+        // Handle quantity change
+        itemsContainer.addEventListener('input', function(e) {
+            if (e.target.classList.contains('quantidade-input')) {
+                const itemRow = e.target.closest('.sale-item');
+                const quantidade = parseInt(e.target.value);
+                const selectedOption = itemRow.querySelector('.produto-select').selectedOptions[0];
+                
+                if (selectedOption && selectedOption.dataset.estoque) {
+                    const estoque = parseInt(selectedOption.dataset.estoque);
+                    if (quantidade > estoque) {
+                        e.target.setCustomValidity(`Estoque insuficiente. Disponível: ${estoque}`);
+                        e.target.reportValidity();
+                        return;
+                    } else {
+                        e.target.setCustomValidity('');
+                    }
+                }
+                
+                calculateSubtotal(itemRow);
+                updateSaleSummary();
+                updateSubmitButton();
+            }
+        });
+        
+        // Remove item
+        itemsContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-item-btn') || e.target.closest('.remove-item-btn')) {
+                const itemRow = e.target.closest('.sale-item');
+                itemRow.remove();
+                
+                const remainingItems = itemsContainer.querySelectorAll('.sale-item');
+                if (remainingItems.length === 0) {
+                    noItemsMessage.style.display = 'block';
+                }
+                
+                updateSaleSummary();
+                updateSubmitButton();
+            }
+        });
+        
+        function calculateSubtotal(itemRow) {
+            const quantidade = parseInt(itemRow.querySelector('.quantidade-input').value) || 0;
+            const precoText = itemRow.querySelector('.preco-input').value.replace('R$ ', '').replace(',', '.');
+            const preco = parseFloat(precoText) || 0;
+            const subtotal = quantidade * preco;
+            
+            itemRow.querySelector('.subtotal-input').value = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
+        }
+        
+        // Add improved input handling for quantity fields
+        itemsContainer.addEventListener('input', function(e) {
+            if (e.target.classList.contains('quantidade-input')) {
+                const itemRow = e.target.closest('.sale-item');
+                const quantidade = parseInt(e.target.value) || 0;
+                const selectedOption = itemRow.querySelector('.produto-select').selectedOptions[0];
+                
+                if (selectedOption && selectedOption.dataset.estoque) {
+                    const estoque = parseInt(selectedOption.dataset.estoque);
+                    if (quantidade > estoque) {
+                        e.target.setCustomValidity(`Estoque insuficiente. Disponível: ${estoque}`);
+                        e.target.reportValidity();
+                        return;
+                    } else {
+                        e.target.setCustomValidity('');
+                    }
+                }
+                
+                calculateSubtotal(itemRow);
+                updateSaleSummary();
+                updateSubmitButton();
+            }
+        });
+        
+        function updateSaleSummary() {
+            const items = itemsContainer.querySelectorAll('.sale-item');
+            let totalItems = 0;
+            let totalValue = 0;
+            let summaryHtml = '';
+            
+            items.forEach(item => {
+                const quantidade = parseInt(item.querySelector('.quantidade-input').value) || 0;
+                const subtotalText = item.querySelector('.subtotal-input').value.replace('R$ ', '').replace(',', '.');
+                const subtotal = parseFloat(subtotalText) || 0;
+                const produtoSelect = item.querySelector('.produto-select');
+                const selectedOption = produtoSelect.selectedOptions[0];
+                
+                if (quantidade > 0 && subtotal > 0 && selectedOption) {
+                    totalItems += quantidade;
+                    totalValue += subtotal;
+                    
+                    summaryHtml += `
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <small class="fw-bold">${selectedOption.dataset.nome}</small>
+                                <br><small class="text-muted">${quantidade}x R$ ${parseFloat(selectedOption.dataset.preco).toFixed(2).replace('.', ',')}</small>
+                            </div>
+                            <span class="badge bg-primary">R$ ${subtotal.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                    `;
+                }
+            });
+            
+            if (totalItems > 0) {
+                // Calcular desconto
+                const desconto = calcularDesconto(totalValue);
+                const valorFinal = totalValue - desconto;
+                
+                summaryHtml += `
+                    <hr>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold">Total de Itens:</span>
+                        <span class="badge bg-secondary">${totalItems}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold">Subtotal:</span>
+                        <span class="badge bg-primary">R$ ${totalValue.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                `;
+                
+                if (desconto > 0) {
+                    summaryHtml += `
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-success">Desconto:</span>
+                            <span class="badge bg-success">-R$ ${desconto.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                    `;
+                }
+                
+                summaryHtml += `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold fs-5">Valor Final:</span>
+                        <span class="badge bg-success fs-5">R$ ${valorFinal.toFixed(2).replace('.', ',')}</span>
+                    </div>
+                `;
+            } else {
+                summaryHtml = `
+                    <div class="text-center text-muted py-4">
+                        
+                        <p class="mb-0">Adicione produtos para ver o resumo</p>
+                    </div>
+                `;
+            }
+            
+            saleSummary.innerHTML = summaryHtml;
+        }
+        
+        function updateSubmitButton() {
+            const items = itemsContainer.querySelectorAll('.sale-item');
+            let hasValidItems = false;
+            
+            items.forEach(item => {
+                const quantidade = parseInt(item.querySelector('.quantidade-input').value) || 0;
+                const subtotalText = item.querySelector('.subtotal-input').value.replace('R$ ', '').replace(',', '.');
+                const subtotal = parseFloat(subtotalText) || 0;
+                
+                if (quantidade > 0 && subtotal > 0) {
+                    hasValidItems = true;
+                }
+            });
+            
+            submitBtn.disabled = !hasValidItems;
+        }
+        
+        // Form validation
+        const form = document.getElementById('sale-form');
+        form.addEventListener('submit', function(e) {
+            const items = itemsContainer.querySelectorAll('.sale-item');
+            let hasValidItems = false;
+            
+            items.forEach(item => {
+                const produtoSelect = item.querySelector('.produto-select');
+                const quantidade = parseInt(item.querySelector('.quantidade-input').value) || 0;
+                
+                if (produtoSelect.value && quantidade > 0) {
+                    hasValidItems = true;
+                }
+            });
+            
+            if (!hasValidItems) {
+                e.preventDefault();
+                alert('Adicione pelo menos um produto à venda.');
+                return;
+            }
+            
+            const formaPagamento = document.getElementById('forma_pagamento').value;
+            if (!formaPagamento) {
+                e.preventDefault();
+                alert('Selecione a forma de pagamento.');
+                document.getElementById('forma_pagamento').focus();
+                return;
+            }
+        });
+        
+        // Funções para cupons
+        function validarCupom() {
+            const codigo = cupomInput.value.trim().toUpperCase();
+            
+            if (!codigo) {
+                cupomMessage.innerHTML = '<span class="text-muted">Digite um código de cupom</span>';
+                cupomAtivo = null;
+                updateSaleSummary();
+                return;
+            }
+            
+            fetch(`/api/cupom/${encodeURIComponent(codigo)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.valido) {
+                        cupomAtivo = data.cupom;
+                        cupomMessage.innerHTML = `<span class="text-success">${data.cupom.descricao || 'Cupom válido'}</span>`;
+                        validarCupomBtn.innerHTML = '';
+                        validarCupomBtn.className = 'btn btn-outline-danger';
+                        updateSaleSummary();
+                    } else {
+                        cupomAtivo = null;
+                        cupomMessage.innerHTML = `<span class="text-danger">${data.mensagem}</span>`;
+                        validarCupomBtn.innerHTML = '';
+                        validarCupomBtn.className = 'btn btn-outline-secondary';
+                        updateSaleSummary();
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro ao validar cupom:', error);
+                    cupomAtivo = null;
+                    cupomMessage.innerHTML = '<span class="text-danger">Erro ao validar cupom</span>';
+                    updateSaleSummary();
+                });
+        }
+        
+        function removerCupom() {
+            cupomAtivo = null;
+            cupomInput.value = '';
+            cupomMessage.innerHTML = '<span class="text-muted">Digite um código de cupom</span>';
+            validarCupomBtn.innerHTML = '';
+            validarCupomBtn.className = 'btn btn-outline-secondary';
+            updateSaleSummary();
+        }
+        
+        function calcularDesconto(valorTotal) {
+            if (!cupomAtivo) return 0;
+            
+            const valorMinimo = cupomAtivo.valor_minimo_compra || 0;
+            if (valorTotal < valorMinimo) return 0;
+            
+            let desconto = 0;
+            
+            if (cupomAtivo.tipo_desconto === 'percentual') {
+                desconto = valorTotal * (cupomAtivo.valor_desconto / 100);
+                if (cupomAtivo.valor_maximo_desconto) {
+                    desconto = Math.min(desconto, cupomAtivo.valor_maximo_desconto);
+                }
+            } else {
+                desconto = Math.min(cupomAtivo.valor_desconto, valorTotal);
+            }
+            
+            return desconto;
+        }
+        
+        // Event listeners para cupons
+        validarCupomBtn.addEventListener('click', function() {
+            if (cupomAtivo) {
+                removerCupom();
+            } else {
+                validarCupom();
+            }
+        });
+        
+        cupomInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (cupomAtivo) {
+                    removerCupom();
+                } else {
+                    validarCupom();
+                }
+            }
+        });
+        
+        cupomInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    });
+</script>
+{% endblock %}
+

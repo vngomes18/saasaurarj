@@ -1,0 +1,26 @@
+# Versões compatíveis para Render (sem pandas para evitar conflitos)
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Migrate==4.0.5
+Flask-OAuthlib==0.9.6
+Flask-Caching==2.3.1
+Flask-Limiter==4.0.0
+Flask-WTF==1.2.2
+Flask-JWT-Extended==4.7.1
+Flask-CORS==4.0.0
+PyJWT==2.10.1
+Werkzeug==2.3.7
+python-dotenv==1.0.0
+reportlab==4.0.4
+openpyxl==3.1.2
+requests==2.31.0
+oauthlib==2.1.0
+requests-oauthlib==1.1.0
+cachelib==0.13.0
+redis==6.4.0
+pyotp==2.9.0
+qrcode[pil]==8.2
+bleach==6.2.0
+markupsafe==3.0.3
+gunicorn==21.2.0
+psycopg2-binary==2.9.9

@@ -1,0 +1,238 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Dashboard - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-v2">
+    <div class="row g-4">
+        <div class="col-lg-8 order-lg-2">
+            <div class="dashboard-card mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="mb-2 d-flex align-items-center">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><path d="M3 3v18h18"></path><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path></svg>
+                            Bem-vindo, {{ session.username }}!
+                        </h1>
+                        <p class="mb-0">Acompanhe o desempenho do seu negócio em tempo real</p>
+                        <div class="mt-3">
+                            <span class="badge bg-primary me-2" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9,22 9,12 15,12 15,22"></polyline></svg>
+                                {{ session.empresa }}
+                            </span>
+                            <span class="badge bg-success" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                                Hoje
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <div class="icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path></svg>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row kpi-grid mb-4">
+                <div class="col-lg-3 col-md-6"><div class="card stat-card primary h-100"><div class="card-body d-flex align-items-center"><div class="stat-icon me-3"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27,6.96 12,12.01 20.73,6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg></div><div><h3 class="mb-1">{{ total_produtos }}</h3><p class="mb-0 text-muted">Produtos Cadastrados</p><small class="text-success">Estoque total</small></div></div></div></div>
+                <div class="col-lg-3 col-md-6"><div class="card stat-card success h-100"><div class="card-body d-flex align-items-center"><div class="stat-icon me-3"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg></div><div><h3 class="mb-1">{{ total_clientes }}</h3><p class="mb-0 text-muted">Clientes Ativos</p><small class="text-success">Base ativa</small></div></div></div></div>
+                <div class="col-lg-3 col-md-6"><div class="card stat-card info h-100"><div class="card-body d-flex align-items-center"><div class="stat-icon me-3"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><path d="M16 8h.01"></path><path d="M16 8v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8"></path><path d="M6 21v-4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"></path></svg></div><div><h3 class="mb-1">{{ total_fornecedores }}</h3><p class="mb-0 text-muted">Fornecedores</p><small class="text-info">Parceiros</small></div></div></div></div>
+                <div class="col-lg-3 col-md-6"><div class="card stat-card {% if produtos_estoque_baixo + produtos_auxiliares_estoque_baixo > 0 %}danger{% else %}success{% endif %} h-100"><div class="card-body d-flex align-items-center"><div class="stat-icon me-3"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div><div><h3 class="mb-1">{{ produtos_estoque_baixo + produtos_auxiliares_estoque_baixo }}</h3><p class="mb-0 text-muted">Estoque Baixo</p><small class="{% if produtos_estoque_baixo + produtos_auxiliares_estoque_baixo > 0 %}text-danger{% else %}text-success{% endif %}">{% if produtos_estoque_baixo + produtos_auxiliares_estoque_baixo > 0 %}Atenção{% else %}OK{% endif %}</small></div></div></div></div>
+            </div>
+            <div class="card h-100 mt-lg-3">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Vendas Recentes</h5>
+                        <span class="badge bg-success">{{ vendas_recentes|length }}</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if vendas_recentes %}
+                    <div class="list-group list-group-flush">
+                        {% for venda in vendas_recentes %}
+                        <div class="list-group-item border-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-light rounded-circle d-flex align-items-center justify-content-center me-3"></div>
+                                    <div>
+                                        <h6 class="mb-1">{% if venda.cliente %}{{ venda.cliente.nome }}{% else %}Cliente Avulso{% endif %}</h6>
+                                        <small class="text-muted">🕐 {{ venda.data_venda.strftime('%d/%m %H:%M') }}</small>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-success fs-6">R$ {{ "%.2f"|format(venda.valor_total) }}</span>
+                                    <div><small class="text-muted">{{ venda.forma_pagamento|title }}</small></div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="card-footer text-center"><a href="{{ url_for('vendas') }}" class="btn btn-outline-primary btn-sm">📋 Ver Todas</a></div>
+                    {% else %}
+                    <div class="text-center p-4">
+                        <div class="avatar-lg bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3"></div>
+                        <h6 class="text-muted">Nenhuma venda realizada ainda</h6>
+                        <p class="text-muted small">Comece vendendo seus produtos</p>
+                        <a href="{{ url_for('nova_venda') }}" class="btn btn-primary btn-sm">➕ Primeira Venda</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 order-lg-1">
+            <div class="card mb-2">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"></polygon></svg>Ações Rápidas</h5>
+                    <p class="text-muted mb-0">Acesso às principais tarefas</p>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6 col-lg-4"><a href="{{ url_for('nova_venda') }}" class="btn tile-btn btn-outline-success w-100 d-flex flex-column align-items-center justify-content-center py-4 gap-1"><div class="tile-icon mb-2">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+                        </div><span class="fw-bold">Nova Venda</span><small class="opacity-75">Realizar venda</small></a></div>
+                        <div class="col-6 col-lg-4"><a href="{{ url_for('nova_compra') }}" class="btn tile-btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-4 gap-1"><div class="tile-icon mb-2">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 11V7a4 4 0 0 0-8 0v4"></path><rect x="3" y="9" width="18" height="11" rx="2" ry="2"></rect><circle cx="12" cy="14" r="2"></circle></svg>
+                        </div><span class="fw-bold">Nova Compra</span><small class="opacity-75">Registrar compra</small></a></div>
+                        <div class="col-6 col-lg-4"><a href="{{ url_for('novo_produto') }}" class="btn tile-btn btn-outline-info w-100 d-flex flex-column align-items-center justify-content-center py-4 gap-1"><div class="tile-icon mb-2">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27,6.96 12,12.01 20.73,6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                        </div><span class="fw-bold">Produto</span><small class="opacity-75">Adicionar estoque</small></a></div>
+                        <div class="col-6 col-lg-4"><a href="{{ url_for('novo_cliente') }}" class="btn tile-btn btn-outline-warning w-100 d-flex flex-column align-items-center justify-content-center py-4 gap-1"><div class="tile-icon mb-2">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        </div><span class="fw-bold">Cliente</span><small class="opacity-75">Cadastrar cliente</small></a></div>
+                        <div class="col-6 col-lg-4"><a href="{{ url_for('novo_fornecedor') }}" class="btn tile-btn btn-outline-secondary w-100 d-flex flex-column align-items-center justify-content-center py-4 gap-1"><div class="tile-icon mb-2">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><path d="M16 8h.01"></path><path d="M16 8v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8"></path><path d="M6 21v-4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"></path></svg>
+                        </div><span class="fw-bold">Fornecedor</span><small class="opacity-75">Adicionar parceiro</small></a></div>
+                        <div class="col-6 col-lg-4"><a href="{{ url_for('produtos') }}" class="btn tile-btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-4 gap-1"><div class="tile-icon mb-2">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9,22 9,12 15,12 15,22"></polyline></svg>
+                        </div><span class="fw-bold">Estoque</span><small class="opacity-75">Gerenciar produtos</small></a></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0 d-flex align-items-center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                            <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                            <path d="M8 21h8"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        Suporte
+                    </h5>
+                    <p class="text-muted mb-0">Atendimento e ajuda rápida</p>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('novo_ticket') }}" class="btn tile-btn btn-outline-primary w-100 d-flex flex-column align-items-center justify-content-center py-4 gap-1">
+                        <div class="tile-icon mb-2">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 18v-6a9 9 0 0 1 18 0v6"></path>
+                                <path d="M8 21h8"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </div>
+                        <span class="fw-bold">Abrir Ticket</span>
+                        <small class="opacity-75">Fale com nosso suporte</small>
+                    </a>
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('suporte') }}" class="btn btn-link btn-sm">Meus Tickets</a>
+                        {% if tickets_abertos is defined %}
+                        <span class="badge bg-info ms-2">Abertos: {{ tickets_abertos }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fade-in animation
+        document.querySelectorAll('.stat-card, .chart-container, .card').forEach((el, index) => {
+            setTimeout(() => el.classList.add('fade-in'), index * 100);
+        });
+
+        // Chart.js theme helpers
+        function cssVar(name, fallback) {
+            const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+            return v || fallback;
+        }
+        function hexToRgba(hex, alpha) {
+            const h = hex.replace('#','');
+            const bigint = parseInt(h.length === 3 ? h.split('').map(c=>c+c).join('') : h, 16);
+            const r = (bigint >> 16) & 255, g = (bigint >> 8) & 255, b = bigint & 255;
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        // Initialize Sales Chart once
+        const canvas = document.getElementById('salesChart');
+        if (canvas && !canvas.dataset.initialized) {
+            canvas.dataset.initialized = '1';
+            const ctx = canvas.getContext('2d');
+            const salesData = JSON.parse(canvas.dataset.sales || '[]');
+
+            const primary = cssVar('--primary-color', '#2563eb');
+            const gridColor = cssVar('--glass-border', 'rgba(148,163,184,0.25)');
+            const textColor = '#0f172a';
+            const dark = document.body.classList.contains('dark-mode');
+            const grid = dark ? 'rgba(148,163,184,0.18)' : gridColor;
+            const labelColor = dark ? '#e2e8f0' : textColor;
+
+            const gradient = ctx.createLinearGradient(0, 0, 0, 320);
+            gradient.addColorStop(0, hexToRgba(primary, 0.25));
+            gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+            const labels = salesData.map(item => item.data);
+            const values = salesData.map(item => item.vendas);
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Vendas',
+                        data: values,
+                        borderColor: primary,
+                        backgroundColor: gradient,
+                        tension: 0.35,
+                        fill: true,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: primary,
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        hitRadius: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: dark ? 'rgba(2,6,23,0.9)' : 'rgba(15,23,42,0.9)',
+                            titleColor: '#ffffff',
+                            bodyColor: '#ffffff',
+                            callbacks: {
+                                label: (ctx) => `Vendas: ${ctx.parsed.y}`
+                            }
+                        }
+                    },
+                    layout: { padding: { left: 8, right: 8, top: 4, bottom: 4 } },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: labelColor }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: grid },
+                            ticks: { color: labelColor, precision: 0 }
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+

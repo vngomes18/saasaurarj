@@ -1,0 +1,268 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Detalhes da Nota Fiscal - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        
+                        Detalhes da Nota Fiscal
+                    </h2>
+                    <p class="text-muted mb-0">{{ nota.numero_nf }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if nota.status == 'pendente' %}
+                    <button class="btn btn-success" onclick="emitirNF({{ nota.id }})">
+                        
+                        Emitir NF
+                    </button>
+                    {% endif %}
+                    <a href="{{ url_for('notas_fiscais') }}" class="btn btn-secondary">
+                        
+                        Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informações da Nota Fiscal -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Informações da Nota Fiscal
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Número:</strong>
+                        </div>
+                        <div class="col-6">
+                            {{ nota.numero_nf }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Série:</strong>
+                        </div>
+                        <div class="col-6">
+                            {{ nota.serie or '-' }}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Modelo:</strong>
+                        </div>
+                        <div class="col-6">
+                            <span class="badge bg-info">{{ nota.modelo }}</span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Status:</strong>
+                        </div>
+                        <div class="col-6">
+                            {% if nota.status == 'pendente' %}
+                                <span class="badge bg-warning">Pendente</span>
+                            {% elif nota.status == 'emitida' %}
+                                <span class="badge bg-success">Emitida</span>
+                            {% else %}
+                                <span class="badge bg-danger">Cancelada</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Tipo:</strong>
+                        </div>
+                        <div class="col-6">
+                            {{ nota.tipo_operacao.title() if nota.tipo_operacao else '-' }}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Data Emissão:</strong>
+                        </div>
+                        <div class="col-6">
+                            {{ nota.data_emissao.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                    </div>
+
+                    {% if nota.data_saida %}
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Data Saída:</strong>
+                        </div>
+                        <div class="col-6">
+                            {{ nota.data_saida.strftime('%d/%m/%Y') }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Valor Total:</strong>
+                        </div>
+                        <div class="col-6">
+                            <span class="fw-bold text-success fs-5">
+                                R$ {{ "%.2f"|format(nota.valor_total) }}
+                            </span>
+                        </div>
+                    </div>
+
+                    {% if nota.chave_acesso %}
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <strong>Chave de Acesso:</strong>
+                            <div class="mt-2">
+                                <code class="d-block text-break">{{ nota.chave_acesso }}</code>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Cliente/Fornecedor -->
+            {% if nota.cliente_fornecedor %}
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        {{ 'Cliente' if nota.tipo_operacao == 'saida' else 'Fornecedor' }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                            
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ nota.cliente_fornecedor }}</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Compra Relacionada -->
+            {% if nota.compra %}
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Compra Relacionada
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar-sm bg-warning text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                            
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ nota.compra.numero_compra }}</h6>
+                            <small class="text-muted">{{ nota.compra.fornecedor.nome }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Observações -->
+        <div class="col-lg-8">
+            {% if nota.observacoes %}
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Observações
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ nota.observacoes }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Ações -->
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Ações
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <button class="btn btn-outline-primary w-100" onclick="imprimirNF({{ nota.id }})">
+                                
+                                Imprimir
+                            </button>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <button class="btn btn-outline-info w-100" onclick="baixarXML({{ nota.id }})">
+                                
+                                Baixar XML
+                            </button>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <button class="btn btn-outline-success w-100" onclick="enviarEmail({{ nota.id }})">
+                                
+                                Enviar por Email
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.card').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+
+    function emitirNF(notaId) {
+        showConfirm('Emitir esta nota fiscal?', function() {
+            alert('Funcionalidade de emissão será implementada em breve!');
+        }, 'Emitir NF', 'btn-primary');
+    }
+
+    function imprimirNF(notaId) {
+        alert('Funcionalidade de impressão será implementada em breve!');
+    }
+
+    function baixarXML(notaId) {
+        alert('Funcionalidade de download XML será implementada em breve!');
+    }
+
+    function enviarEmail(notaId) {
+        alert('Funcionalidade de envio por email será implementada em breve!');
+    }
+</script>
+{% endblock %}
+

@@ -1,0 +1,387 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Produtos{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-v2">
+    <!-- Header da página -->
+    <div class="dashboard-card mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2 d-flex align-items-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27,6.96 12,12.01 20.73,6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    Produtos
+                </h1>
+                <p class="mb-0">Gerencie seu estoque de produtos</p>
+                <div class="mt-3">
+                    <span class="badge bg-primary me-2" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27,6.96 12,12.01 20.73,6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                        Estoque
+                    </span>
+                    <span class="badge bg-success" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        Ativo
+                    </span>
+                </div>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ url_for('novo_produto') }}" class="btn btn-primary d-flex align-items-center">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="16"></line>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                    </svg>
+                    Novo Produto
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros e busca -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="M21 21l-4.35-4.35"></path>
+                            </svg>
+                        </span>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Buscar produtos...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="categoryFilter">
+                        <option value="">Todas as categorias</option>
+                        <!-- Categorias serão carregadas dinamicamente via JavaScript -->
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="stockFilter">
+                        <option value="">Todos os estoques</option>
+                        <option value="low">Estoque baixo</option>
+                        <option value="normal">Estoque normal</option>
+                        <option value="out">Sem estoque</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+            <!-- Produtos List -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="produtos-table-container">
+                        <table class="produtos-table" id="productsTable">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Produto</th>
+                                    <th class="text-center">Preço</th>
+                                    <th class="text-center">Estoque Atual</th>
+                                    <th class="text-center">Estoque Mínimo</th>
+                                    <th class="text-center">Categoria</th>
+                                    <th class="text-center">Código</th>
+                                    <th class="text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if produtos %}
+                                    {% for produto in produtos %}
+                                    <tr class="produto-row" 
+                                        data-name="{{ produto.nome|lower }}" 
+                                        data-category="{{ produto.categoria|lower if produto.categoria else '' }}"
+                                        data-stock="{{ produto.estoque_atual }}"
+                                        data-min-stock="{{ produto.estoque_minimo }}">
+                                        <td>
+                                            <div class="produto-info">
+                                                <div class="produto-avatar">
+                                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                                        <polyline points="3.27,6.96 12,12.01 20.73,6.96"></polyline>
+                                                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                                    </svg>
+                                                </div>
+                                                <div class="produto-details">
+                                                    <h6>{{ produto.nome }}</h6>
+                                                    {% if produto.descricao %}
+                                                        <small>{{ produto.descricao[:50] }}{% if produto.descricao|length > 50 %}...{% endif %}</small>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-success">
+                                                R$ {{ "%.2f"|format(produto.preco) }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if produto.estoque_atual <= 0 %}
+                                                <span class="badge bg-danger">
+                                                    {{ produto.estoque_atual }}
+                                                </span>
+                                            {% elif produto.estoque_atual <= produto.estoque_minimo %}
+                                                <span class="badge bg-warning">
+                                                    {{ produto.estoque_atual }}
+                                                </span>
+                                                <i class="fas fa-exclamation-triangle text-warning ms-1" 
+                                                   data-bs-toggle="tooltip" 
+                                                   title="Estoque baixo!"></i>
+                                            {% else %}
+                                                <span class="badge bg-primary">
+                                                    {{ produto.estoque_atual }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">
+                                                {{ produto.estoque_minimo }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if produto.categoria %}
+                                                <span class="badge bg-info">{{ produto.categoria }}</span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if produto.codigo_barras %}
+                                                <code>{{ produto.codigo_barras }}</code>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('editar_produto', id=produto.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   data-bs-toggle="tooltip"
+                                                   title="Editar">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                    </svg>
+                                                </a>
+                                                <a href="#" 
+                                                   class="btn btn-sm btn-outline-danger" 
+                                                   data-bs-toggle="tooltip"
+                                                   title="Excluir"
+                                                   onclick="showConfirm('Tem certeza que deseja excluir este produto?', function() { window.location.href = '{{ url_for('excluir_produto', id=produto.id) }}'; }); return false;">
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                        <polyline points="3,6 5,6 21,6"></polyline>
+                                                        <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                                                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                                                    </svg>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <!-- Estado vazio -->
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5">
+                                            <div class="avatar-lg bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                                                    <polyline points="3.27,6.96 12,12.01 20.73,6.96"></polyline>
+                                                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                                                </svg>
+                                            </div>
+                                            <h6 class="text-muted">Nenhum produto cadastrado</h6>
+                                            <p class="text-muted small">Comece adicionando seu primeiro produto ao estoque</p>
+                                            <a href="{{ url_for('novo_produto') }}" class="btn btn-primary btn-sm">➕ Primeiro Produto</a>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Lista em cards (mobile) -->
+        <div class="d-md-none">
+            {% if produtos %}
+            <div class="mobile-list">
+                {% for produto in produtos %}
+                <div class="mobile-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="title">{{ produto.nome }}</div>
+                            {% if produto.descricao %}
+                                <small class="text-muted">{{ produto.descricao[:60] }}{% if produto.descricao|length > 60 %}...{% endif %}</small>
+                            {% endif %}
+                        </div>
+                        <span class="badge bg-success">R$ {{ "%.2f"|format(produto.preco) }}</span>
+                    </div>
+                    <div class="meta mt-2">
+                        {% if produto.estoque_atual <= 0 %}
+                            <span class="badge bg-danger">Estoque: {{ produto.estoque_atual }}</span>
+                        {% elif produto.estoque_atual <= produto.estoque_minimo %}
+                            <span class="badge bg-warning">Estoque: {{ produto.estoque_atual }}</span>
+                        {% else %}
+                            <span class="badge bg-primary">Estoque: {{ produto.estoque_atual }}</span>
+                        {% endif %}
+                        <span class="badge bg-secondary">Mín: {{ produto.estoque_minimo }}</span>
+                        {% if produto.categoria %}
+                            <span class="badge bg-info">{{ produto.categoria }}</span>
+                        {% endif %}
+                        {% if produto.codigo_barras %}
+                            <span class="badge bg-light text-dark">Cod: {{ produto.codigo_barras }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="actions mt-2">
+                        <a href="{{ url_for('nova_venda') }}?produto_id={{ produto.id }}" class="btn btn-sm btn-success d-flex align-items-center" aria-label="Vender">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                <circle cx="9" cy="21" r="1"></circle>
+                                <circle cx="20" cy="21" r="1"></circle>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                            </svg>
+                            Vender
+                        </a>
+                        <a href="{{ url_for('editar_produto', id=produto.id) }}" class="btn btn-sm btn-primary d-flex align-items-center" aria-label="Editar">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                            Editar
+                        </a>
+                        <a href="#" class="btn btn-sm btn-outline-danger d-flex align-items-center" aria-label="Excluir"
+                           onclick="showConfirm('Tem certeza que deseja excluir este produto?', function() { window.location.href = '{{ url_for('excluir_produto', id=produto.id) }}'; }); return false;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                <polyline points="3,6 5,6 21,6"></polyline>
+                                <path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"></path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                            Excluir
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state text-center py-5">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-3">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                    <polyline points="3.27,6.96 12,12.01 20.73,6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg>
+                <h5 class="text-muted">Nenhum produto cadastrado</h5>
+                <p class="text-muted">Comece adicionando seu primeiro produto</p>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Funcionalidade de busca
+    const searchInput = document.getElementById('searchInput');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const stockFilter = document.getElementById('stockFilter');
+    const productRows = document.querySelectorAll('.product-row');
+
+    function filterProducts() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedCategory = categoryFilter.value.toLowerCase();
+        const selectedStock = stockFilter.value;
+
+        productRows.forEach(row => {
+            const name = row.dataset.name;
+            const category = row.dataset.category;
+            const stock = parseInt(row.dataset.stock);
+            const minStock = parseInt(row.dataset.minStock);
+
+            let showRow = true;
+
+            // Filtro por busca
+            if (searchTerm && !name.includes(searchTerm)) {
+                showRow = false;
+            }
+
+            // Filtro por categoria
+            if (selectedCategory && category !== selectedCategory) {
+                showRow = false;
+            }
+
+            // Filtro por estoque
+            if (selectedStock) {
+                if (selectedStock === 'low' && stock > minStock) {
+                    showRow = false;
+                } else if (selectedStock === 'normal' && (stock <= minStock || stock <= 0)) {
+                    showRow = false;
+                } else if (selectedStock === 'out' && stock > 0) {
+                    showRow = false;
+                }
+            }
+
+            row.style.display = showRow ? '' : 'none';
+        });
+    }
+
+    // Carregar categorias dinamicamente
+    async function carregarCategorias() {
+        try {
+            const response = await fetch('/api/categorias');
+            if (response.ok) {
+                const categorias = await response.json();
+                
+                // Limpar opções existentes (exceto a primeira)
+                const categoryFilter = document.getElementById('categoryFilter');
+                if (categoryFilter) {
+                    // Manter apenas a primeira opção
+                    const firstOption = categoryFilter.querySelector('option[value=""]');
+                    categoryFilter.innerHTML = '';
+                    if (firstOption) {
+                        categoryFilter.appendChild(firstOption);
+                    }
+                    
+                    // Adicionar categorias do backend
+                    categorias.forEach(categoria => {
+                        const option = document.createElement('option');
+                        option.value = categoria;
+                        option.textContent = categoria;
+                        categoryFilter.appendChild(option);
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao carregar categorias:', error);
+        }
+    }
+
+    // Carregar categorias quando a página carregar
+    carregarCategorias();
+
+    // Event listeners para filtros
+    if (searchInput) searchInput.addEventListener('input', filterProducts);
+    if (categoryFilter) categoryFilter.addEventListener('change', filterProducts);
+    if (stockFilter) stockFilter.addEventListener('change', filterProducts);
+
+    // Recarregar categorias quando a página ganhar foco (para capturar novas categorias)
+    window.addEventListener('focus', carregarCategorias);
+    
+    // Escutar eventos de categoria criada de outras abas
+    window.addEventListener('categoriaCriada', carregarCategorias);
+});
+</script>
+
+{% endblock %}

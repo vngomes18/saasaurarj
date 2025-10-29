@@ -1,0 +1,718 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+    {% if fornecedor %}Editar Fornecedor{% else %}Novo Fornecedor{% endif %} - SaaS Sistema
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>
+                
+                {% if fornecedor %}Editar Fornecedor{% else %}Novo Fornecedor{% endif %}
+                    </h2>
+            <p class="text-muted">
+                {% if fornecedor %}Atualize as informações do fornecedor{% else %}Cadastre um novo fornecedor no sistema{% endif %}
+                    </p>
+                </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('fornecedores') }}" class="btn btn-outline-secondary">
+                    
+                Voltar para Fornecedores
+                </a>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- CSRF Token -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <!-- Informações Básicas -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3">
+                                Informações Básicas
+                            </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                    <label for="nome" class="form-label">
+                                        Nome Fantasia *
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="nome" 
+                                           name="nome" 
+                                           value="{{ fornecedor.nome if fornecedor else '' }}" 
+                                           required>
+                                    <div class="invalid-feedback">
+                                        Por favor, insira o nome do fornecedor.
+                                    </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                    <label for="razao_social" class="form-label">
+                                        
+                                        Razão Social
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="razao_social" 
+                                           name="razao_social" 
+                                       value="{{ fornecedor.razao_social if fornecedor else '' }}">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                    <label for="cnpj" class="form-label">
+                                        
+                                        CNPJ
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control cnpj-input" 
+                                           id="cnpj" 
+                                           name="cnpj" 
+                                           placeholder="00.000.000/0000-00"
+                                           value="{{ fornecedor.cnpj if fornecedor else '' }}">
+                                    <div class="form-text">
+                                        Digite apenas números, a formatação será aplicada automaticamente
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="categoria_fornecedor" class="form-label">
+                                        
+                                        Categoria
+                                    </label>
+                                    <select class="form-select" id="categoria_fornecedor" name="categoria_fornecedor">
+                                        <option value="">Selecione...</option>
+                                        <option value="Matéria-prima" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Matéria-prima' else '' }}>Matéria-prima</option>
+                                        <option value="Produtos acabados" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Produtos acabados' else '' }}>Produtos acabados</option>
+                                        <option value="Serviços" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Serviços' else '' }}>Serviços</option>
+                                        <option value="Equipamentos" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Equipamentos' else '' }}>Equipamentos</option>
+                                        <option value="Tecnologia" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Tecnologia' else '' }}>Tecnologia</option>
+                                        <option value="Logística" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Logística' else '' }}>Logística</option>
+                                        <option value="Outros" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Outros' else '' }}>Outros</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">
+                                        
+                                        Email Principal
+                                    </label>
+                                    <input type="email" 
+                                           class="form-control" 
+                                           id="email" 
+                                           name="email" 
+                                           value="{{ fornecedor.email if fornecedor else '' }}">
+                                </div>
+
+                            <div class="col-md-6 mb-3">
+                                    <label for="telefone" class="form-label">
+                                        
+                                        Telefone Principal
+                                    </label>
+                                    <input type="tel" 
+                                           class="form-control phone-input" 
+                                           id="telefone" 
+                                           name="telefone" 
+                                           placeholder="(00) 00000-0000"
+                                           value="{{ fornecedor.telefone if fornecedor else '' }}">
+                                    <div class="form-text">
+                                        Digite apenas números, a formatação será aplicada automaticamente
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Endereço com CEP -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3">
+                                Endereço
+                            </h5>
+                        <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label for="cep" class="form-label">CEP</label>
+                                    <input type="text" 
+                                           class="form-control cep-input" 
+                                           id="cep" 
+                                           name="cep" 
+                                           placeholder="00000-000"
+                                           value="{{ fornecedor.cep if fornecedor else '' }}">
+                                    <div class="form-text">
+                                        Digite o CEP para preenchimento automático
+                                    </div>
+                                </div>
+                            <div class="col-md-6 mb-3">
+                                    <label for="logradouro" class="form-label">Logradouro</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="logradouro" 
+                                           name="logradouro" 
+                                           placeholder="Rua, Avenida, etc."
+                                           value="{{ fornecedor.logradouro if fornecedor else '' }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="numero" class="form-label">Número</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="numero" 
+                                           name="numero" 
+                                           placeholder="123"
+                                           value="{{ fornecedor.numero if fornecedor else '' }}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="bairro" class="form-label">Bairro</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="bairro" 
+                                           name="bairro" 
+                                           value="{{ fornecedor.bairro if fornecedor else '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="cidade" class="form-label">Cidade</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="cidade" 
+                                           name="cidade" 
+                                           value="{{ fornecedor.cidade if fornecedor else '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="uf" class="form-label">UF</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="uf" 
+                                           name="uf" 
+                                           maxlength="2"
+                                           value="{{ fornecedor.uf if fornecedor else '' }}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="complemento" class="form-label">Complemento</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="complemento" 
+                                           name="complemento" 
+                                           placeholder="Complemento (opcional)"
+                                           value="{{ fornecedor.complemento if fornecedor else '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Informações Fiscais -->
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enable_fiscal_info" onchange="toggleSection('fiscal_info')">
+                                        <label class="form-check-label fw-bold" for="enable_fiscal_info">
+                                            Informações Fiscais
+                                        </label>
+                                        <small class="text-muted ms-3">(Opcional)</small>
+                                    </div>
+                                </div>
+                                <div class="card-body" id="fiscal_info" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="inscricao_estadual" class="form-label">Inscrição Estadual</label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="inscricao_estadual" 
+                                                   name="inscricao_estadual" 
+                                                   placeholder="123456789"
+                                                   value="{{ fornecedor.inscricao_estadual if fornecedor else '' }}">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="inscricao_municipal" class="form-label">Inscrição Municipal</label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="inscricao_municipal" 
+                                                   name="inscricao_municipal" 
+                                                   placeholder="123456789"
+                                                   value="{{ fornecedor.inscricao_municipal if fornecedor else '' }}">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="regime_tributario" class="form-label">Regime Tributário</label>
+                                            <select class="form-select" id="regime_tributario" name="regime_tributario">
+                                                <option value="">Selecione...</option>
+                                                <option value="Simples Nacional" {{ 'selected' if fornecedor and fornecedor.regime_tributario == 'Simples Nacional' else '' }}>Simples Nacional</option>
+                                                <option value="Lucro Presumido" {{ 'selected' if fornecedor and fornecedor.regime_tributario == 'Lucro Presumido' else '' }}>Lucro Presumido</option>
+                                                <option value="Lucro Real" {{ 'selected' if fornecedor and fornecedor.regime_tributario == 'Lucro Real' else '' }}>Lucro Real</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Informações Financeiras -->
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enable_financial_info" onchange="toggleSection('financial_info')">
+                                        <label class="form-check-label fw-bold" for="enable_financial_info">
+                                            Informações Financeiras
+                                        </label>
+                                        <small class="text-muted ms-3">(Opcional)</small>
+                                    </div>
+                                </div>
+                                <div class="card-body" id="financial_info" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="limite_credito" class="form-label">Limite de Crédito (R$)</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">R$</span>
+                                                <input type="text" 
+                                                       class="form-control currency-input" 
+                                                       id="limite_credito" 
+                                                       name="limite_credito" 
+                                                       placeholder="0,00"
+                                                       value="{% if fornecedor and fornecedor.limite_credito %}{{ '%.2f'|format(fornecedor.limite_credito)|replace('.', ',') }}{% else %}0,00{% endif %}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="prazo_pagamento" class="form-label">Prazo de Pagamento (dias)</label>
+                                            <input type="number" 
+                                                   class="form-control" 
+                                                   id="prazo_pagamento" 
+                                                   name="prazo_pagamento" 
+                                                   min="1" 
+                                                   max="365"
+                                                   value="{{ fornecedor.prazo_pagamento if fornecedor else 30 }}">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="forma_pagamento_preferida" class="form-label">Forma de Pagamento Preferida</label>
+                                            <select class="form-select" id="forma_pagamento_preferida" name="forma_pagamento_preferida">
+                                                <option value="">Selecione...</option>
+                                                <option value="PIX" {{ 'selected' if fornecedor and fornecedor.forma_pagamento_preferida == 'PIX' else '' }}>PIX</option>
+                                                <option value="Transferência" {{ 'selected' if fornecedor and fornecedor.forma_pagamento_preferida == 'Transferência' else '' }}>Transferência</option>
+                                                <option value="Boleto" {{ 'selected' if fornecedor and fornecedor.forma_pagamento_preferida == 'Boleto' else '' }}>Boleto</option>
+                                                <option value="Cheque" {{ 'selected' if fornecedor and fornecedor.forma_pagamento_preferida == 'Cheque' else '' }}>Cheque</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                            <label for="banco" class="form-label">Banco</label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="banco" 
+                                                   name="banco" 
+                                                   placeholder="Nome do banco"
+                                                   value="{{ fornecedor.banco if fornecedor else '' }}">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="agencia" class="form-label">Agência</label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="agencia" 
+                                                   name="agencia" 
+                                                   placeholder="1234"
+                                                   value="{{ fornecedor.agencia if fornecedor else '' }}">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="conta" class="form-label">Conta Corrente</label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="conta" 
+                                                   name="conta" 
+                                                   placeholder="12345-6"
+                                                   value="{{ fornecedor.conta if fornecedor else '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label for="chave_pix" class="form-label">Chave PIX</label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="chave_pix" 
+                                                   name="chave_pix" 
+                                                   placeholder="CPF, CNPJ, Email ou Telefone"
+                                                   value="{{ fornecedor.chave_pix if fornecedor else '' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contatos Avançados -->
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enable_contacts_info" onchange="toggleSection('contacts_info')">
+                                        <label class="form-check-label fw-bold" for="enable_contacts_info">
+                                            Contatos Avançados
+                                        </label>
+                                        <small class="text-muted ms-3">(Opcional)</small>
+                                    </div>
+                                </div>
+                                <div class="card-body" id="contacts_info" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="contato_financeiro" class="form-label">
+                                                
+                                                Contato Financeiro
+                                            </label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="contato_financeiro" 
+                                                   name="contato_financeiro" 
+                                                   placeholder="Nome do responsável financeiro"
+                                                   value="{{ fornecedor.contato_financeiro if fornecedor else '' }}">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="email_financeiro" class="form-label">
+                                                
+                                                Email Financeiro
+                                            </label>
+                                            <input type="email" 
+                                                   class="form-control" 
+                                                   id="email_financeiro" 
+                                                   name="email_financeiro" 
+                                                   placeholder="financeiro@empresa.com"
+                                                   value="{{ fornecedor.email_financeiro if fornecedor else '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="contato_comercial" class="form-label">
+                                                
+                                                Contato Comercial
+                                            </label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="contato_comercial" 
+                                                   name="contato_comercial" 
+                                                   placeholder="Nome do responsável comercial"
+                                                   value="{{ fornecedor.contato_comercial if fornecedor else '' }}">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="email_comercial" class="form-label">
+                                                
+                                                Email Comercial
+                                            </label>
+                                            <input type="email" 
+                                                   class="form-control" 
+                                                   id="email_comercial" 
+                                                   name="email_comercial" 
+                                                   placeholder="comercial@empresa.com"
+                                                   value="{{ fornecedor.email_comercial if fornecedor else '' }}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="mb-4">
+                            <div class="row">
+                            <div class="col-md-4 mb-3">
+                                    <label for="status" class="form-label">
+                                        Status
+                                    </label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="ativo" {{ 'selected' if fornecedor and fornecedor.status == 'ativo' else '' }}>Ativo</option>
+                                        <option value="inativo" {{ 'selected' if fornecedor and fornecedor.status == 'inativo' else '' }}>Inativo</option>
+                                        <option value="bloqueado" {{ 'selected' if fornecedor and fornecedor.status == 'bloqueado' else '' }}>Bloqueado</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Observações -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3">
+                                Observações
+                            </h5>
+                        <div class="mb-3">
+                                <label for="observacoes" class="form-label">Observações Gerais</label>
+                                <textarea class="form-control" 
+                                          id="observacoes" 
+                                          name="observacoes" 
+                                          rows="4" 
+                                          placeholder="Observações importantes sobre o fornecedor...">{{ fornecedor.observacoes if fornecedor else '' }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-flex justify-content-end gap-3">
+                            <a href="{{ url_for('fornecedores') }}" class="btn btn-outline-secondary">
+                                
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                
+                                {{ 'Atualizar' if fornecedor else 'Cadastrar' }} Fornecedor
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Estilos para seções colapsáveis */
+.card-header .form-check {
+    margin: 0;
+}
+
+.card-header .form-check-input {
+    margin-top: 0.25rem;
+    transform: scale(1.2);
+}
+
+.card-header .form-check-label {
+    margin-left: 0.5rem;
+    cursor: pointer;
+}
+
+.card-header {
+    border-bottom: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.card-header:hover {
+    background-color: #f8f9fa !important;
+}
+
+.card-body {
+    transition: all 0.3s ease;
+}
+
+/* Animações simplificadas para compatibilidade */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+    // Elementos do DOM
+    const cnpjInput = document.getElementById('cnpj');
+    const cepInput = document.getElementById('cep');
+    const logradouroInput = document.getElementById('logradouro');
+    const bairroInput = document.getElementById('bairro');
+    const cidadeInput = document.getElementById('cidade');
+    const ufInput = document.getElementById('uf');
+    const telefoneInput = document.getElementById('telefone');
+    const limiteCreditoInput = document.getElementById('limite_credito');
+
+    // Função para formatar CNPJ
+    function formatCNPJ(value) {
+        if (!value) return value;
+        
+        // Remove caracteres não numéricos
+        const numbers = value.replace(/\D/g, '');
+        
+        // Formato CNPJ: 00.000.000/0000-00
+        return numbers.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
+                     .replace(/(\d{2})(\d{3})(\d{3})(\d{4})/, '$1.$2.$3/$4')
+                     .replace(/(\d{2})(\d{3})(\d{3})/, '$1.$2.$3')
+                     .replace(/(\d{2})(\d{3})/, '$1.$2');
+    }
+
+    // Função para formatar telefone
+    function formatPhone(value) {
+        if (!value) return value;
+        
+        const numbers = value.replace(/\D/g, '');
+        
+        if (numbers.length === 11) {
+            return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+        } else if (numbers.length === 10) {
+            return numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+        }
+        
+        return value;
+    }
+
+    // Função para formatar CEP
+    function formatCEP(value) {
+        if (!value) return value;
+        
+        const numbers = value.replace(/\D/g, '');
+        if (numbers.length === 8) {
+            return numbers.replace(/(\d{5})(\d{3})/, '$1-$2');
+        }
+        return value;
+    }
+
+    // Função para formatar moeda
+    function formatCurrency(value) {
+        if (!value) return '0,00';
+        
+        const numbers = value.replace(/\D/g, '');
+        const formatted = (parseInt(numbers) / 100).toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
+        return formatted;
+    }
+
+    // Event listener para CNPJ
+    if (cnpjInput) {
+        cnpjInput.addEventListener('input', function() {
+            this.value = formatCNPJ(this.value);
+        });
+    }
+
+    // Event listener para telefone
+    if (telefoneInput) {
+        telefoneInput.addEventListener('input', function() {
+            this.value = formatPhone(this.value);
+        });
+    }
+
+
+    // Event listener para CEP
+    if (cepInput) {
+        cepInput.addEventListener('input', function() {
+            this.value = formatCEP(this.value);
+            
+            // Buscar dados do CEP quando tiver 8 dígitos
+            const numbers = this.value.replace(/\D/g, '');
+            if (numbers.length === 8) {
+                fetch(`/api/cep/${numbers}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            logradouroInput.value = data.data.logradouro || '';
+                            bairroInput.value = data.data.bairro || '';
+                            cidadeInput.value = data.data.cidade || '';
+                            ufInput.value = data.data.uf || '';
+                        }
+                    })
+                    .catch(error => console.error('Erro ao buscar CEP:', error));
+            }
+        });
+    }
+
+    // Event listener para limite de crédito
+    if (limiteCreditoInput) {
+        limiteCreditoInput.addEventListener('input', function() {
+            this.value = formatCurrency(this.value);
+        });
+    }
+
+    // Validação do formulário
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const nome = document.getElementById('nome').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const cnpj = document.getElementById('cnpj').value.trim();
+            
+            if (!nome) {
+                e.preventDefault();
+                alert('Por favor, preencha o nome do fornecedor.');
+                document.getElementById('nome').focus();
+                return false;
+            }
+            
+            if (email && !validateEmail(email)) {
+                e.preventDefault();
+                alert('Por favor, insira um email válido.');
+                document.getElementById('email').focus();
+                return false;
+            }
+            
+            if (cnpj && !validateCNPJ(cnpj)) {
+                e.preventDefault();
+                alert('Por favor, insira um CNPJ válido.');
+                document.getElementById('cnpj').focus();
+                return false;
+            }
+        });
+    }
+
+    // Funções de validação
+    function validateEmail(email) {
+        const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return pattern.test(email);
+    }
+
+    function validateCNPJ(cnpj) {
+        const numbers = cnpj.replace(/\D/g, '');
+        return numbers.length === 14;
+    }
+
+    // Função para controlar seções colapsáveis (simplificada)
+    window.toggleSection = function(sectionId) {
+        const section = document.getElementById(sectionId);
+        const checkbox = document.getElementById('enable_' + sectionId);
+        
+        if (checkbox.checked) {
+            section.style.display = 'block';
+            section.style.opacity = '1';
+        } else {
+            section.style.display = 'none';
+            section.style.opacity = '0';
+        }
+    };
+
+    // Verificar se há dados existentes e habilitar seções automaticamente
+    document.addEventListener('DOMContentLoaded', function() {
+        // Verificar informações fiscais
+        const fiscalFields = ['inscricao_estadual', 'inscricao_municipal', 'regime_tributario'];
+        const hasFiscalData = fiscalFields.some(field => {
+            const element = document.getElementById(field);
+            return element && element.value && element.value.trim() !== '';
+        });
+        
+        if (hasFiscalData) {
+            document.getElementById('enable_fiscal_info').checked = true;
+            toggleSection('fiscal_info');
+        }
+
+        // Verificar informações financeiras
+        const financialFields = ['limite_credito', 'prazo_pagamento', 'forma_pagamento_preferida', 'banco', 'agencia', 'conta', 'chave_pix'];
+        const hasFinancialData = financialFields.some(field => {
+            const element = document.getElementById(field);
+            return element && element.value && element.value.trim() !== '' && element.value !== '0,00' && element.value !== '30';
+        });
+        
+        if (hasFinancialData) {
+            document.getElementById('enable_financial_info').checked = true;
+            toggleSection('financial_info');
+        }
+
+        // Verificar contatos avançados
+        const contactFields = ['contato_financeiro', 'email_financeiro', 'contato_comercial', 'email_comercial'];
+        const hasContactData = contactFields.some(field => {
+            const element = document.getElementById(field);
+            return element && element.value && element.value.trim() !== '';
+        });
+        
+        if (hasContactData) {
+            document.getElementById('enable_contacts_info').checked = true;
+            toggleSection('contacts_info');
+        }
+    });
+
+    });
+</script>
+{% endblock %}

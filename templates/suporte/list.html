@@ -1,0 +1,141 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Suporte - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        
+                        Suporte
+                    </h2>
+                    <p class="text-muted mb-0">Central de atendimento e tickets de suporte</p>
+                </div>
+                <a href="{{ url_for('novo_ticket') }}" class="btn btn-primary">
+                    
+                    Novo Ticket
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tickets List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Meus Tickets
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if tickets %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Título</th>
+                                        <th>Categoria</th>
+                                        <th>Prioridade</th>
+                                        <th>Status</th>
+                                        <th>Data Abertura</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for ticket in tickets %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm bg-{{ 'success' if ticket.status == 'resolvido' else 'warning' if ticket.status == 'aberto' else 'info' }} text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                    
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ ticket.titulo }}</h6>
+                                                    <small class="text-muted">{{ ticket.descricao[:50] }}...</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ ticket.categoria or 'Geral' }}</span>
+                                        </td>
+                                        <td>
+                                            {% if ticket.prioridade == 'urgente' %}
+                                                <span class="badge bg-danger">Urgente</span>
+                                            {% elif ticket.prioridade == 'alta' %}
+                                                <span class="badge bg-warning">Alta</span>
+                                            {% elif ticket.prioridade == 'media' %}
+                                                <span class="badge bg-info">Média</span>
+                                            {% else %}
+                                                <span class="badge bg-success">Baixa</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if ticket.status == 'aberto' %}
+                                                <span class="badge bg-warning">Aberto</span>
+                                            {% elif ticket.status == 'em_andamento' %}
+                                                <span class="badge bg-info">Em Andamento</span>
+                                            {% elif ticket.status == 'resolvido' %}
+                                                <span class="badge bg-success">Resolvido</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Fechado</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="text-muted">{{ ticket.data_abertura.strftime('%d/%m/%Y %H:%M') }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('detalhes_ticket', id=ticket.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Ver Detalhes">
+                                                    
+                                                </a>
+                                                {% if ticket.respostas %}
+                                                <span class="badge bg-primary ms-2">
+                                                    {{ ticket.respostas|length }} resposta(s)
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center p-5">
+                            
+                            <h5 class="text-muted">Nenhum ticket de suporte</h5>
+                            <p class="text-muted">Crie um ticket quando precisar de ajuda</p>
+                            <a href="{{ url_for('novo_ticket') }}" class="btn btn-primary">
+                                
+                                Novo Ticket
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.card, .table').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}
+

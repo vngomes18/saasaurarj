@@ -1,0 +1,262 @@
+{% extends "layout/base.html" %}
+
+{% block title %}P&L (Profit & Loss) - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                
+                P&L (Profit & Loss)
+            </h2>
+            <p class="text-muted">
+                Demonstrativo de resultados do período
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <div class="btn-group" role="group">
+                <a href="{{ url_for('relatorios') }}" class="btn btn-outline-secondary">
+                    
+                    Voltar
+                </a>
+                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                    
+                    Exportar
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='pl', formato='pdf') }}">
+                        PDF
+                    </a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='pl', formato='excel') }}">
+                        Excel
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros de Período -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        
+                        Período do Relatório
+                    </h5>
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-6">
+                            <label for="inicio" class="form-label">Data Início</label>
+                            <input type="date" class="form-control" id="inicio" name="inicio" value="{{ periodo.inicio }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fim" class="form-label">Data Fim</label>
+                            <input type="date" class="form-control" id="fim" name="fim" value="{{ periodo.fim }}">
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                
+                                Atualizar Relatório
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo Executivo -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3>R$ {{ "%.2f"|format(receita_total) }}</h3>
+                    <p class="mb-0">Receita Total</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <h3>R$ {{ "%.2f"|format(custo_total) }}</h3>
+                    <p class="mb-0">Custo Total</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card {% if margem_lucro >= 0 %}bg-primary{% else %}bg-warning{% endif %} text-white">
+                <div class="card-body text-center">
+                    <h3>R$ {{ "%.2f"|format(margem_lucro) }}</h3>
+                    <p class="mb-0">Margem de Lucro</p>
+                    <small>{{ "%.1f"|format(margem_percentual) }}%</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Pizza -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        
+                        Distribuição de Receitas e Custos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="pieChart" width="400" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        
+                        Análise de Margem
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="barChart" width="400" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela Detalhada -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        
+                        Demonstrativo Detalhado
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Descrição</th>
+                                    <th class="text-end">Valor</th>
+                                    <th class="text-end">%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="table-success">
+                                    <td><strong>RECEITAS</strong></td>
+                                    <td class="text-end"><strong>R$ {{ "%.2f"|format(receita_total) }}</strong></td>
+                                    <td class="text-end"><strong>100.0%</strong></td>
+                                </tr>
+                                <tr class="table-danger">
+                                    <td>Custos de Mercadorias</td>
+                                    <td class="text-end">R$ {{ "%.2f"|format(custo_total) }}</td>
+                                    <td class="text-end">{{ "%.1f"|format((custo_total/receita_total*100) if receita_total > 0 else 0) }}%</td>
+                                </tr>
+                                <tr class="{% if margem_lucro >= 0 %}table-primary{% else %}table-warning{% endif %}">
+                                    <td><strong>LUCRO BRUTO</strong></td>
+                                    <td class="text-end"><strong>R$ {{ "%.2f"|format(margem_lucro) }}</strong></td>
+                                    <td class="text-end"><strong>{{ "%.1f"|format(margem_percentual) }}%</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dados do gráfico
+    const receitaTotal = {{ receita_total }};
+    const custoTotal = {{ custo_total }};
+    const margemLucro = {{ margem_lucro }};
+    
+    // Gráfico de Pizza
+    const pieCtx = document.getElementById('pieChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Receitas', 'Custos'],
+            datasets: [{
+                data: [receitaTotal, custoTotal],
+                backgroundColor: [
+                    '#28a745',
+                    '#dc3545'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.parsed;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((value / total) * 100).toFixed(1);
+                            return context.label + ': R$ ' + value.toFixed(2) + ' (' + percentage + '%)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Gráfico de Barras
+    const barCtx = document.getElementById('barChart').getContext('2d');
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Receitas', 'Custos', 'Lucro'],
+            datasets: [{
+                label: 'Valores (R$)',
+                data: [receitaTotal, custoTotal, margemLucro],
+                backgroundColor: [
+                    '#28a745',
+                    '#dc3545',
+                    margemLucro >= 0 ? '#007bff' : '#ffc107'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(2);
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.label + ': R$ ' + context.parsed.y.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

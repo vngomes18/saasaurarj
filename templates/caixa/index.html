@@ -1,0 +1,832 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Caixa - SaaS Sistema{% endblock %}
+
+{% block extra_css %}
+<style>
+.caixa-header {
+  background: #fff;
+  color: #212529;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+}
+.caixa-card { border: none; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+
+/* KPI tiles */
+.kpi-tile { border-radius: 14px; padding: 1rem; color: #212529; background: #f8f9fa; display:flex; align-items:center; gap:.75rem; }
+.kpi-icon { width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#fff; }
+.kpi-primary { background: linear-gradient(135deg,#6a11cb,#2575fc); }
+.kpi-success { background: linear-gradient(135deg,#00b09b,#96c93d); }
+.kpi-warning { background: linear-gradient(135deg,#f7971e,#ffd200); color:#333; }
+.kpi-value { font-size:1.25rem; font-weight:700; }
+.kpi-label { font-size:.85rem; color:#6c757d; }
+
+/* Payments */
+.payment-card { border-radius:14px; background:#fff; box-shadow:0 6px 20px rgba(0,0,0,0.07); }
+.payment-progress { height:8px; background:#eef2f7; }
+.payment-progress .progress-bar { background: linear-gradient(90deg,#4e54c8,#8f94fb); }
+.payment-icon svg { width:18px; height:18px; }
+
+/* Quick actions */
+.btn-soft-primary { background: rgba(37,117,252,.1); color:#2575fc; border:none; }
+.btn-soft-success { background: rgba(0,176,155,.12); color:#00b09b; border:none; }
+.btn-soft-secondary { background: rgba(108,117,125,.12); color:#6c757d; border:none; }
+.btn-soft-primary:hover, .btn-soft-success:hover, .btn-soft-secondary:hover { opacity:.9; }
+
+.stat { display:flex; align-items:center; justify-content:space-between; }
+.stat-title { font-size: .9rem; color:#6c757d; }
+.stat-value { font-size: 1.4rem; font-weight: 700; }
+.badge-status { font-size:.85rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="caixa-header d-flex align-items-center justify-content-between">
+        <div>
+          <h2 class="mb-1">Caixa</h2>
+          <p class="text-muted mb-0">Controle diário de vendas e movimentações</p>
+        </div>
+        <div class="d-flex align-items-center">
+          {% if sessao %}
+            <span class="badge bg-success badge-status">Caixa aberto</span>
+            <small class="ms-2">Aberto em {{ sessao.data_abertura.strftime('%d/%m/%Y %H:%M') }}</small>
+          {% else %}
+            <span class="badge bg-secondary badge-status">Caixa fechado</span>
+          {% endif %}
+          <a href="{{ url_for('caixa_sessoes') }}" class="btn btn-outline-primary btn-sm ms-3">Sessões</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ações Rápidas do Caixa -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card caixa-card">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0">Ações Rápidas do Caixa</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('vendas') }}" class="btn btn-soft-primary d-flex align-items-center gap-2">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              Nova Venda
+            </a>
+            <a href="{{ url_for('compras') }}" class="btn btn-soft-success d-flex align-items-center gap-2">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 11V7a4 4 0 0 0-8 0v4"/><rect x="3" y="9" width="18" height="11" rx="2" ry="2"/></svg>
+              Nova Compra
+            </a>
+            <a href="{{ url_for('produtos') }}" class="btn btn-soft-secondary d-flex align-items-center gap-2">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              Produtos
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Destaque: Registrar Venda Rápida -->
+  {% if sessao %}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card caixa-card border-primary">
+        <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between">
+          <h5 class="mb-0 text-primary">Registrar Venda Rápida</h5>
+          <span class="text-muted small">Vinculada ao caixa aberto</span>
+        </div>
+        <div class="card-body">
+          <form method="post" action="{{ url_for('caixa_registrar_venda') }}" class="row g-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
+            <!-- Informações do Cliente -->
+            <div class="col-12 mb-3">
+              <div class="row">
+                <div class="col-md-3">
+                  <label class="form-label">Cliente</label>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="tipo_cliente" id="cliente_nao_cadastrado" value="nao_cadastrado" checked>
+                    <label class="form-check-label" for="cliente_nao_cadastrado">
+                      Cliente não cadastrado
+                    </label>
+                  </div>
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="tipo_cliente" id="cliente_cadastrado" value="cadastrado">
+                    <label class="form-check-label" for="cliente_cadastrado">
+                      Cliente cadastrado
+                    </label>
+                  </div>
+                </div>
+                <div class="col-md-9" id="cliente-cadastrado-field" style="display: none;">
+                  <label class="form-label">Selecionar Cliente</label>
+                  <select name="cliente_id" id="clienteSelect" class="form-select">
+                    <option value="">Selecione um cliente</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Informações do Produto -->
+            <div class="col-sm-6 col-md-5">
+              <label class="form-label">Produto</label>
+              <select name="produto_id" id="produtoSelect" class="form-select" required>
+                <option value="">Selecione um produto</option>
+              </select>
+            </div>
+            <div class="col-sm-3 col-md-2">
+              <label class="form-label">Quantidade</label>
+              <input type="number" min="1" id="quantidadeInput" name="quantidade" class="form-control" placeholder="1" required>
+            </div>
+            <div class="col-sm-3 col-md-3">
+              <label class="form-label">Informações do Produto</label>
+              <div id="produtoInfo" class="form-text">
+                Selecione um produto para ver categoria e estoque.
+              </div>
+            </div>
+            <div class="col-sm-3 col-md-2">
+              <label class="form-label">Valor</label>
+              <input type="number" step="0.01" min="0" id="valorInput" name="valor" class="form-control" placeholder="0,00" required>
+            </div>
+            <div class="col-sm-4 col-md-3">
+              <label class="form-label">Pagamento</label>
+              <select name="forma_pagamento" id="formaPagamentoSelect" class="form-select" required>
+                <option value="">Selecione</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="cartao">Cartão</option>
+                <option value="pix">Pix</option>
+                <option value="boleto">Boleto</option>
+                <option value="transferencia">Transferência</option>
+              </select>
+            </div>
+            <div class="col-sm-4 col-md-3" id="valor-entregue-field" style="display: none;">
+              <label class="form-label">Valor Entregue (R$)</label>
+              <input type="number" step="0.01" min="0" id="valorEntregueInput" name="valor_entregue" class="form-control" placeholder="0,00">
+              <div class="form-text">
+                <strong>Troco: R$ <span id="trocoCalculado">0,00</span></strong>
+              </div>
+            </div>
+            <div class="col-sm-4 col-md-3" id="boleto-config-field" style="display: none;">
+              <label class="form-label">Data de Vencimento</label>
+              <input type="date" id="dataVencimentoInput" name="data_vencimento" class="form-control">
+            </div>
+            <div class="col-sm-4 col-md-3" id="parcelas-field" style="display: none;">
+              <label class="form-label">Número de Parcelas</label>
+              <select id="numeroParcelasSelect" name="numero_parcelas" class="form-select">
+                <option value="1">1x (À vista)</option>
+                <option value="2">2x</option>
+                <option value="3">3x</option>
+                <option value="4">4x</option>
+                <option value="5">5x</option>
+                <option value="6">6x</option>
+                <option value="12">12x</option>
+                <option value="24">24x</option>
+              </select>
+              <div class="form-text" id="valor-parcela-info" style="display: none;">
+                <strong>Valor por parcela: R$ <span id="valorParcelaCalculado">0,00</span></strong>
+              </div>
+            </div>
+            <div class="col-sm-4 col-md-3" id="intervalo-parcelas-field" style="display: none;">
+              <label class="form-label">Intervalo entre Parcelas</label>
+              <select id="intervaloParcelasSelect" name="intervalo_parcelas" class="form-select">
+                <option value="7">7 dias</option>
+                <option value="15">15 dias</option>
+                <option value="21">21 dias</option>
+                <option value="28">28 dias</option>
+                <option value="35">35 dias</option>
+              </select>
+              <div class="form-text" id="datas-parcelas-info" style="display: none;">
+                <strong>Datas das parcelas:</strong>
+                <div id="datasParcelasCalculadas" class="small"></div>
+              </div>
+            </div>
+            <div class="col-sm-5 col-md-5">
+              <label class="form-label">Observações</label>
+              <input type="text" name="observacoes" class="form-control" placeholder="Opcional">
+            </div>
+            <div class="col-sm-12 col-md-2 d-flex align-items-end justify-content-end">
+              <button type="submit" class="btn btn-primary w-100">Registrar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Ações de Abertura/Fechamento -->
+  <div class="row mb-4">
+    <div class="col-md-6 mb-3">
+      <div class="card caixa-card h-100">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0">Sessão de Caixa</h5>
+        </div>
+        <div class="card-body">
+          {% if sessao %}
+            <form method="post" action="{{ url_for('fechar_caixa') }}" class="row g-2 align-items-end mb-3">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <div class="col-12 col-md-4">
+                <label class="form-label mb-1">Saldo no fechamento</label>
+                <input type="number" step="0.01" name="saldo_fechamento" class="form-control" placeholder="Saldo no fechamento" required>
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label mb-1">Observações</label>
+                <input type="text" name="observacoes_fechamento" class="form-control" placeholder="Opcional">
+              </div>
+              <div class="col-12 col-md-4 d-grid d-md-flex justify-content-md-end">
+                <button type="submit" class="btn btn-danger btn-lg px-4">Fechar Caixa</button>
+              </div>
+            </form>
+          {% else %}
+            <form method="post" action="{{ url_for('abrir_caixa') }}" class="row g-2 align-items-end mb-3">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <div class="col-12 col-md-4">
+                <label class="form-label mb-1">Saldo inicial</label>
+                <input type="number" step="0.01" name="saldo_inicial" class="form-control" placeholder="Saldo Inicial" required>
+              </div>
+              <div class="col-12 col-md-4">
+                <label class="form-label mb-1">Observações</label>
+                <input type="text" name="observacoes_abertura" class="form-control" placeholder="Opcional">
+              </div>
+              <div class="col-12 col-md-4 d-grid d-md-flex justify-content-md-end">
+                <button type="submit" class="btn btn-success btn-lg px-4">Abrir Caixa</button>
+              </div>
+            </form>
+          {% endif %}
+          {% if sessao %}
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <div class="stat">
+                  <div>
+                    <div class="stat-title">Saldo inicial</div>
+                    <div class="stat-value">R$ {{ '%.2f'|format(sessao.saldo_inicial or 0) }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <div class="stat">
+                  <div>
+                    <div class="stat-title">Período</div>
+                    <div>{{ inicio.strftime('%d/%m/%Y %H:%M') }} — {{ fim.strftime('%d/%m/%Y %H:%M') }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">Nenhum caixa aberto. Abra o caixa para iniciar o expediente.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumo Financeiro Diário -->
+    <div class="col-md-6 mb-3">
+      <div class="card caixa-card h-100">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0">Resumo das Vendas do Dia</h5>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-sm-4">
+              <div class="kpi-tile">
+                <div class="kpi-icon kpi-primary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3v18h18" />
+                    <path d="M7 14l3-3 4 4 5-5" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="kpi-label">Total de Vendas</div>
+                  <div id="total_vendas" class="kpi-value">R$ {{ '%.2f'|format(total_vendas or 0) }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-4">
+              <div class="kpi-tile">
+                <div class="kpi-icon kpi-success">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9 12l2 2 4-4" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="kpi-label">Qtde de Vendas</div>
+                  <div id="qtd_vendas" class="kpi-value">{{ qtd_vendas }}</div>
+                </div>
+              </div>
+            </div>
+            <div class="col-sm-4">
+              <div class="kpi-tile">
+                <div class="kpi-icon kpi-warning">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3h18v14H3z" />
+                    <path d="M7 7h10M7 11h10M7 15h7" />
+                  </svg>
+                </div>
+                <div>
+                  <div class="kpi-label">Ticket Médio</div>
+                  <div id="ticket_medio" class="kpi-value">R$ {{ '%.2f'|format(ticket_medio or 0) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <hr>
+          <div id="por_pagamento" class="row g-3">
+            {% for fp, val in por_pagamento.items() %}
+              {% set perc = ((val / total_vendas) * 100) if total_vendas else 0 %}
+              <div class="col-sm-6">
+                <div class="payment-card p-3">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="payment-icon">
+                        {% if fp == 'dinheiro' %}
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect>
+                            <circle cx="8" cy="12" r="2"></circle>
+                            <line x1="14" y1="12" x2="18" y2="12"></line>
+                          </svg>
+                        {% elif fp == 'cartao' %}
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                          </svg>
+                        {% elif fp == 'pix' %}
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12,4 20,12 12,20 4,12"></polygon>
+                            <circle cx="12" cy="12" r="2"></circle>
+                          </svg>
+                        {% elif fp == 'boleto' %}
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="4" y1="6" x2="4" y2="18"></line>
+                            <line x1="8" y1="6" x2="8" y2="18"></line>
+                            <line x1="11" y1="6" x2="11" y2="18"></line>
+                            <line x1="15" y1="6" x2="15" y2="18"></line>
+                            <line x1="18" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        {% elif fp == 'transferencia' %}
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M5 12h14"></path>
+                            <path d="M12 5l7 7-7 7"></path>
+                            <path d="M12 19L5 12l7-7"></path>
+                          </svg>
+                        {% else %}
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 7h18v10H3z"></path>
+                            <path d="M16 12h2"></path>
+                          </svg>
+                        {% endif %}
+                      </span>
+                      <strong class="text-capitalize">{{ fp }}</strong>
+                    </div>
+                    <span class="text-muted">R$ {{ '%.2f'|format(val) }}</span>
+                  </div>
+                  <div class="progress payment-progress">
+                    <div class="progress-bar" role="progressbar" style="width: {{ '%.0f'|format(perc) }}%" aria-valuenow="{{ '%.0f'|format(perc) }}" aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Movimentos do Caixa -->
+  <div class="row">
+    <div class="col-12 mb-3">
+      <div class="card caixa-card">
+        <div class="card-header bg-white border-0 d-flex align-items-center justify-content-between">
+          <h5 class="mb-0">Movimentos do Caixa</h5>
+          {% if sessao %}
+          <span class="text-muted small">Últimos 10</span>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          {% if movimentos and movimentos|length > 0 %}
+            <div class="table-responsive">
+              <table class="table table-sm table-hover mb-0">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Tipo</th>
+                    <th class="text-end">Valor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for m in movimentos %}
+                    <tr>
+                      <td>{{ m.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                      <td><span class="badge {{ 'bg-success' if m.tipo=='entrada' else ('bg-danger' if m.tipo=='saida' else 'bg-secondary') }}">{{ m.tipo|capitalize }}</span></td>
+                      <td class="text-end">R$ {{ '%.2f'|format(m.valor) }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <p class="text-muted mb-0">Nenhum movimento registrado nesta sessão.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+
+
+
+{% block extra_js %}
+<script>
+// Atualização periódica do dashboard do caixa
+async function refreshDashboard(){
+  try {
+    const resp = await fetch("{{ url_for('api_caixa_dashboard') }}");
+    const data = await resp.json();
+    if (!data.success) return;
+    document.getElementById('total_vendas').textContent = `R$ ${data.total_vendas.toFixed(2)}`;
+    document.getElementById('qtd_vendas').textContent = data.qtd_vendas;
+    document.getElementById('ticket_medio').textContent = `R$ ${data.ticket_medio.toFixed(2)}`;
+    const cont = document.getElementById('por_pagamento');
+    cont.innerHTML = '';
+    const total = data.total_vendas || 0;
+    Object.entries(data.por_pagamento).forEach(([fp, val]) => {
+      const col = document.createElement('div');
+      col.className = 'col-sm-6';
+      const perc = total ? Math.min(100, Math.round((val / total) * 100)) : 0;
+      const icon = (() => {
+        switch(fp){
+          case 'dinheiro':
+            return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><circle cx="8" cy="12" r="2"></circle><line x1="14" y1="12" x2="18" y2="12"></line></svg>`;
+          case 'cartao':
+            return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><line x1="16" y1="13" x2="8" y2="13"></line></svg>`;
+          case 'pix':
+            return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,4 20,12 12,20 4,12"></polygon><circle cx="12" cy="12" r="2"></circle></svg>`;
+          case 'boleto':
+            return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="4" y2="18"></line><line x1="8" y1="6" x2="8" y2="18"></line><line x1="11" y1="6" x2="11" y2="18"></line><line x1="15" y1="6" x2="15" y2="18"></line><line x1="18" y1="6" x2="18" y2="18"></line></svg>`;
+          case 'transferencia':
+            return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5l7 7-7 7"></path><path d="M12 19L5 12l7-7"></path></svg>`;
+          default:
+            return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v10H3z"></path><path d="M16 12h2"></path></svg>`;
+        }
+      })();
+      col.innerHTML = `
+        <div class="payment-card p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="d-flex align-items-center gap-2">
+              <span class="payment-icon">${icon}</span>
+              <strong class="text-capitalize">${fp}</strong>
+            </div>
+            <span class="text-muted">R$ ${Number(val).toFixed(2)}</span>
+          </div>
+          <div class="progress payment-progress">
+            <div class="progress-bar" role="progressbar" style="width: ${perc}%" aria-valuenow="${perc}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>`;
+      cont.appendChild(col);
+    });
+  } catch(e){ console.warn('Falha ao atualizar caixa:', e); }
+}
+setInterval(refreshDashboard, 15000);
+
+// Seleção de produto e exibição de categoria/estoque
+document.addEventListener('DOMContentLoaded', async () => {
+  const select = document.getElementById('produtoSelect');
+  const qty = document.getElementById('quantidadeInput');
+  const info = document.getElementById('produtoInfo');
+  const valorInput = document.getElementById('valorInput');
+
+  if (!select) return; // Formulário de venda rápida pode não existir quando o caixa está fechado
+
+  // Controle do tipo de cliente
+  const clienteNaoCadastrado = document.getElementById('cliente_nao_cadastrado');
+  const clienteCadastrado = document.getElementById('cliente_cadastrado');
+  const clienteCadastradoField = document.getElementById('cliente-cadastrado-field');
+  const clienteSelect = document.getElementById('clienteSelect');
+
+  // Função para controlar exibição do campo de cliente
+  function toggleClienteField() {
+    if (clienteCadastrado.checked) {
+      clienteCadastradoField.style.display = 'block';
+      clienteSelect.required = true;
+    } else {
+      clienteCadastradoField.style.display = 'none';
+      clienteSelect.required = false;
+      clienteSelect.value = '';
+    }
+  }
+
+  // Event listeners para tipo de cliente
+  if (clienteNaoCadastrado) {
+    clienteNaoCadastrado.addEventListener('change', toggleClienteField);
+  }
+  if (clienteCadastrado) {
+    clienteCadastrado.addEventListener('change', toggleClienteField);
+  }
+
+  // Carregar lista de clientes
+  async function loadClientes() {
+    try {
+      const resp = await fetch("{{ url_for('api.api_clientes') }}");
+      const json = await resp.json();
+      if (json && json.success && Array.isArray(json.data)) {
+        const lista = json.data.slice().sort((a,b) => (a.nome || '').localeCompare(b.nome || ''));
+        lista.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = `${c.nome} (${c.email || 'Sem email'})`;
+          if (clienteSelect) clienteSelect.appendChild(opt);
+        });
+      }
+    } catch(e) {
+      console.warn('Falha ao carregar clientes:', e);
+    }
+  }
+
+  // Carregar clientes se o campo existir
+  if (clienteSelect) {
+    loadClientes();
+  }
+
+  // Controle dos campos de pagamento
+  const formaPagamentoSelect = document.getElementById('formaPagamentoSelect');
+  const valorEntregueField = document.getElementById('valor-entregue-field');
+  const valorEntregueInput = document.getElementById('valorEntregueInput');
+  const trocoCalculado = document.getElementById('trocoCalculado');
+  const boletoConfigField = document.getElementById('boleto-config-field');
+  const dataVencimentoInput = document.getElementById('dataVencimentoInput');
+  const parcelasField = document.getElementById('parcelas-field');
+  const numeroParcelasSelect = document.getElementById('numeroParcelasSelect');
+  const valorParcelaInfo = document.getElementById('valor-parcela-info');
+  const valorParcelaCalculado = document.getElementById('valorParcelaCalculado');
+  const intervaloParcelasField = document.getElementById('intervalo-parcelas-field');
+  const intervaloParcelasSelect = document.getElementById('intervaloParcelasSelect');
+  const datasParcelasInfo = document.getElementById('datas-parcelas-info');
+  const datasParcelasCalculadas = document.getElementById('datasParcelasCalculadas');
+
+  // Função para controlar exibição dos campos de pagamento
+  function togglePaymentFields() {
+    const formaPagamento = formaPagamentoSelect ? formaPagamentoSelect.value : '';
+    
+    // Resetar todos os campos
+    valorEntregueField.style.display = 'none';
+    valorEntregueInput.required = false;
+    valorEntregueInput.value = '';
+    trocoCalculado.textContent = '0,00';
+    
+    boletoConfigField.style.display = 'none';
+    dataVencimentoInput.required = false;
+    dataVencimentoInput.value = '';
+    
+    parcelasField.style.display = 'none';
+    numeroParcelasSelect.required = false;
+    valorParcelaInfo.style.display = 'none';
+    
+    intervaloParcelasField.style.display = 'none';
+    intervaloParcelasSelect.required = false;
+    datasParcelasInfo.style.display = 'none';
+    
+    // Mostrar campos específicos baseado na forma de pagamento
+    if (formaPagamento === 'dinheiro') {
+      valorEntregueField.style.display = 'block';
+      valorEntregueInput.required = true;
+    } else if (formaPagamento === 'boleto') {
+      boletoConfigField.style.display = 'block';
+      dataVencimentoInput.required = true;
+      parcelasField.style.display = 'block';
+      numeroParcelasSelect.required = true;
+      
+      // Definir data padrão (30 dias a partir de hoje)
+      const hoje = new Date();
+      const dataVencimento = new Date(hoje);
+      dataVencimento.setDate(hoje.getDate() + 30);
+      dataVencimentoInput.value = dataVencimento.toISOString().split('T')[0];
+    }
+  }
+
+  // Função para calcular o troco
+  function calcularTroco() {
+    if (!valorEntregueInput || !trocoCalculado) return;
+    
+    const valorTotal = parseFloat(valorInput.value) || 0;
+    const valorEntregue = parseFloat(valorEntregueInput.value) || 0;
+    
+    if (valorEntregue >= valorTotal) {
+      const troco = valorEntregue - valorTotal;
+      trocoCalculado.textContent = troco.toFixed(2);
+      
+      // Adicionar classe de sucesso se troco positivo
+      if (troco > 0) {
+        trocoCalculado.parentElement.className = 'form-text text-success';
+      } else {
+        trocoCalculado.parentElement.className = 'form-text';
+      }
+    } else {
+      trocoCalculado.textContent = '0,00';
+      trocoCalculado.parentElement.className = 'form-text text-danger';
+    }
+  }
+
+  // Função para controlar exibição do campo de intervalo
+  function toggleIntervaloField() {
+    const numeroParcelas = parseInt(numeroParcelasSelect.value) || 1;
+    
+    if (numeroParcelas > 1) {
+      intervaloParcelasField.style.display = 'block';
+      intervaloParcelasSelect.required = true;
+    } else {
+      intervaloParcelasField.style.display = 'none';
+      intervaloParcelasSelect.required = false;
+      datasParcelasInfo.style.display = 'none';
+    }
+  }
+
+  // Função para calcular valor das parcelas
+  function calcularParcelas() {
+    if (!numeroParcelasSelect || !valorParcelaCalculado || !valorParcelaInfo) return;
+    
+    const valorTotal = parseFloat(valorInput.value) || 0;
+    const numeroParcelas = parseInt(numeroParcelasSelect.value) || 1;
+    
+    if (valorTotal > 0 && numeroParcelas > 0) {
+      const valorParcela = valorTotal / numeroParcelas;
+      valorParcelaCalculado.textContent = valorParcela.toFixed(2);
+      valorParcelaInfo.style.display = 'block';
+    } else {
+      valorParcelaInfo.style.display = 'none';
+    }
+    
+    // Controlar exibição do campo de intervalo
+    toggleIntervaloField();
+  }
+
+  // Função para calcular datas das parcelas
+  function calcularDatasParcelas() {
+    if (!dataVencimentoInput || !numeroParcelasSelect || !intervaloParcelasSelect || !datasParcelasCalculadas || !datasParcelasInfo) return;
+    
+    const dataVencimento = dataVencimentoInput.value;
+    const numeroParcelas = parseInt(numeroParcelasSelect.value) || 1;
+    const intervaloDias = parseInt(intervaloParcelasSelect.value) || 7;
+    
+    if (dataVencimento && numeroParcelas > 1) {
+      const dataBase = new Date(dataVencimento);
+      let datasHTML = '';
+      
+      for (let i = 0; i < numeroParcelas; i++) {
+        const dataParcela = new Date(dataBase);
+        dataParcela.setDate(dataBase.getDate() + (i * intervaloDias));
+        
+        const dataFormatada = dataParcela.toLocaleDateString('pt-BR');
+        const numeroParcela = i + 1;
+        
+        datasHTML += `<div>${numeroParcela}ª parcela: ${dataFormatada}</div>`;
+      }
+      
+      datasParcelasCalculadas.innerHTML = datasHTML;
+      datasParcelasInfo.style.display = 'block';
+    } else {
+      datasParcelasInfo.style.display = 'none';
+    }
+  }
+
+  // Event listeners para forma de pagamento
+  if (formaPagamentoSelect) {
+    formaPagamentoSelect.addEventListener('change', togglePaymentFields);
+  }
+
+  // Event listeners para cálculo de troco
+  if (valorEntregueInput) {
+    valorEntregueInput.addEventListener('input', calcularTroco);
+  }
+  if (valorInput) {
+    valorInput.addEventListener('input', function() {
+      calcularTroco();
+      calcularParcelas();
+    });
+  }
+
+  // Event listeners para cálculo de parcelas
+  if (numeroParcelasSelect) {
+    numeroParcelasSelect.addEventListener('change', function() {
+      calcularParcelas();
+      calcularDatasParcelas();
+    });
+  }
+
+  // Event listeners para cálculo de datas das parcelas
+  if (dataVencimentoInput) {
+    dataVencimentoInput.addEventListener('change', calcularDatasParcelas);
+  }
+  if (intervaloParcelasSelect) {
+    intervaloParcelasSelect.addEventListener('change', calcularDatasParcelas);
+  }
+
+  try {
+    const resp = await fetch("{{ url_for('api.api_produtos') }}");
+    const json = await resp.json();
+    if (json && json.success && Array.isArray(json.data)) {
+      const lista = json.data.slice().sort((a,b) => (a.nome || '').localeCompare(b.nome || ''));
+      lista.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.nome} (${p.categoria || 'Sem categoria'})`;
+        opt.dataset.preco = p.preco;
+        opt.dataset.estoque = p.estoque_atual;
+        opt.dataset.nome = p.nome;
+        opt.dataset.categoria = p.categoria || '';
+        select.appendChild(opt);
+      });
+    }
+  } catch(e) {
+    console.warn('Falha ao carregar produtos para venda rápida:', e);
+  }
+
+  function updateInfoAndValor(){
+    const opt = select.options[select.selectedIndex];
+    if (!opt || !opt.value) {
+      if (info) info.textContent = 'Selecione um produto para ver categoria e estoque.';
+      if (qty) { qty.value = ''; qty.removeAttribute('max'); }
+      return;
+    }
+    const estoque = Number(opt.dataset.estoque || 0);
+    const preco = Number(opt.dataset.preco || 0);
+    const nome = opt.dataset.nome || '';
+    const categoria = opt.dataset.categoria || '';
+
+    if (info) info.textContent = `${nome} • Categoria: ${categoria || '—'} • Estoque: ${estoque}`;
+    if (qty) {
+      qty.setAttribute('max', String(estoque));
+      if (!qty.value || Number(qty.value) < 1) qty.value = 1;
+      if (Number(qty.value) > estoque) qty.value = estoque > 0 ? estoque : 1;
+    }
+    if (valorInput) {
+      const q = Number(qty && qty.value ? qty.value : 0);
+      const total = (preco || 0) * (q || 0);
+      if (!isNaN(total)) valorInput.value = total.toFixed(2);
+    }
+  }
+
+  select.addEventListener('change', updateInfoAndValor);
+  if (qty) qty.addEventListener('input', updateInfoAndValor);
+
+  // Inicializa exibição
+  updateInfoAndValor();
+
+  // Validação do formulário
+  const form = document.querySelector('form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      const formaPagamento = formaPagamentoSelect ? formaPagamentoSelect.value : '';
+      
+      // Validar se pagamento é dinheiro e valor entregue é suficiente
+      if (formaPagamento === 'dinheiro') {
+        const valorTotal = parseFloat(valorInput.value) || 0;
+        const valorEntregue = parseFloat(valorEntregueInput.value) || 0;
+        
+        if (valorEntregue < valorTotal) {
+          e.preventDefault();
+          alert('O valor entregue deve ser maior ou igual ao valor da compra!');
+          valorEntregueInput.focus();
+          return false;
+        }
+      }
+      
+      // Validar se pagamento é boleto e campos obrigatórios estão preenchidos
+      if (formaPagamento === 'boleto') {
+        if (!dataVencimentoInput.value) {
+          e.preventDefault();
+          alert('Por favor, selecione a data de vencimento do boleto!');
+          dataVencimentoInput.focus();
+          return false;
+        }
+        
+        if (!numeroParcelasSelect.value) {
+          e.preventDefault();
+          alert('Por favor, selecione o número de parcelas!');
+          numeroParcelasSelect.focus();
+          return false;
+        }
+        
+        // Validar intervalo se houver mais de uma parcela
+        const numeroParcelas = parseInt(numeroParcelasSelect.value) || 1;
+        if (numeroParcelas > 1 && !intervaloParcelasSelect.value) {
+          e.preventDefault();
+          alert('Por favor, selecione o intervalo entre as parcelas!');
+          intervaloParcelasSelect.focus();
+          return false;
+        }
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

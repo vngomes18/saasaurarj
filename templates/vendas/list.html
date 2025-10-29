@@ -1,0 +1,411 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Vendas - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                Controle de Vendas
+            </h2>
+            <p class="text-muted">Acompanhe todas as suas vendas</p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('nova_venda') }}" class="btn btn-success">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Nova Venda
+            </a>
+            <button class="btn btn-outline-secondary btn-export-csv">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7,10 12,15 17,10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Exportar CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="input-group">
+                <span class="input-group-text">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="M21 21l-4.35-4.35"></path>
+                    </svg>
+                </span>
+                <input type="text" class="form-control table-search" placeholder="Buscar vendas...">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="statusFilter">
+                <option value="">Todos os status</option>
+                <option value="finalizada">Finalizada</option>
+                <option value="pendente">Pendente</option>
+                <option value="cancelada">Cancelada</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select class="form-select" id="paymentFilter">
+                <option value="">Todas as formas</option>
+                <option value="dinheiro">Dinheiro</option>
+                <option value="cartao">Cartão</option>
+                <option value="pix">PIX</option>
+                <option value="transferencia">Transferência</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="date" class="form-control" id="dateFilter" placeholder="Filtrar por data">
+        </div>
+    </div>
+
+    <!-- Sales Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="vendas-table-container d-none d-md-block">
+                <table class="vendas-table" id="salesTable">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Venda</th>
+                            <th class="text-center">Data/Hora</th>
+                            <th class="text-center">Cliente</th>
+                            <th class="text-center">Valor Total</th>
+                            <th class="text-center">Pagamento</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Itens</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if vendas %}
+                            {% for venda in vendas %}
+                            <tr class="venda-row" 
+                                data-id="{{ venda.id }}" 
+                                data-status="{{ venda.status }}"
+                                data-value="{{ venda.valor_total }}">
+                                <td>
+                                    <div class="venda-info">
+                                        <div class="venda-avatar">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="9" cy="21" r="1"></circle>
+                                                <circle cx="20" cy="21" r="1"></circle>
+                                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="venda-details">
+                                            <h6>#{{ venda.id }}</h6>
+                                            {% if venda.observacoes %}
+                                                <small>{{ venda.observacoes[:40] }}{% if venda.observacoes|length > 40 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="text-center">
+                                        <strong>{{ venda.data_venda.strftime('%d/%m/%Y') }}</strong>
+                                        <br><small class="text-muted">{{ venda.data_venda.strftime('%H:%M') }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if venda.cliente %}
+                                        <div class="text-center">
+                                            <div class="cliente-avatar-sm">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                                    <circle cx="12" cy="7" r="4"></circle>
+                                                </svg>
+                                            </div>
+                                            <strong>{{ venda.cliente.nome }}</strong>
+                                            {% if venda.cliente.telefone %}
+                                                <br><small class="text-muted">{{ venda.cliente.telefone }}</small>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center">
+                                            <span class="badge bg-secondary">Cliente Avulso</span>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">
+                                        R$ {{ "%.2f"|format(venda.valor_total) }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if venda.forma_pagamento %}
+                                        <span class="badge bg-info">{{ venda.forma_pagamento.title() }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if venda.status == 'finalizada' %}
+                                        <span class="badge bg-success">
+                                            Finalizada
+                                        </span>
+                                    {% elif venda.status == 'pendente' %}
+                                        <span class="badge bg-warning">
+                                            Pendente
+                                        </span>
+                                    {% elif venda.status == 'cancelada' %}
+                                        <span class="badge bg-danger">
+                                            Cancelada
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        {{ venda.itens|length }} item(s)
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('detalhes_venda', id=venda.id) }}" 
+                                           class="btn btn-sm btn-outline-primary"
+                                           data-bs-toggle="tooltip" 
+                                           title="Ver detalhes">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                                <circle cx="12" cy="12" r="3"></circle>
+                                            </svg>
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-secondary btn-print"
+                                                data-bs-toggle="tooltip" 
+                                                title="Imprimir">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="6,9 6,2 18,2 18,9"></polyline>
+                                                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                                <rect x="6" y="14" width="12" height="8"></rect>
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-3">
+                                        <circle cx="9" cy="21" r="1"></circle>
+                                        <circle cx="20" cy="21" r="1"></circle>
+                                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                                    </svg>
+                                    <h5 class="text-muted">Nenhuma venda realizada</h5>
+                                    <p class="text-muted">Comece realizando sua primeira venda</p>
+                                    <a href="{{ url_for('nova_venda') }}" class="btn btn-success">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                                        </svg>
+                                        Realizar Primeira Venda
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Lista em cards (mobile) -->
+            <div class="d-md-none">
+                {% if vendas %}
+                <div class="mobile-list">
+                    {% for venda in vendas %}
+                    <div class="mobile-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="title">Venda #{{ venda.id }}</div>
+                                <small class="text-muted">{{ venda.data_venda.strftime('%d/%m/%Y %H:%M') }}</small>
+                            </div>
+                            <span class="badge bg-success">R$ {{ "%.2f"|format(venda.valor_total) }}</span>
+                        </div>
+                        <div class="meta mt-2">
+                            {% if venda.cliente %}
+                                <span class="badge bg-secondary">{{ venda.cliente.nome }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Cliente Avulso</span>
+                            {% endif %}
+                            {% if venda.forma_pagamento %}
+                                <span class="badge bg-info">{{ venda.forma_pagamento.title() }}</span>
+                            {% endif %}
+                            {% if venda.status == 'finalizada' %}
+                                <span class="badge bg-success">Finalizada</span>
+                            {% elif venda.status == 'pendente' %}
+                                <span class="badge bg-warning">Pendente</span>
+                            {% elif venda.status == 'cancelada' %}
+                                <span class="badge bg-danger">Cancelada</span>
+                            {% endif %}
+                            <span class="badge bg-primary">{{ venda.itens|length }} item(s)</span>
+                        </div>
+                        <div class="actions mt-2">
+                            <a href="{{ url_for('detalhes_venda', id=venda.id) }}" class="btn btn-sm btn-primary" aria-label="Ver detalhes">
+                                Ver
+                            </a>
+                            <button class="btn btn-sm btn-outline-secondary btn-print" aria-label="Imprimir">
+                                Imprimir
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state text-center py-5">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-muted mb-3">
+                        <circle cx="9" cy="21" r="1"></circle>
+                        <circle cx="20" cy="21" r="1"></circle>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                    </svg>
+                    <h5 class="text-muted">Nenhuma venda realizada</h5>
+                    <p class="text-muted">Comece realizando sua primeira venda</p>
+                    <a href="{{ url_for('nova_venda') }}" class="btn btn-success">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Realizar Primeira Venda
+                    </a>
+                </div>
+                {% endif %}
+
+                <!-- FAB Nova Venda -->
+                <a href="{{ url_for('nova_venda') }}" class="btn btn-success rounded-circle position-fixed bottom-0 end-0 m-3 shadow" aria-label="Nova venda">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Summary -->
+    {% if vendas %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        
+                        Resumo das Vendas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-primary">{{ vendas|length }}</h3>
+                                <p class="text-muted mb-0">Total de Vendas</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-success">
+                                    R$ {{ "%.2f"|format(vendas|sum(attribute='valor_total')) }}
+                                </h3>
+                                <p class="text-muted mb-0">Faturamento Total</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-warning">
+                                    {{ vendas|selectattr('status', 'equalto', 'pendente')|list|length }}
+                                </h3>
+                                <p class="text-muted mb-0">Vendas Pendentes</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h3 class="text-info">
+                                    R$ {{ "%.2f"|format(vendas|sum(attribute='valor_total') / vendas|length if vendas|length > 0 else 0) }}
+                                </h3>
+                                <p class="text-muted mb-0">Ticket Médio</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filters
+        const statusFilter = document.getElementById('statusFilter');
+        const paymentFilter = document.getElementById('paymentFilter');
+        const dateFilter = document.getElementById('dateFilter');
+        const table = document.querySelector('table');
+        
+        function applyFilters() {
+            const selectedStatus = statusFilter.value;
+            const selectedPayment = paymentFilter.value;
+            const selectedDate = dateFilter.value;
+            const rows = table.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                let showRow = true;
+                
+                // Status filter
+                if (selectedStatus && showRow) {
+                    const statusCell = row.querySelector('td:nth-child(6)');
+                    if (statusCell && !statusCell.textContent.toLowerCase().includes(selectedStatus.toLowerCase())) {
+                        showRow = false;
+                    }
+                }
+                
+                // Payment filter
+                if (selectedPayment && showRow) {
+                    const paymentCell = row.querySelector('td:nth-child(5)');
+                    if (paymentCell && !paymentCell.textContent.toLowerCase().includes(selectedPayment.toLowerCase())) {
+                        showRow = false;
+                    }
+                }
+                
+                // Date filter
+                if (selectedDate && showRow) {
+                    const dateCell = row.querySelector('td:nth-child(2)');
+                    if (dateCell) {
+                        const dateText = dateCell.textContent.trim();
+                        const rowDate = dateText.split('\n')[0]; // Get just the date part
+                        const [day, month, year] = rowDate.split('/');
+                        const rowDateFormatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                        
+                        if (rowDateFormatted !== selectedDate) {
+                            showRow = false;
+                        }
+                    }
+                }
+                
+                row.style.display = showRow ? '' : 'none';
+            });
+        }
+        
+        statusFilter.addEventListener('change', applyFilters);
+        paymentFilter.addEventListener('change', applyFilters);
+        dateFilter.addEventListener('change', applyFilters);
+
+        // Add animation to table rows
+        document.querySelectorAll('tbody tr').forEach((row, index) => {
+            setTimeout(() => {
+                row.classList.add('fade-in');
+            }, index * 50);
+        });
+    });
+</script>
+{% endblock %}
+

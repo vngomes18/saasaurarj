@@ -1,0 +1,152 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Nova Nota Fiscal - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        
+                        Nova Nota Fiscal
+                    </h2>
+                    <p class="text-muted mb-0">Cadastre uma nova nota fiscal</p>
+                </div>
+                <a href="{{ url_for('notas_fiscais') }}" class="btn btn-secondary">
+                    
+                    Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-12">
+            <form method="POST">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="card">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0">
+                            
+                            Informações da Nota Fiscal
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="numero_nf" class="form-label">Número da NF *</label>
+                                <input type="text" class="form-control" id="numero_nf" name="numero_nf" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="serie" class="form-label">Série</label>
+                                <input type="text" class="form-control" id="serie" name="serie" placeholder="1">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="modelo" class="form-label">Modelo</label>
+                                <select class="form-select" id="modelo" name="modelo">
+                                    <option value="NFe">NFe</option>
+                                    <option value="NFCe">NFCe</option>
+                                    <option value="NF">NF</option>
+                                    <option value="NFS">NFS</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="chave_acesso" class="form-label">Chave de Acesso</label>
+                                <input type="text" class="form-control" id="chave_acesso" name="chave_acesso"
+                                       placeholder="44 dígitos">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="data_saida" class="form-label">Data de Saída</label>
+                                <input type="date" class="form-control" id="data_saida" name="data_saida">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="tipo_operacao" class="form-label">Tipo de Operação</label>
+                                <select class="form-select" id="tipo_operacao" name="tipo_operacao">
+                                    <option value="saida">Saída</option>
+                                    <option value="entrada">Entrada</option>
+                                    <option value="devolucao">Devolução</option>
+                                    <option value="transferencia">Transferência</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="valor_total" class="form-label">Valor Total *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" id="valor_total" name="valor_total" 
+                                           step="0.01" min="0" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cliente_fornecedor" class="form-label">Cliente/Fornecedor</label>
+                                <input type="text" class="form-control" id="cliente_fornecedor" name="cliente_fornecedor">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="compra_id" class="form-label">Compra Relacionada</label>
+                                <select class="form-select" id="compra_id" name="compra_id">
+                                    <option value="">Nenhuma</option>
+                                    {% for compra in compras %}
+                                    <option value="{{ compra.id }}">{{ compra.numero_compra }} - {{ compra.fornecedor.nome }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="observacoes" class="form-label">Observações</label>
+                            <textarea class="form-control" id="observacoes" name="observacoes" rows="3"></textarea>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ url_for('notas_fiscais') }}" class="btn btn-secondary">
+                                
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                
+                                Salvar Nota Fiscal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.card').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+
+        // Chave de acesso mask (44 dígitos)
+        document.getElementById('chave_acesso').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 44) {
+                value = value.substring(0, 44);
+            }
+            e.target.value = value;
+        });
+    });
+</script>
+{% endblock %}
+

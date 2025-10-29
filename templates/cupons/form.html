@@ -1,0 +1,402 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+    {% if cupom %}Editar Cupom{% else %}Novo Cupom{% endif %} - SaaS Sistema
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>
+                
+                {% if cupom %}Editar Cupom{% else %}Novo Cupom{% endif %}
+            </h2>
+            <p class="text-muted">
+                {% if cupom %}Atualize as informações do cupom{% else %}Crie um novo cupom de desconto{% endif %}
+            </p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="{{ url_for('cupons') }}" class="btn btn-outline-secondary">
+                
+                Voltar para Cupons
+            </a>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        <!-- CSRF Token -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <!-- Informações Básicas -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3">
+                                
+                                Informações Básicas
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="codigo" class="form-label">
+                                        
+                                        Código do Cupom *
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="codigo" 
+                                           name="codigo" 
+                                           placeholder="Ex: DESCONTO10"
+                                           value="{{ cupom.codigo if cupom else '' }}"
+                                           style="text-transform: uppercase;"
+                                           required>
+                                    <div class="invalid-feedback">
+                                        Por favor, insira o código do cupom.
+                                    </div>
+                                    <div class="form-text">
+                                        
+                                        O código será convertido para maiúsculas automaticamente
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="tipo_desconto" class="form-label">
+                                        
+                                        Tipo de Desconto *
+                                    </label>
+                                    <select class="form-select" id="tipo_desconto" name="tipo_desconto" required>
+                                        <option value="">Selecione...</option>
+                                        <option value="percentual" {{ 'selected' if cupom and cupom.tipo_desconto == 'percentual' else '' }}>
+                                            Percentual (%)
+                                        </option>
+                                        <option value="valor_fixo" {{ 'selected' if cupom and cupom.tipo_desconto == 'valor_fixo' else '' }}>
+                                            Valor Fixo (R$)
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback">
+                                        Por favor, selecione o tipo de desconto.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="descricao" class="form-label">
+                                        
+                                        Descrição
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="descricao" 
+                                           name="descricao" 
+                                           placeholder="Ex: Desconto de 10% para novos clientes"
+                                           value="{{ cupom.descricao if cupom else '' }}">
+                                    <div class="form-text">
+                                        
+                                        Descrição opcional do cupom
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configurações de Desconto -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3">
+                                
+                                Configurações de Desconto
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="valor_desconto" class="form-label">
+                                        
+                                        Valor do Desconto *
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control currency-input" 
+                                           id="valor_desconto" 
+                                           name="valor_desconto" 
+                                           placeholder="0,00"
+                                           value="{{ cupom.valor_desconto|string|replace('.', ',') if cupom else '' }}"
+                                           required>
+                                    <div class="invalid-feedback">
+                                        Por favor, insira o valor do desconto.
+                                    </div>
+                                    <div class="form-text" id="desconto-help">
+                                        
+                                        Para percentual, insira apenas o número (ex: 10 para 10%)
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="valor_minimo_compra" class="form-label">
+                                        
+                                        Valor Mínimo da Compra
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control currency-input" 
+                                           id="valor_minimo_compra" 
+                                           name="valor_minimo_compra" 
+                                           placeholder="0,00"
+                                           value="{{ cupom.valor_minimo_compra|string|replace('.', ',') if cupom and cupom.valor_minimo_compra else '' }}">
+                                    <div class="form-text">
+                                        
+                                        Valor mínimo da compra para usar o cupom (deixe vazio para sem mínimo)
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row" id="max-desconto-row" style="display: none;">
+                                <div class="col-md-6 mb-3">
+                                    <label for="valor_maximo_desconto" class="form-label">
+                                        
+                                        Valor Máximo do Desconto
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control currency-input" 
+                                           id="valor_maximo_desconto" 
+                                           name="valor_maximo_desconto" 
+                                           placeholder="0,00"
+                                           value="{{ cupom.valor_maximo_desconto|string|replace('.', ',') if cupom and cupom.valor_maximo_desconto else '' }}">
+                                    <div class="form-text">
+                                        
+                                        Valor máximo de desconto para cupons percentuais
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Período de Validade -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                                Período de Validade
+                            </h5>
+                            
+                            <!-- Checkbox para habilitar período de validade -->
+                            <div class="row mb-3">
+                                <div class="col-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="tem_periodo_validade" 
+                                               name="tem_periodo_validade"
+                                               {{ 'checked' if cupom and (cupom.data_inicio or cupom.data_fim) else '' }}>
+                                        <label class="form-check-label" for="tem_periodo_validade">
+                                            <strong>Definir período de validade</strong>
+                                        </label>
+                                    </div>
+                                    <div class="form-text">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                            <circle cx="12" cy="12" r="10"></circle>
+                                            <path d="M12 6v6l4 2"></path>
+                                        </svg>
+                                        Se desabilitado, o cupom não terá data de expiração
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Campos de data (inicialmente ocultos) -->
+                            <div class="row" id="periodo-validade-fields" style="display: none;">
+                                <div class="col-md-6 mb-3">
+                                    <label for="data_inicio" class="form-label">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                            <polyline points="9,22 9,12 15,12 15,22"></polyline>
+                                        </svg>
+                                        Data de Início *
+                                    </label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="data_inicio" 
+                                           name="data_inicio" 
+                                           value="{{ cupom.data_inicio.strftime('%Y-%m-%d') if cupom and cupom.data_inicio else '' }}">
+                                    <div class="invalid-feedback">
+                                        Por favor, selecione a data de início.
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="data_fim" class="form-label">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                            <path d="M9 11l3 3 8-8"></path>
+                                            <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c1.51 0 2.93.37 4.18 1.03"></path>
+                                        </svg>
+                                        Data de Fim *
+                                    </label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="data_fim" 
+                                           name="data_fim" 
+                                           value="{{ cupom.data_fim.strftime('%Y-%m-%d') if cupom and cupom.data_fim else '' }}">
+                                    <div class="invalid-feedback">
+                                        Por favor, selecione a data de fim.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configurações Avançadas -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3">
+                                
+                                Configurações Avançadas
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="limite_uso" class="form-label">
+                                        
+                                        Limite de Uso
+                                    </label>
+                                    <input type="number" 
+                                           class="form-control" 
+                                           id="limite_uso" 
+                                           name="limite_uso" 
+                                           placeholder="Ex: 100"
+                                           min="1"
+                                           value="{{ cupom.limite_uso if cupom and cupom.limite_uso else '' }}">
+                                    <div class="form-text">
+                                        
+                                        Número máximo de usos (deixe vazio para ilimitado)
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">
+                                        
+                                        Status
+                                    </label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="ativo" 
+                                               name="ativo"
+                                               {{ 'checked' if cupom and cupom.ativo else '' }}>
+                                        <label class="form-check-label" for="ativo">
+                                            Cupom ativo
+                                        </label>
+                                    </div>
+                                    <div class="form-text">
+                                        
+                                        Cupons inativos não podem ser utilizados
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-flex justify-content-end gap-3">
+                            <a href="{{ url_for('cupons') }}" class="btn btn-outline-secondary">
+                                
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                
+                                {% if cupom %}Atualizar Cupom{% else %}Criar Cupom{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoDescontoSelect = document.getElementById('tipo_desconto');
+    const valorDescontoInput = document.getElementById('valor_desconto');
+    const descontoHelp = document.getElementById('desconto-help');
+    const maxDescontoRow = document.getElementById('max-desconto-row');
+    
+    // Elementos do período de validade
+    const temPeriodoValidadeCheckbox = document.getElementById('tem_periodo_validade');
+    const periodoValidadeFields = document.getElementById('periodo-validade-fields');
+    const dataInicioInput = document.getElementById('data_inicio');
+    const dataFimInput = document.getElementById('data_fim');
+    
+    // Função para atualizar interface baseada no tipo de desconto
+    function updateDescontoInterface() {
+        const tipo = tipoDescontoSelect.value;
+        
+        if (tipo === 'percentual') {
+            valorDescontoInput.placeholder = '10';
+            descontoHelp.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><percent></percent></svg>Para percentual, insira apenas o número (ex: 10 para 10%)';
+            maxDescontoRow.style.display = 'block';
+        } else if (tipo === 'valor_fixo') {
+            valorDescontoInput.placeholder = '0,00';
+            descontoHelp.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>Valor fixo em reais';
+            maxDescontoRow.style.display = 'none';
+        } else {
+            maxDescontoRow.style.display = 'none';
+        }
+    }
+    
+    // Função para controlar período de validade
+    function updatePeriodoValidadeInterface() {
+        const temPeriodo = temPeriodoValidadeCheckbox.checked;
+        
+        if (temPeriodo) {
+            periodoValidadeFields.style.display = 'block';
+            dataInicioInput.required = true;
+            dataFimInput.required = true;
+            
+            // Adicionar animação suave
+            periodoValidadeFields.style.opacity = '0';
+            setTimeout(() => {
+                periodoValidadeFields.style.transition = 'opacity 0.3s ease-in-out';
+                periodoValidadeFields.style.opacity = '1';
+            }, 10);
+        } else {
+            periodoValidadeFields.style.display = 'none';
+            dataInicioInput.required = false;
+            dataFimInput.required = false;
+            
+            // Limpar valores quando desabilitado
+            dataInicioInput.value = '';
+            dataFimInput.value = '';
+        }
+    }
+    
+    // Event listeners
+    tipoDescontoSelect.addEventListener('change', updateDescontoInterface);
+    temPeriodoValidadeCheckbox.addEventListener('change', updatePeriodoValidadeInterface);
+    
+    // Inicialização
+    updateDescontoInterface();
+    updatePeriodoValidadeInterface();
+    
+    // Converter código para maiúsculas
+    const codigoInput = document.getElementById('codigo');
+    codigoInput.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+    
+    // Validação do formulário
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        // Só validar datas se o período de validade estiver habilitado
+        if (temPeriodoValidadeCheckbox.checked) {
+            const dataInicio = new Date(dataInicioInput.value);
+            const dataFim = new Date(dataFimInput.value);
+            
+            if (dataFim <= dataInicio) {
+                e.preventDefault();
+                alert('A data de fim deve ser posterior à data de início!');
+                return false;
+            }
+        }
+    });
+    
+    // Definir data padrão como hoje se não houver valor
+    const hoje = new Date().toISOString().split('T')[0];
+    if (!dataInicioInput.value) {
+        dataInicioInput.value = hoje;
+    }
+});
+</script>
+{% endblock %}

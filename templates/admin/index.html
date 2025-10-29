@@ -1,0 +1,782 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Painel Administrativo - SaaS Sistema de Gestão{% endblock %}
+
+{% block extra_css %}
+<style>
+.admin-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.admin-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.admin-card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 1.5rem;
+}
+
+.admin-card-body {
+    padding: 1.5rem;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.stat-card.success {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.stat-card.warning {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.stat-card.danger {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.stat-card.info {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    color: #333;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.section-title {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 3px solid #667eea;
+    display: inline-block;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 2rem;
+}
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    transition: background-color 0.2s ease;
+}
+
+.recent-item:hover {
+    background-color: #f8f9fa;
+}
+
+.recent-item-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.recent-item-content {
+    flex-grow: 1;
+}
+
+.recent-item-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.recent-item-subtitle {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.admin-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-admin {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-user {
+    background-color: #6c757d;
+    color: white;
+}
+
+.badge-success {
+    background-color: #28a745;
+    color: white;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.badge-info {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.quick-action-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.quick-action-btn.secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+}
+
+.quick-action-btn.success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+@media (max-width: 768px) {
+    .stat-number {
+        font-size: 2rem;
+    }
+    
+    .admin-card-header {
+        padding: 1rem;
+    }
+    
+    .admin-card-body {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        
+                        Painel Administrativo
+                    </h1>
+                    <p class="text-muted mb-0">Visão geral completa do sistema</p>
+                </div>
+                <div>
+                    <button class="btn quick-action-btn me-2" onclick="location.reload()">
+                        
+                        Atualizar
+                    </button>
+                    <button class="btn quick-action-btn secondary" onclick="exportData()">
+                        
+                        Exportar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas Gerais -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="section-title">
+                
+                Estatísticas Gerais
+            </h4>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-number">{{ stats.total_usuarios }}</div>
+                <div class="stat-label">Total de Usuários</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card success">
+                <div class="stat-number">{{ stats.usuarios_admin }}</div>
+                <div class="stat-label">Administradores</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card warning">
+                <div class="stat-number">{{ vendas_stats.total_vendas }}</div>
+                <div class="stat-label">Total de Vendas</div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card danger">
+                <div class="stat-number">R$ {{ "%.2f"|format(vendas_stats.faturamento_mes) }}</div>
+                <div class="stat-label">Faturamento do Mês</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seções Detalhadas -->
+    <div class="row">
+        <!-- Clientes -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card admin-card h-100">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        
+                        Clientes
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-12 text-center">
+                            <div class="stat-number text-primary">{{ clientes_stats.total }}</div>
+                            <div class="stat-label">Total de Clientes</div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin_table', table_name='cliente') }}" class="btn btn-outline-primary btn-sm">
+                            
+                            Ver Tabela
+                        </a>
+                        <a href="{{ url_for('admin_table', table_name='cliente') }}?format=csv" class="btn btn-outline-success btn-sm">
+                            
+                            Exportar CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produtos -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card admin-card h-100">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        
+                        Produtos
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-12 text-center">
+                            <div class="stat-number text-primary">{{ produtos_stats.total }}</div>
+                            <div class="stat-label">Total de Produtos</div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin_table', table_name='produto') }}" class="btn btn-outline-primary btn-sm">
+                            
+                            Ver Tabela
+                        </a>
+                        <a href="{{ url_for('admin_table', table_name='produto') }}?format=csv" class="btn btn-outline-success btn-sm">
+                            
+                            Exportar CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vendas -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card admin-card h-100">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        
+                        Vendas
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-12 text-center">
+                            <div class="stat-number text-primary">{{ vendas_stats.total_vendas }}</div>
+                            <div class="stat-label">Total de Vendas</div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin_table', table_name='venda') }}" class="btn btn-outline-primary btn-sm">
+                            
+                            Ver Tabela
+                        </a>
+                        <a href="{{ url_for('admin_table', table_name='venda') }}?format=csv" class="btn btn-outline-success btn-sm">
+                            
+                            Exportar CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fornecedores -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card admin-card h-100">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        
+                        Fornecedores
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-12 text-center">
+                            <div class="stat-number text-primary">{{ fornecedores_stats.total }}</div>
+                            <div class="stat-label">Total de Fornecedores</div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin_table', table_name='fornecedor') }}" class="btn btn-outline-primary btn-sm">
+                            
+                            Ver Tabela
+                        </a>
+                        <a href="{{ url_for('admin_table', table_name='fornecedor') }}?format=csv" class="btn btn-outline-success btn-sm">
+                            
+                            Exportar CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compras -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card admin-card h-100">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        
+                        Compras
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-12 text-center">
+                            <div class="stat-number text-primary">{{ compras_stats.total }}</div>
+                            <div class="stat-label">Total de Compras</div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin_table', table_name='compra') }}" class="btn btn-outline-primary btn-sm">
+                            
+                            Ver Tabela
+                        </a>
+                        <a href="{{ url_for('admin_table', table_name='compra') }}?format=csv" class="btn btn-outline-success btn-sm">
+                            
+                            Exportar CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Produtos Auxiliares -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card admin-card h-100">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        
+                        Produtos Auxiliares
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-12 text-center">
+                            <div class="stat-number text-primary">{{ produtos_aux_stats.total }}</div>
+                            <div class="stat-label">Total de Produtos Auxiliares</div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin_table', table_name='produto_auxiliar') }}" class="btn btn-outline-primary btn-sm">
+                            
+                            Ver Tabela
+                        </a>
+                        <a href="{{ url_for('admin_table', table_name='produto_auxiliar') }}?format=csv" class="btn btn-outline-success btn-sm">
+                            
+                            Exportar CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notas Fiscais -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card admin-card h-100">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        
+                        Notas Fiscais
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-12 text-center">
+                            <div class="stat-number text-primary">{{ notas_stats.total }}</div>
+                            <div class="stat-label">Total de Notas Fiscais</div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin_table', table_name='nota_fiscal') }}" class="btn btn-outline-primary btn-sm">
+                            
+                            Ver Tabela
+                        </a>
+                        <a href="{{ url_for('admin_table', table_name='nota_fiscal') }}?format=csv" class="btn btn-outline-success btn-sm">
+                            
+                            Exportar CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Suporte -->
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card admin-card h-100">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        
+                        Suporte
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-12 text-center">
+                            <div class="stat-number text-primary">{{ suporte_stats.tickets_abertos + suporte_stats.tickets_resolvidos }}</div>
+                            <div class="stat-label">Total de Tickets</div>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin_table', table_name='ticket_suporte') }}" class="btn btn-outline-primary btn-sm">
+                            
+                            Ver Tabela
+                        </a>
+                        <a href="{{ url_for('admin_table', table_name='ticket_suporte') }}?format=csv" class="btn btn-outline-success btn-sm">
+                            
+                            Exportar CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos e Análises -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="section-title">
+                
+                Análises e Gráficos
+            </h4>
+        </div>
+        
+        <!-- Gráfico de Vendas dos Últimos 7 Dias -->
+        <div class="col-lg-8 mb-4">
+            <div class="card admin-card">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        
+                        Vendas dos Últimos 7 Dias
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    <div class="chart-container">
+                        <canvas id="vendasChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Produtos -->
+        <div class="col-lg-4 mb-4">
+            <div class="card admin-card">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        
+                        Top 5 Produtos
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    {% if top_produtos %}
+                        {% for produto in top_produtos %}
+                        <div class="recent-item">
+                            <div class="recent-item-icon bg-primary">
+                                
+                            </div>
+                            <div class="recent-item-content">
+                                <div class="recent-item-title">{{ produto.nome }}</div>
+                                <div class="recent-item-subtitle">{{ produto.total_vendido }} unidades vendidas</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted">
+                            
+                            <p>Nenhum produto vendido ainda</p>
+                        </div>
+                    {% endif %}
+                </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Atividade Recente -->
+    <div class="row">
+        <!-- Usuários Recentes -->
+        <div class="col-lg-6 mb-4">
+            <div class="card admin-card">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        
+                        Usuários Recentes
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    {% if usuarios_recentes %}
+                        {% for usuario in usuarios_recentes %}
+                        <div class="recent-item">
+                            <div class="recent-item-icon {% if usuario.role == 'admin' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                
+                            </div>
+                            <div class="recent-item-content">
+                                <div class="recent-item-title">
+                                    {{ usuario.username }}
+                                    {% if usuario.role == 'admin' %}
+                                        <span class="admin-badge badge-admin ms-2">Admin</span>
+                                    {% else %}
+                                        <span class="admin-badge badge-user ms-2">User</span>
+                                    {% endif %}
+                                </div>
+                                <div class="recent-item-subtitle">
+                                    {{ usuario.email }} • {{ usuario.empresa }}
+                                </div>
+                            </div>
+                            <div class="text-muted small">
+                                {{ usuario.created_at.strftime('%d/%m/%Y') }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted">
+                            
+                            <p>Nenhum usuário cadastrado</p>
+                        </div>
+                    {% endif %}
+        </div>
+            </div>
+        </div>
+
+        <!-- Tickets Recentes -->
+        <div class="col-lg-6 mb-4">
+            <div class="card admin-card">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        
+                        Tickets Recentes
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    {% if tickets_recentes %}
+                        {% for ticket in tickets_recentes %}
+                        <div class="recent-item">
+                            <div class="recent-item-icon 
+                                {% if ticket.status == 'aberto' %}bg-warning
+                                {% elif ticket.status == 'em_andamento' %}bg-info
+                                {% elif ticket.status == 'resolvido' %}bg-success
+                                {% else %}bg-secondary{% endif %}">
+                                
+                            </div>
+                            <div class="recent-item-content">
+                                <div class="recent-item-title">{{ ticket.titulo }}</div>
+                                <div class="recent-item-subtitle">
+                                    {{ ticket.categoria }} • 
+                                    <span class="admin-badge 
+                                        {% if ticket.prioridade == 'urgente' %}badge-danger
+                                        {% elif ticket.prioridade == 'alta' %}badge-warning
+                                        {% else %}badge-info{% endif %}">
+                                        {{ ticket.prioridade }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="text-muted small">
+                                {{ ticket.data_abertura.strftime('%d/%m/%Y') }}
+      </div>
+    </div>
+    {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted">
+                            
+                            <p>Nenhum ticket de suporte</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações Rápidas -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card admin-card">
+                <div class="admin-card-header">
+                    <h5 class="mb-0">
+                        
+                        Ações Rápidas
+                    </h5>
+                </div>
+                <div class="admin-card-body">
+                    <div class="row">
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('admin_table', table_name='user') }}" class="btn quick-action-btn w-100">
+                                
+                                Gerenciar Usuários
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('admin_table', table_name='produto') }}" class="btn quick-action-btn success w-100">
+                                
+                                Gerenciar Produtos
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('admin_table', table_name='venda') }}" class="btn quick-action-btn secondary w-100">
+                                
+                                Ver Vendas
+                            </a>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-3">
+                            <a href="{{ url_for('admin_table', table_name='ticket_suporte') }}" class="btn quick-action-btn w-100">
+                                
+                                Suporte
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Gráfico de Vendas dos Últimos 7 Dias
+const vendasData = {{ vendas_7_dias|tojson }};
+const ctx = document.getElementById('vendasChart').getContext('2d');
+const vendasChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: vendasData.map(item => item.data),
+        datasets: [{
+            label: 'Vendas',
+            data: vendasData.map(item => item.vendas),
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            borderWidth: 3,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#667eea',
+            pointBorderColor: '#ffffff',
+            pointBorderWidth: 2,
+            pointRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0,0,0,0.1)'
+                }
+            },
+            x: {
+                grid: {
+                    display: false
+                }
+            }
+        },
+        elements: {
+            point: {
+                hoverRadius: 8
+            }
+        }
+    }
+});
+
+// Função para exportar dados
+function exportData() {
+    // Implementar funcionalidade de exportação
+    alert('Funcionalidade de exportação será implementada em breve!');
+}
+
+// Auto-refresh a cada 5 minutos
+setInterval(function() {
+    location.reload();
+}, 300000); // 5 minutos
+
+// Animação de entrada para os cards
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.admin-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
+{% endblock %}

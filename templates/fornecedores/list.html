@@ -1,0 +1,181 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Fornecedores - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                            <rect x="1" y="3" width="15" height="13"></rect>
+                            <path d="M16 8h.01"></path>
+                            <path d="M16 8v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8"></path>
+                            <path d="M6 21v-4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"></path>
+                        </svg>
+                        Fornecedores
+                    </h2>
+                    <p class="text-muted mb-0">Gerencie seus fornecedores e parceiros comerciais</p>
+                </div>
+                <a href="{{ url_for('novo_fornecedor') }}" class="btn btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    Novo Fornecedor
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fornecedores List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="fornecedores-table-container">
+                <table class="fornecedores-table" id="suppliersTable">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Fornecedor</th>
+                            <th class="text-center">Documento</th>
+                            <th class="text-center">Contato</th>
+                            <th class="text-center">Localização</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if fornecedores %}
+                            {% for fornecedor in fornecedores %}
+                            <tr class="fornecedor-row" 
+                                data-name="{{ fornecedor.nome|lower }}" 
+                                data-status="{{ fornecedor.status }}"
+                                data-city="{{ fornecedor.cidade|lower if fornecedor.cidade else '' }}">
+                                <td>
+                                    <div class="fornecedor-info">
+                                        <div class="fornecedor-avatar">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="1" y="3" width="15" height="13"></rect>
+                                                <path d="M16 8h.01"></path>
+                                                <path d="M16 8v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8"></path>
+                                                <path d="M6 21v-4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"></path>
+                                            </svg>
+                                        </div>
+                                        <div class="fornecedor-details">
+                                            <h6>{{ fornecedor.nome }}</h6>
+                                            {% if fornecedor.razao_social %}
+                                                <small>{{ fornecedor.razao_social[:50] }}{% if fornecedor.razao_social|length > 50 %}...{% endif %}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if fornecedor.cnpj %}
+                                        <code>{{ fornecedor.cnpj }}</code>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="text-center">
+                                        {% if fornecedor.contato %}
+                                            <div class="mb-1">
+                                                <span class="badge bg-primary">
+                                                    {{ fornecedor.contato }}
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                        {% if fornecedor.telefone %}
+                                            <span class="badge bg-info">
+                                                {{ fornecedor.telefone }}
+                                            </span>
+                                        {% endif %}
+                                        {% if fornecedor.email %}
+                                            <br><small class="text-muted">{{ fornecedor.email[:30] }}{% if fornecedor.email|length > 30 %}...{% endif %}</small>
+                                        {% endif %}
+                                        {% if not fornecedor.contato and not fornecedor.telefone %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if fornecedor.cidade %}
+                                        <span class="badge bg-secondary">{{ fornecedor.cidade }}, {{ fornecedor.estado or 'N/A' }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if fornecedor.status == 'ativo' %}
+                                        <span class="badge bg-success">
+                                            Ativo
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            Inativo
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('editar_fornecedor', id=fornecedor.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           data-bs-toggle="tooltip"
+                                           title="Editar">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                            </svg>
+                                        </a>
+                                        <a href="#" 
+                                           class="btn btn-sm btn-outline-danger" 
+                                           data-bs-toggle="tooltip"
+                                           title="Excluir"
+                                           onclick="showConfirm('Tem certeza que deseja excluir este fornecedor?', function() { window.location.href = '{{ url_for('excluir_fornecedor', id=fornecedor.id) }}'; }); return false;">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="3,6 5,6 21,6"></polyline>
+                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center p-5">
+                            
+                            <h5 class="text-muted">Nenhum fornecedor cadastrado</h5>
+                            <p class="text-muted">Comece adicionando seu primeiro fornecedor</p>
+                            <a href="{{ url_for('novo_fornecedor') }}" class="btn btn-primary">
+                                
+                                Adicionar Fornecedor
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.card, .table').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}
+

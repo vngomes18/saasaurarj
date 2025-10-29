@@ -1,0 +1,725 @@
+{% extends "layout/base.html" %}
+
+{% block title %}
+    {% if cliente %}Editar Cliente{% else %}Novo Cliente{% endif %} - SaaS Sistema
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>
+                
+                {% if cliente %}Editar Cliente{% else %}Novo Cliente{% endif %}
+            </h2>
+            <p class="text-muted">
+                {% if cliente %}Atualize as informações do cliente{% else %}Cadastre um novo cliente no sistema{% endif %}
+            </p>
+        </div>
+        <div class="col-md-6 text-end">
+            <a href="{{ url_for('clientes') }}" class="btn btn-outline-secondary">
+                
+                Voltar para Clientes
+            </a>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalid:[object Object]="true" data-offline-queue="true">
+                        <!-- CSRF Token -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <!-- Informações Básicas -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3">
+                                
+                                Informações Básicas
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="nome" class="form-label">
+                                        
+                                        Nome Completo *
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="nome" 
+                                           name="nome" 
+                                           value="{{ cliente.nome if cliente else '' }}" 
+                                           required>
+                                    <div class="invalid-feedback">
+                                        Por favor, insira o nome do cliente.
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="tipo_cliente" class="form-label">
+                                        
+                                        Tipo de Cliente
+                                    </label>
+                                    <select class="form-select" id="tipo_cliente" name="tipo_cliente">
+                                        <option value="pessoa_fisica" {{ 'selected' if cliente and cliente.tipo_cliente == 'pessoa_fisica' else '' }}>Pessoa Física</option>
+                                        <option value="pessoa_juridica" {{ 'selected' if cliente and cliente.tipo_cliente == 'pessoa_juridica' else '' }}>Pessoa Jurídica</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="cpf_cnpj" class="form-label">
+                                        
+                                        <span id="cpf-cnpj-label">CPF</span>
+                                    </label>
+                                    <input type="text" 
+                                           class="form-control cpf-cnpj-input" 
+                                           id="cpf_cnpj" 
+                                           name="cpf_cnpj" 
+                                           placeholder="000.000.000-00"
+                                           value="{{ cliente.cpf_cnpj if cliente else '' }}">
+                                    <div class="form-text">
+                                        Digite apenas números, a formatação será aplicada automaticamente
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="data_nascimento" class="form-label">
+                                        
+                                        Data de Nascimento
+                                    </label>
+                                    <input type="date" 
+                                           class="form-control" 
+                                           id="data_nascimento" 
+                                           name="data_nascimento" 
+                                           value="{% if cliente and cliente.data_nascimento %}{{ cliente.data_nascimento.strftime('%Y-%m-%d') }}{% endif %}">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="email" class="form-label">
+                                        
+                                        Email
+                                    </label>
+                                    <input type="email" 
+                                           class="form-control" 
+                                           id="email" 
+                                           name="email" 
+                                           value="{{ cliente.email if cliente else '' }}">
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="telefone" class="form-label">
+                                        
+                                        Telefone
+                                    </label>
+                                    <input type="tel" 
+                                           class="form-control phone-input" 
+                                           id="telefone" 
+                                           name="telefone" 
+                                           placeholder="(00) 00000-0000"
+                                           value="{{ cliente.telefone if cliente else '' }}">
+                                    <div class="form-text">
+                                        Digite apenas números, a formatação será aplicada automaticamente
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Endereço com CEP -->
+                        <div class="mb-4">
+                            <h5 class="text-primary mb-3">
+                                
+                                Endereço
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <label for="cep" class="form-label">CEP</label>
+                                    <input type="text" 
+                                           class="form-control cep-input" 
+                                           id="cep" 
+                                           name="cep" 
+                                           placeholder="00000-000"
+                                           value="{{ cliente.cep if cliente else '' }}">
+                                    <div class="form-text">
+                                        Digite o CEP para preenchimento automático
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="logradouro" class="form-label">Logradouro</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="logradouro" 
+                                           name="logradouro" 
+                                           placeholder="Rua, Avenida, etc."
+                                           value="{{ cliente.logradouro if cliente else '' }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="numero" class="form-label">Número</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="numero" 
+                                           name="numero" 
+                                           placeholder="123"
+                                           value="{{ cliente.numero if cliente else '' }}">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="bairro" class="form-label">Bairro</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="bairro" 
+                                           name="bairro" 
+                                           value="{{ cliente.bairro if cliente else '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="cidade" class="form-label">Cidade</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="cidade" 
+                                           name="cidade" 
+                                           value="{{ cliente.cidade if cliente else '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="uf" class="form-label">UF</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="uf" 
+                                           name="uf" 
+                                           maxlength="2"
+                                           value="{{ cliente.uf if cliente else '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campos para Cobrança -->
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enable_billing_info" onchange="toggleSection('billing_info')" {{ 'checked' if cliente and (cliente.forma_pagamento_preferida or cliente.limite_credito or cliente.dia_vencimento) else '' }}>
+                                        <label class="form-check-label fw-bold" for="enable_billing_info">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                                <line x1="1" y1="10" x2="23" y2="10"></line>
+                                            </svg>
+                                            Informações de Cobrança
+                                        </label>
+                                        <small class="text-muted ms-3">(Opcional - Desabilitado por padrão)</small>
+                                    </div>
+                                </div>
+                                <div class="card-body" id="billing_info" style="display: {{ 'block' if cliente and (cliente.forma_pagamento_preferida or cliente.limite_credito or cliente.dia_vencimento) else 'none' }};">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="forma_pagamento_preferida" class="form-label">Forma de Pagamento Preferida</label>
+                                    <select class="form-select" id="forma_pagamento_preferida" name="forma_pagamento_preferida">
+                                        <option value="">Selecione...</option>
+                                        <option value="dinheiro" {{ 'selected' if cliente and cliente.forma_pagamento_preferida == 'dinheiro' else '' }}>Dinheiro</option>
+                                        <option value="cartao_debito" {{ 'selected' if cliente and cliente.forma_pagamento_preferida == 'cartao_debito' else '' }}>Cartão de Débito</option>
+                                        <option value="cartao_credito" {{ 'selected' if cliente and cliente.forma_pagamento_preferida == 'cartao_credito' else '' }}>Cartão de Crédito</option>
+                                        <option value="pix" {{ 'selected' if cliente and cliente.forma_pagamento_preferida == 'pix' else '' }}>PIX</option>
+                                        <option value="boleto" {{ 'selected' if cliente and cliente.forma_pagamento_preferida == 'boleto' else '' }}>Boleto</option>
+                                        <option value="transferencia" {{ 'selected' if cliente and cliente.forma_pagamento_preferida == 'transferencia' else '' }}>Transferência</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="limite_credito" class="form-label">Limite de Crédito (R$)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">R$</span>
+                                        <input type="text" 
+                                               class="form-control currency-input" 
+                                               id="limite_credito" 
+                                               name="limite_credito" 
+                                               placeholder="0,00"
+                                               value="{% if cliente and cliente.limite_credito %}{{ '%.2f'|format(cliente.limite_credito)|replace('.', ',') }}{% else %}0,00{% endif %}">
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="dia_vencimento" class="form-label">Dia de Vencimento</label>
+                                    <select class="form-select" id="dia_vencimento" name="dia_vencimento">
+                                        <option value="">Selecione...</option>
+                                        {% for i in range(1, 32) %}
+                                        <option value="{{ i }}" {{ 'selected' if cliente and cliente.dia_vencimento == i else '' }}>{{ i }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campos para Notificações -->
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enable_notification_info" onchange="toggleSection('notification_info')" {{ 'checked' if cliente and (cliente.aceita_email or cliente.aceita_sms or cliente.aceita_whatsapp or cliente.horario_notificacoes) else '' }}>
+                                        <label class="form-check-label fw-bold" for="enable_notification_info">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                            </svg>
+                                            Preferências de Notificação
+                                        </label>
+                                        <small class="text-muted ms-3">(Opcional - Desabilitado por padrão)</small>
+                                    </div>
+                                </div>
+                                <div class="card-body" id="notification_info" style="display: {{ 'block' if cliente and (cliente.aceita_email or cliente.aceita_sms or cliente.aceita_whatsapp or cliente.horario_notificacoes) else 'none' }};">
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="aceita_email" 
+                                               name="aceita_email" 
+                                               value="1"
+                                               {{ 'checked' if cliente and cliente.aceita_email else '' }}>
+                                        <label class="form-check-label" for="aceita_email">
+                                            
+                                            Email
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="aceita_sms" 
+                                               name="aceita_sms" 
+                                               value="1"
+                                               {{ 'checked' if cliente and cliente.aceita_sms else '' }}>
+                                        <label class="form-check-label" for="aceita_sms">
+                                            
+                                            SMS
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" 
+                                               type="checkbox" 
+                                               id="aceita_whatsapp" 
+                                               name="aceita_whatsapp" 
+                                               value="1"
+                                               {{ 'checked' if cliente and cliente.aceita_whatsapp else '' }}>
+                                        <label class="form-check-label" for="aceita_whatsapp">
+                                            
+                                            WhatsApp
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="horario_notificacoes" class="form-label">Horário Preferido</label>
+                                    <select class="form-select" id="horario_notificacoes" name="horario_notificacoes">
+                                        <option value="08:00-12:00" {{ 'selected' if cliente and cliente.horario_notificacoes == '08:00-12:00' else '' }}>08:00 - 12:00</option>
+                                        <option value="12:00-18:00" {{ 'selected' if cliente and cliente.horario_notificacoes == '12:00-18:00' else '' }}>12:00 - 18:00</option>
+                                        <option value="18:00-22:00" {{ 'selected' if cliente and cliente.horario_notificacoes == '18:00-22:00' else '' }}>18:00 - 22:00</option>
+                                        <option value="09:00-18:00" {{ 'selected' if cliente and cliente.horario_notificacoes == '09:00-18:00' else '' }}>09:00 - 18:00</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+
+                        <!-- Campos para Encomendas -->
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enable_delivery_info" onchange="toggleSection('delivery_info')" {{ 'checked' if cliente and (cliente.endereco_entrega or cliente.instrucoes_entrega or cliente.pessoa_responsavel) else '' }}>
+                                        <label class="form-check-label fw-bold" for="enable_delivery_info">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                                                <rect x="1" y="3" width="15" height="13"></rect>
+                                                <path d="M16 8h.01"></path>
+                                                <path d="M16 8v8a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8"></path>
+                                                <path d="M6 21v-4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4"></path>
+                                            </svg>
+                                            Informações de Entrega
+                                        </label>
+                                        <small class="text-muted ms-3">(Opcional - Desabilitado por padrão)</small>
+                                    </div>
+                                </div>
+                                <div class="card-body" id="delivery_info" style="display: {{ 'block' if cliente and (cliente.endereco_entrega or cliente.instrucoes_entrega or cliente.pessoa_responsavel) else 'none' }};">
+                            <div class="mb-3">
+                                <label for="endereco_entrega" class="form-label">Endereço de Entrega</label>
+                                <textarea class="form-control" 
+                                          id="endereco_entrega" 
+                                          name="endereco_entrega" 
+                                          rows="2" 
+                                          placeholder="Endereço específico para entregas (se diferente do endereço principal)">{{ cliente.endereco_entrega if cliente else '' }}</textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="instrucoes_entrega" class="form-label">Instruções de Entrega</label>
+                                    <textarea class="form-control" 
+                                              id="instrucoes_entrega" 
+                                              name="instrucoes_entrega" 
+                                              rows="2" 
+                                              placeholder="Instruções especiais para entrega">{{ cliente.instrucoes_entrega if cliente else '' }}</textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="pessoa_responsavel" class="form-label">Pessoa Responsável</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           id="pessoa_responsavel" 
+                                           name="pessoa_responsavel" 
+                                           placeholder="Nome da pessoa responsável por receber"
+                                           value="{{ cliente.pessoa_responsavel if cliente else '' }}">
+                                </div>
+                            </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campos Comerciais -->
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="enable_commercial_info" onchange="toggleSection('commercial_info')" {{ 'checked' if cliente and (cliente.status or cliente.observacoes) else '' }}>
+                                        <label class="form-check-label fw-bold" for="enable_commercial_info">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                                            </svg>
+                                            Informações Comerciais
+                                        </label>
+                                        <small class="text-muted ms-3">(Opcional - Desabilitado por padrão)</small>
+                                    </div>
+                                </div>
+                                <div class="card-body" id="commercial_info" style="display: {{ 'block' if cliente and (cliente.status or cliente.observacoes) else 'none' }};">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="ativo" {{ 'selected' if cliente and cliente.status == 'ativo' else '' }}>Ativo</option>
+                                        <option value="inativo" {{ 'selected' if cliente and cliente.status == 'inativo' else '' }}>Inativo</option>
+                                        <option value="bloqueado" {{ 'selected' if cliente and cliente.status == 'bloqueado' else '' }}>Bloqueado</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="observacoes" class="form-label">Observações</label>
+                                    <textarea class="form-control" 
+                                              id="observacoes" 
+                                              name="observacoes" 
+                                              rows="3" 
+                                              placeholder="Observações importantes sobre o cliente">{{ cliente.observacoes if cliente else '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+
+                        <!-- Botões -->
+                        <div class="d-flex justify-content-end gap-3">
+                            <a href="{{ url_for('clientes') }}" class="btn btn-outline-secondary">
+                                
+                                Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                
+                                {{ 'Atualizar' if cliente else 'Cadastrar' }} Cliente
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+/* Estilos para seções colapsáveis */
+.card-header {
+    border-bottom: 1px solid #dee2e6;
+    padding: 1rem;
+}
+
+.card-header .form-check {
+    margin: 0;
+}
+
+.card-header .form-check-label {
+    color: #495057;
+    font-size: 1.1rem;
+}
+
+.card-body {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.card-body[id$="_info"] {
+    border-top: 1px solid #dee2e6;
+}
+</style>
+
+<script>
+// Função para alternar seções colapsáveis
+function toggleSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    const checkbox = document.getElementById('enable_' + sectionId);
+    
+    if (section && checkbox) {
+        if (checkbox.checked) {
+            // Habilitar seção
+            section.style.display = 'block';
+            section.style.opacity = '0';
+            setTimeout(() => {
+                section.style.transition = 'opacity 0.3s ease-in-out';
+                section.style.opacity = '1';
+            }, 10);
+        } else {
+            // Desabilitar seção
+            section.style.transition = 'opacity 0.3s ease-in-out';
+            section.style.opacity = '0';
+            setTimeout(() => {
+                section.style.display = 'none';
+                
+                // Limpar campos quando desabilitar (opcional)
+                const inputs = section.querySelectorAll('input:not([type="hidden"]), select, textarea');
+                inputs.forEach(input => {
+                    if (input.type === 'checkbox' || input.type === 'radio') {
+                        input.checked = false;
+                    } else {
+                        input.value = '';
+                    }
+                });
+            }, 300);
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar seções opcionais - DESABILITADAS POR PADRÃO
+    const sectionsToCheck = [
+        { sectionId: 'billing_info', checkboxId: 'enable_billing_info' },
+        { sectionId: 'notification_info', checkboxId: 'enable_notification_info' },
+        { sectionId: 'delivery_info', checkboxId: 'enable_delivery_info' },
+        { sectionId: 'commercial_info', checkboxId: 'enable_commercial_info' }
+    ];
+    
+    sectionsToCheck.forEach(({ sectionId, checkboxId }) => {
+        const section = document.getElementById(sectionId);
+        const checkbox = document.getElementById(checkboxId);
+        
+        if (section && checkbox) {
+            // Para novos clientes, manter desabilitado por padrão
+            // Para edição, só habilitar se o checkbox já estiver marcado (via template)
+            if (checkbox.checked) {
+                section.style.display = 'block';
+                section.style.opacity = '1';
+            } else {
+                section.style.display = 'none';
+                section.style.opacity = '0';
+            }
+        }
+    });
+    // Elementos do DOM
+    const tipoClienteSelect = document.getElementById('tipo_cliente');
+    const cpfCnpjInput = document.getElementById('cpf_cnpj');
+    const cpfCnpjLabel = document.getElementById('cpf-cnpj-label');
+    const cepInput = document.getElementById('cep');
+    const logradouroInput = document.getElementById('logradouro');
+    const bairroInput = document.getElementById('bairro');
+    const cidadeInput = document.getElementById('cidade');
+    const ufInput = document.getElementById('uf');
+    const telefoneInput = document.getElementById('telefone');
+    const limiteCreditoInput = document.getElementById('limite_credito');
+
+    // Função para formatar CPF/CNPJ
+    function formatCPFCNPJ(value) {
+        if (!value) return value;
+        
+        // Remove caracteres não numéricos
+        const numbers = value.replace(/\D/g, '');
+        
+        if (numbers.length <= 11) {
+            // Formato CPF: 000.000.000-00
+            return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+                         .replace(/(\d{3})(\d{3})(\d{3})/, '$1.$2.$3')
+                         .replace(/(\d{3})(\d{3})/, '$1.$2');
+        } else {
+            // Formato CNPJ: 00.000.000/0000-00
+            return numbers.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')
+                         .replace(/(\d{2})(\d{3})(\d{3})(\d{4})/, '$1.$2.$3/$4')
+                         .replace(/(\d{2})(\d{3})(\d{3})/, '$1.$2.$3')
+                         .replace(/(\d{2})(\d{3})/, '$1.$2');
+        }
+    }
+
+    // Função para formatar telefone
+    function formatPhone(value) {
+        if (!value) return value;
+        
+        const numbers = value.replace(/\D/g, '');
+        
+        if (numbers.length === 11) {
+            return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+        } else if (numbers.length === 10) {
+            return numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+        }
+        
+        return value;
+    }
+
+    // Função para formatar CEP
+    function formatCEP(value) {
+        if (!value) return value;
+        
+        const numbers = value.replace(/\D/g, '');
+        if (numbers.length === 8) {
+            return numbers.replace(/(\d{5})(\d{3})/, '$1-$2');
+        }
+        return value;
+    }
+
+    // Função para formatar moeda
+    function formatCurrency(value) {
+        if (!value) return '0,00';
+        
+        const numbers = value.replace(/\D/g, '');
+        const formatted = (parseInt(numbers) / 100).toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        
+        return formatted;
+    }
+
+    // Event listener para tipo de cliente
+    if (tipoClienteSelect) {
+        tipoClienteSelect.addEventListener('change', function() {
+            if (this.value === 'pessoa_fisica') {
+                cpfCnpjLabel.textContent = 'CPF';
+                cpfCnpjInput.placeholder = '000.000.000-00';
+            } else {
+                cpfCnpjLabel.textContent = 'CNPJ';
+                cpfCnpjInput.placeholder = '00.000.000/0000-00';
+            }
+        });
+    }
+
+    // Event listener para CPF/CNPJ
+    if (cpfCnpjInput) {
+        cpfCnpjInput.addEventListener('input', function() {
+            this.value = formatCPFCNPJ(this.value);
+        });
+    }
+
+    // Event listener para telefone
+    if (telefoneInput) {
+        telefoneInput.addEventListener('input', function() {
+            this.value = formatPhone(this.value);
+        });
+    }
+
+    // Event listener para CEP (Otimizado com rate limiting)
+    if (cepInput) {
+        let cepDebounceTimer;
+        
+        cepInput.addEventListener('input', function() {
+            this.value = formatCEP(this.value);
+            
+            // Buscar dados do CEP quando tiver 8 dígitos (com debounce)
+            const numbers = this.value.replace(/\D/g, '');
+            if (numbers.length === 8) {
+                // Cancelar timer anterior
+                clearTimeout(cepDebounceTimer);
+                
+                // Criar novo timer com debounce ULTRA CONSERVADOR
+                cepDebounceTimer = setTimeout(async () => {
+                    try {
+                        // Usar sistema de fallback para CEP
+                        const data = await window.getCepSafe(numbers);
+                        if (data && data.success) {
+                            logradouroInput.value = data.data.logradouro || '';
+                            bairroInput.value = data.data.bairro || '';
+                            cidadeInput.value = data.data.cidade || '';
+                            ufInput.value = data.data.uf || '';
+                            
+                            if (typeof showToast === 'function') {
+                                showToast('✅ CEP encontrado', 'success');
+                            }
+                        } else if (data === null) {
+                            // Modo fallback ativo - não fazer nada
+                            console.log('📊 CEP pulado devido ao modo fallback');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao buscar CEP:', error);
+                        // Mostrar toast de erro se disponível
+                        if (typeof showToast === 'function') {
+                            showToast('⚠️ CEP temporariamente indisponível', 'warning');
+                        }
+                    }
+                }, 5000); // 5 segundos de debounce para CEP
+            }
+        });
+    }
+
+    // Event listener para limite de crédito
+    if (limiteCreditoInput) {
+        limiteCreditoInput.addEventListener('input', function() {
+            this.value = formatCurrency(this.value);
+        });
+    }
+
+    // Validação do formulário
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const nome = document.getElementById('nome').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const cpfCnpj = document.getElementById('cpf_cnpj').value.trim();
+            
+            if (!nome) {
+                e.preventDefault();
+                alert('Por favor, preencha o nome do cliente.');
+                document.getElementById('nome').focus();
+                return false;
+            }
+            
+            if (email && !validateEmail(email)) {
+                e.preventDefault();
+                alert('Por favor, insira um email válido.');
+                document.getElementById('email').focus();
+                return false;
+            }
+            
+            if (cpfCnpj) {
+                const tipoCliente = document.getElementById('tipo_cliente').value;
+                const isValid = tipoCliente === 'pessoa_fisica' ? 
+                    validateCPF(cpfCnpj) : validateCNPJ(cpfCnpj);
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    alert(`Por favor, insira um ${tipoCliente === 'pessoa_fisica' ? 'CPF' : 'CNPJ'} válido.`);
+                    document.getElementById('cpf_cnpj').focus();
+                    return false;
+                }
+            }
+        });
+    }
+
+    // Funções de validação (simplificadas para o frontend)
+    function validateEmail(email) {
+        const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return pattern.test(email);
+    }
+
+    function validateCPF(cpf) {
+        const numbers = cpf.replace(/\D/g, '');
+        return numbers.length === 11;
+    }
+
+    function validateCNPJ(cnpj) {
+        const numbers = cnpj.replace(/\D/g, '');
+        return numbers.length === 14;
+    }
+
+});
+</script>
+{% endblock %}
+

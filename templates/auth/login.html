@@ -1,0 +1,105 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Login - SaaS Sistema{% endblock %}
+
+{% block extra_css %}
+<style>
+.divider {
+    text-align: center;
+    margin: 1.5rem 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #dee2e6;
+}
+
+.divider span {
+    background: white;
+    padding: 0 1rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.google-btn {
+    border: 2px solid #db4437;
+    color: #db4437;
+    transition: all 0.3s ease;
+}
+
+.google-btn:hover {
+    background-color: #db4437;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(219, 68, 55, 0.3);
+}
+
+.google-btn i {
+    font-size: 1.1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card fade-in">
+        <div class="auth-header">
+            <h2>SaaS Gestão</h2>
+            <p>Faça login para acessar seu painel</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('login') }}" class="needs-validation" novalidate>
+            <div class="mb-3">
+                <label for="email" class="form-label">
+                    Email
+                </label>
+                <input type="email" class="form-control" id="email" name="email" required>
+                <div class="invalid-feedback">
+                    Por favor, insira um email válido.
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="password" class="form-label">
+                    Senha
+                </label>
+                <input type="password" class="form-control" id="password" name="password" required>
+                <div class="invalid-feedback">
+                    Por favor, insira sua senha.
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 mb-3">
+                Entrar
+            </button>
+        </form>
+
+        {% if google_configured %}
+        <!-- Divisor -->
+        <div class="divider">
+            <span>ou</span>
+        </div>
+
+        <!-- Botão Google -->
+        <a href="{{ url_for('google_login') }}" class="btn btn-outline-danger w-100 mb-3 google-btn">
+            Entrar com Google
+        </a>
+        {% endif %}
+
+        <div class="text-center">
+            <p class="mb-0">Não tem uma conta? 
+                <a href="{{ url_for('register') }}" class="text-decoration-none">
+                    Cadastre-se aqui
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,263 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Detalhes da Compra - SaaS Sistema{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        
+                        Detalhes da Compra
+                    </h2>
+                    <p class="text-muted mb-0">{{ compra.numero_compra }}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    {% if compra.status == 'pendente' %}
+                    <a href="#" 
+                       class="btn btn-success"
+                       onclick="showConfirm('Confirmar esta compra e atualizar o estoque?', function() { window.location.href = '{{ url_for('confirmar_compra', id=compra.id) }}'; }, 'Confirmar Compra', 'btn-success'); return false;">
+                        
+                        Confirmar Compra
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('compras') }}" class="btn btn-secondary">
+                        
+                        Voltar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Informações da Compra -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Informações da Compra
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Número:</strong>
+                        </div>
+                        <div class="col-6">
+                            {{ compra.numero_compra }}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Status:</strong>
+                        </div>
+                        <div class="col-6">
+                            {% if compra.status == 'pendente' %}
+                                <span class="badge bg-warning">Pendente</span>
+                            {% elif compra.status == 'confirmada' %}
+                                <span class="badge bg-info">Confirmada</span>
+                            {% elif compra.status == 'entregue' %}
+                                <span class="badge bg-success">Entregue</span>
+                            {% else %}
+                                <span class="badge bg-danger">Cancelada</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Data Compra:</strong>
+                        </div>
+                        <div class="col-6">
+                            {{ compra.data_compra.strftime('%d/%m/%Y %H:%M') }}
+                        </div>
+                    </div>
+
+                    {% if compra.data_entrega %}
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Data Entrega:</strong>
+                        </div>
+                        <div class="col-6">
+                            {{ compra.data_entrega.strftime('%d/%m/%Y') }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if compra.forma_pagamento %}
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Pagamento:</strong>
+                        </div>
+                        <div class="col-6">
+                            {{ compra.forma_pagamento.replace('_', ' ').title() }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <strong>Total:</strong>
+                        </div>
+                        <div class="col-6">
+                            <span class="fw-bold text-success fs-5">
+                                R$ {{ "%.2f"|format(compra.valor_total) }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fornecedor -->
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Fornecedor
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                            
+                        </div>
+                        <div>
+                            <h6 class="mb-0">{{ compra.fornecedor.nome }}</h6>
+                            <small class="text-muted">{{ compra.fornecedor.cidade }}, {{ compra.fornecedor.estado }}</small>
+                        </div>
+                    </div>
+
+                    {% if compra.fornecedor.contato %}
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Contato:</strong></div>
+                        <div class="col-8">{{ compra.fornecedor.contato }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if compra.fornecedor.telefone %}
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Telefone:</strong></div>
+                        <div class="col-8">{{ compra.fornecedor.telefone }}</div>
+                    </div>
+                    {% endif %}
+
+                    {% if compra.fornecedor.email %}
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>E-mail:</strong></div>
+                        <div class="col-8">{{ compra.fornecedor.email }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Itens da Compra -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Itens da Compra
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if compra.itens %}
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Quantidade</th>
+                                        <th>Preço Unit.</th>
+                                        <th>Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in compra.itens %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm bg-light text-primary rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                    
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ item.produto.nome }}</h6>
+                                                    <small class="text-muted">{{ item.produto.categoria or 'Sem categoria' }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary fs-6">{{ item.quantidade }}</span>
+                                        </td>
+                                        <td>
+                                            <span class="text-success fw-bold">
+                                                R$ {{ "%.2f"|format(item.preco_unitario) }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="text-success fw-bold fs-5">
+                                                R$ {{ "%.2f"|format(item.subtotal) }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="table-primary">
+                                    <tr>
+                                        <th colspan="3" class="text-end">Total:</th>
+                                        <th>
+                                            <span class="text-success fw-bold fs-4">
+                                                R$ {{ "%.2f"|format(compra.valor_total) }}
+                                            </span>
+                                        </th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center p-4">
+                            
+                            <h5 class="text-muted">Nenhum item encontrado</h5>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Observações -->
+            {% if compra.observacoes %}
+            <div class="card mt-4">
+                <div class="card-header bg-white border-0">
+                    <h5 class="mb-0">
+                        
+                        Observações
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="mb-0">{{ compra.observacoes }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add animation classes
+        document.querySelectorAll('.card').forEach((el, index) => {
+            setTimeout(() => {
+                el.classList.add('fade-in');
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}
+

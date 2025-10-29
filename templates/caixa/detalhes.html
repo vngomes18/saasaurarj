@@ -1,0 +1,119 @@
+{% extends 'layout/base.html' %}
+{% block title %}Detalhes do Caixa{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Sessão do Caixa #{{ sessao.id }}</h3>
+    <div class="btn-group">
+      <a class="btn btn-outline-secondary" href="{{ url_for('caixa_sessoes') }}">Voltar</a>
+      <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">Exportar</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{{ url_for('exportar_caixa_sessao', sessao_id=sessao.id, formato='csv') }}">CSV</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('exportar_caixa_sessao', sessao_id=sessao.id, formato='excel') }}">Excel</a></li>
+        <li><a class="dropdown-item" href="{{ url_for('exportar_caixa_sessao', sessao_id=sessao.id, formato='pdf') }}">PDF</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h6 class="text-uppercase text-muted">Resumo</h6>
+          <dl class="row mb-0">
+            <dt class="col-6">Início</dt>
+            <dd class="col-6">{{ sessao.data_abertura|datetime('short') if sessao.data_abertura else '-' }}</dd>
+
+            <dt class="col-6">Fim</dt>
+            <dd class="col-6">{{ sessao.data_fechamento|datetime('short') if sessao.data_fechamento else '-' }}</dd>
+
+            <dt class="col-6">Status</dt>
+            <dd class="col-6">
+              {% if sessao.status == 'aberto' %}
+                <span class="badge bg-success">Aberto</span>
+              {% elif sessao.status == 'fechado' %}
+                <span class="badge bg-danger">Fechado</span>
+              {% else %}
+                <span class="badge bg-secondary">-</span>
+              {% endif %}
+            </dd>
+
+            <dt class="col-6">Saldo inicial</dt>
+            <dd class="col-6">R$ {{ (sessao.saldo_inicial or 0)|float|round(2) }}</dd>
+
+            <dt class="col-6">Entradas</dt>
+            <dd class="col-6">R$ {{ entradas|float|round(2) }}</dd>
+
+            <dt class="col-6">Saídas</dt>
+            <dd class="col-6">R$ {{ saidas|float|round(2) }}</dd>
+
+            <dt class="col-6">Saldo parcial</dt>
+            <dd class="col-6">R$ {{ saldo_parcial|float|round(2) }}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-8">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="text-uppercase text-muted mb-0">Movimentos</h6>
+            <form class="d-flex" method="post" action="{{ url_for('importar_movimentos_caixa', sessao_id=sessao.id) }}" enctype="multipart/form-data">
+              <input type="file" name="arquivo" accept=".csv" class="form-control form-control-sm" required>
+              <button class="btn btn-sm btn-primary ms-2" type="submit">Importar CSV</button>
+            </form>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm table-hover">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Tipo</th>
+                  <th>Origem</th>
+                  <th>Forma pgto.</th>
+                  <th>Origem dados</th>
+                  <th class="text-end">Valor</th>
+                  <th>Descrição</th>
+                </tr>
+              </thead>
+              <tbody>
+              {% for m in movimentos %}
+                <tr>
+                  <td>{{ m.created_at|datetime('short') if m.created_at else '-' }}</td>
+                  <td>
+                    {% if m.tipo == 'entrada' %}
+                      <span class="badge bg-success">Entrada</span>
+                    {% elif m.tipo == 'saida' %}
+                      <span class="badge bg-danger">Saída</span>
+                    {% else %}
+                      <span class="badge bg-secondary">-</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ m.origem or '-' }}</td>
+                  <td>{{ m.forma_pagamento or '-' }}</td>
+                  <td>
+                    {% if m.descricao and '[IMPORTADO]' in m.descricao %}
+                      <span class="badge bg-info text-dark">Importado</span>
+                    {% else %}
+                      <span class="badge bg-secondary">Manual</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end">R$ {{ (m.valor or 0)|float|round(2) }}</td>
+                  <td>{{ m.descricao or '' }}</td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td colspan="6" class="text-center text-muted py-4">Nenhum movimento encontrado</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

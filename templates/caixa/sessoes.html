@@ -1,0 +1,69 @@
+{% extends 'layout/base.html' %}
+{% block title %}Sessões do Caixa{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0">Sessões do Caixa</h3>
+    <div class="btn-group">
+      <a class="btn btn-outline-secondary {% if not status %}active{% endif %}" href="{{ url_for('caixa_sessoes') }}">Todas</a>
+      <a class="btn btn-outline-success {% if status=='aberto' %}active{% endif %}" href="{{ url_for('caixa_sessoes', status='aberto') }}">Abertas</a>
+      <a class="btn btn-outline-danger {% if status=='fechado' %}active{% endif %}" href="{{ url_for('caixa_sessoes', status='fechado') }}">Fechadas</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body p-0">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Início</th>
+            <th>Fim</th>
+            <th>Status</th>
+            <th>Saldo inicial</th>
+            <th>Saldo fechamento</th>
+            <th style="width: 120px">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for s in paginated.items %}
+          <tr>
+            <td>{{ s.data_abertura|datetime('short') if s.data_abertura else '-' }}</td>
+            <td>{{ s.data_fechamento|datetime('short') if s.data_fechamento else '-' }}</td>
+            <td>
+              {% if s.status == 'aberto' %}
+                <span class="badge bg-success">Aberto</span>
+              {% elif s.status == 'fechado' %}
+                <span class="badge bg-danger">Fechado</span>
+              {% else %}
+                <span class="badge bg-secondary">-</span>
+              {% endif %}
+            </td>
+            <td>R$ {{ (s.saldo_inicial or 0)|float|round(2) }}</td>
+            <td>R$ {{ (s.saldo_fechamento or 0)|float|round(2) }}</td>
+            <td>
+              <a class="btn btn-sm btn-primary" href="{{ url_for('caixa_sessao_detalhes', sessao_id=s.id) }}">Detalhes</a>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">Nenhuma sessão encontrada</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center">
+      <div>Página {{ paginated.page }} de {{ paginated.pages or 1 }}</div>
+      <div>
+        {% if paginated.has_prev %}
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('caixa_sessoes', status=status, page=paginated.prev_num) }}">Anterior</a>
+        {% endif %}
+        {% if paginated.has_next %}
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('caixa_sessoes', status=status, page=paginated.next_num) }}">Próxima</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
