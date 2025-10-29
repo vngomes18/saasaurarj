@@ -1,0 +1,55 @@
+{% extends "layout/base.html" %}
+{% block title %}Gestão do Plano{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-v2">
+  <div class="dashboard-card mb-4">
+    <h1 class="mb-2">Seu Plano</h1>
+    <p class="mb-0">Plano atual: <strong>{{ (settings.plan_tier or 'free')|capitalize }}</strong></p>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h5>Alterar Plano</h5>
+          <form method="POST" action="{{ url_for('alterar_plano') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="mb-3">
+              <label class="form-label">Selecionar novo plano</label>
+              <select class="form-select" name="plan_tier">
+                <option value="free" {% if settings.plan_tier=='free' %}selected{% endif %}>Free</option>
+                <option value="freepremium" {% if settings.plan_tier=='freepremium' %}selected{% endif %}>FreePremium</option>
+                <option value="premium" {% if settings.plan_tier=='premium' %}selected{% endif %}>Premium</option>
+              </select>
+            </div>
+            <button class="btn btn-primary">Salvar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-body">
+          <h5>Benefícios</h5>
+          <ul class="mb-0">
+            {% if settings.plan_tier=='premium' %}
+              <li>Todos os módulos e relatórios</li>
+              <li>Exportações CSV/PDF/Excel</li>
+              <li>Suporte prioritário</li>
+            {% elif settings.plan_tier=='freepremium' %}
+              <li>Compras e Fornecedores</li>
+              <li>Relatórios básicos</li>
+              <li>Exportações CSV/PDF/Excel básico</li>
+            {% else %}
+              <li>Módulos básicos</li>
+              <li>Exportação CSV</li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

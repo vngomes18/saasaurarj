@@ -1,0 +1,82 @@
+{% extends "layout/base.html" %}
+{% block title %}Funcionários{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-v2">
+  <div class="dashboard-card mb-4">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="mb-2">Funcionários</h1>
+        <p class="mb-0">Crie contas de funcionário vinculadas à sua empresa.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Novo Funcionário</h5>
+          <form method="POST" action="{{ url_for('admin_funcionarios') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="mb-3">
+              <label class="form-label">Usuário</label>
+              <input type="text" class="form-control" name="username" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" name="email" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Senha</label>
+              <input type="password" class="form-control" name="password" required>
+            </div>
+            <button class="btn btn-primary">Criar Funcionário</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">Lista de Funcionários</h5>
+          {% if funcionarios %}
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Usuário</th>
+                  <th>Email</th>
+                  <th style="width: 220px">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for f in funcionarios %}
+                <tr>
+                  <td>{{ f.username }}</td>
+                  <td>{{ f.email }}</td>
+                  <td>
+                    <form method="POST" action="{{ url_for('admin_reset_password', user_id=f.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                      <button class="btn btn-sm btn-outline-primary">Redefinir Senha</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('admin_delete_user', user_id=f.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir este funcionário?');">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                      <button class="btn btn-sm btn-outline-danger">Excluir</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+            <p class="text-muted mb-0">Nenhum funcionário cadastrado.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

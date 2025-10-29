@@ -1,0 +1,73 @@
+{% extends "layout/base.html" %}
+{% block title %}Planos e Assinatura{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-v2">
+  <div class="dashboard-card mb-4">
+    <h1 class="mb-2">Escolha seu Plano</h1>
+    <p class="mb-0">Selecione o plano que melhor atende ao seu negócio.</p>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h3 class="card-title">Free</h3>
+          <p class="text-muted">R$ 0/mês</p>
+          <ul class="mb-3">
+            <li>1 usuário (Admin)</li>
+            <li>Módulos básicos</li>
+            <li>Exportação CSV</li>
+          </ul>
+          <form method="POST" action="{{ url_for('alterar_plano') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="plan_tier" value="free">
+            <button class="btn btn-outline-secondary w-100" {% if not session.user_id %}disabled{% endif %}>Manter Free</button>
+            {% if not session.user_id %}<small class="text-muted">Faça login para assinar</small>{% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h3 class="card-title">FreePremium</h3>
+          <p class="text-muted">R$ 49/mês</p>
+          <ul class="mb-3">
+            <li>Até 3 usuários</li>
+            <li>Compras, Fornecedores, Relatórios básicos</li>
+            <li>Exportação CSV/PDF/Excel básico</li>
+          </ul>
+          <form method="POST" action="{{ url_for('alterar_plano') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="plan_tier" value="freepremium">
+            <button class="btn btn-primary w-100" {% if not session.user_id %}disabled{% endif %}>Assinar FreePremium</button>
+            {% if not session.user_id %}<small class="text-muted">Faça login para assinar</small>{% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h3 class="card-title">Premium</h3>
+          <p class="text-muted">R$ 199/mês</p>
+          <ul class="mb-3">
+            <li>Módulos completos</li>
+            <li>Relatórios avançados e automações</li>
+            <li>Suporte prioritário</li>
+          </ul>
+          <form method="POST" action="{{ url_for('alterar_plano') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="plan_tier" value="premium">
+            <button class="btn btn-success w-100" {% if not session.user_id %}disabled{% endif %}>Assinar Premium</button>
+            {% if not session.user_id %}<small class="text-muted">Faça login para assinar</small>{% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

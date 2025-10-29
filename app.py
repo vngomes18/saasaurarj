@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, make_response
+from markupsafe import Markup
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_caching import Cache
@@ -334,6 +335,19 @@ app.config.update(
     SECRET_KEY=os.environ.get('SECRET_KEY', secrets.token_hex(32))  # Chave secreta segura
 )
 
+# Injeta user_settings no contexto Jinja para acesso em todos os templates
+@app.context_processor
+def inject_user_settings():
+    uid = session.get('user_id')
+    try:
+        settings = get_user_settings(uid) if uid else None
+    except Exception:
+        settings = None
+    is_admin_flag = (session.get('role') == 'admin')
+    feature_reports = has_feature(uid, 'reports') if uid else False
+    effective_plan_tier = get_plan_tier_for_user(uid) if uid else 'free'
+    return dict(user_settings=settings, is_admin_flag=is_admin_flag, feature_reports=feature_reports, effective_plan_tier=effective_plan_tier)
+
 # Configuração do OAuth (apenas se as credenciais estiverem configuradas)
 try:
     oauth = OAuth(app)
@@ -427,6 +441,100 @@ def update_user_settings(user_id, **kwargs):
     settings.updated_at = datetime.utcnow()
     db.session.commit()
     return settings
+
+# ===== Plano: helpers de recursos e cotas =====
+PLAN_FEATURES = {
+    'free': {
+        'cupons': False,
+        'notas_fiscais': False,
+        'export_pdf': False,
+        'export_excel': False,
+        'api_write': False,
+        'staff_management': False,
+    },
+    'freepremium': {
+        'cupons': True,
+        'notas_fiscais': True,  # emissão manual
+        'export_pdf': True,
+        'export_excel': True,  # limitado
+        'api_write': False,
+        'staff_management': True,
+    },
+    'premium': {
+        'cupons': True,
+        'notas_fiscais': True,
+        'export_pdf': True,
+        'export_excel': True,
+        'api_write': True,
+        'staff_management': True,
+    }
+}
+
+PLAN_QUOTAS = {
+    'free': {
+        'produtos_max': 100,
+        'clientes_max': 200,
+        'vendas_mes_max': 300,
+        'nfe_mes_max': 0,
+        'cupons_ativos_max': 0,
+    },
+    'freepremium': {
+        'produtos_max': 1000,
+        'clientes_max': 2000,
+        'vendas_mes_max': 2000,
+        'nfe_mes_max': 100,
+        'cupons_ativos_max': 10,
+    },
+    'premium': {
+        'produtos_max': None,
+        'clientes_max': None,
+        'vendas_mes_max': None,
+        'nfe_mes_max': None,
+        'cupons_ativos_max': None,
+    }
+}
+
+def get_plan_tier_for_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return 'free'
+    if user.role == 'admin':
+        s = get_user_settings(user_id)
+    else:
+        admin = User.query.filter_by(empresa=user.empresa, role='admin').first()
+        s = get_user_settings(admin.id) if admin else get_user_settings(user_id)
+    tier = (s.plan_tier or 'free').lower()
+    return tier if tier in PLAN_FEATURES else 'free'
+
+def has_feature(user_id, feature):
+    tier = get_plan_tier_for_user(user_id)
+    user = User.query.get(user_id)
+    if feature == 'reports' and user and user.role != 'admin':
+        return False
+    return bool(PLAN_FEATURES.get(tier, {}).get(feature, False))
+
+def require_plan(feature):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            uid = session.get('user_id')
+            if not uid:
+                return redirect(url_for('login'))
+            if not has_feature(uid, feature):
+                upgrade_link = url_for('planos')
+                msg = Markup(f'Recurso indisponível no seu plano. <a href="{upgrade_link}" class="alert-link">Veja os planos</a> para fazer upgrade.')
+                flash(msg, 'warning')
+                return redirect(url_for('dashboard'))
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+def check_quota_exceeded(user_id, quota_key, current_count):
+    tier = get_plan_tier_for_user(user_id)
+    limit = PLAN_QUOTAS.get(tier, {}).get(quota_key)
+    if limit is None:
+        return False
+    return current_count >= limit
 
 # Helper de autorização
 def is_admin():
@@ -917,6 +1025,7 @@ class UserSettings(db.Model):
     language = db.Column(db.String(5), default='pt')
     timezone = db.Column(db.String(50), default='America/Sao_Paulo')
     dashboard_refresh = db.Column(db.Integer, default=30)  # seconds
+    plan_tier = db.Column(db.String(20), default='free', index=True)  # free | freepremium | premium
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 # ========== ADMIN DATA VIEWER ==========
@@ -1802,6 +1911,95 @@ def dashboard():
                          vendas_recentes=vendas_recentes,
                          vendas_7_dias=vendas_7_dias)
 
+# ===== Páginas de planos e gestão =====
+@app.route('/planos')
+def planos():
+    return render_template('planos/index.html')
+
+@app.route('/conta/plano')
+@login_required
+def conta_plano():
+    settings = get_user_settings(session['user_id'])
+    return render_template('conta/plano.html', settings=settings)
+
+@app.route('/conta/plano/alterar', methods=['POST'])
+@login_required
+@admin_required
+def alterar_plano():
+    novo_plano = request.form.get('plan_tier', '').lower()
+    if novo_plano not in ['free','freepremium','premium']:
+        flash('Plano inválido.', 'error')
+        return redirect(url_for('conta_plano'))
+    update_user_settings(session['user_id'], plan_tier=novo_plano)
+    flash(f'Plano atualizado para {novo_plano.capitalize()}.', 'success')
+    return redirect(url_for('conta_plano'))
+
+@app.route('/admin/funcionarios', methods=['GET','POST'])
+@login_required
+@require_plan('staff_management')
+def admin_funcionarios():
+    admin_user = User.query.get(session['user_id'])
+    msg_error = None
+    if request.method == 'POST':
+        username = request.form.get('username','').strip()
+        email = request.form.get('email','').strip()
+        password = request.form.get('password','')
+        if not username or not email or not password:
+            msg_error = 'Preencha usuário, email e senha.'
+        elif not validate_email(email):
+            msg_error = 'Email inválido.'
+        elif User.query.filter_by(email=email).first():
+            msg_error = 'Email já cadastrado.'
+        if msg_error:
+            flash(msg_error, 'error')
+        else:
+            funcionario = User(
+                username=username,
+                email=email,
+                empresa=admin_user.empresa,
+                role='user'
+            )
+            funcionario.set_password(password)
+            db.session.add(funcionario)
+            db.session.commit()
+            flash('Funcionário criado com sucesso.', 'success')
+            return redirect(url_for('admin_funcionarios'))
+    funcionarios = User.query.filter_by(empresa=admin_user.empresa, role='user').order_by(User.username).all()
+    return render_template('admin/funcionarios.html', funcionarios=funcionarios)
+
+@app.route('/admin/funcionarios/<int:user_id>/reset-password', methods=['POST'])
+@login_required
+@require_plan('staff_management')
+def admin_reset_password(user_id):
+    admin_user = User.query.get(session['user_id'])
+    user = User.query.get(user_id)
+    if not user or user.empresa != admin_user.empresa or user.role != 'user':
+        flash('Operação não permitida.', 'error')
+        return redirect(url_for('admin_funcionarios'))
+    temp_pw = secrets.token_urlsafe(8)
+    user.set_password(temp_pw)
+    db.session.commit()
+    flash(f'Senha redefinida. Nova senha temporária: {temp_pw}', 'success')
+    return redirect(url_for('admin_funcionarios'))
+
+@app.route('/admin/funcionarios/<int:user_id>/delete', methods=['POST'])
+@login_required
+@require_plan('staff_management')
+def admin_delete_user(user_id):
+    admin_user = User.query.get(session['user_id'])
+    user = User.query.get(user_id)
+    if not user or user.empresa != admin_user.empresa or user.role != 'user':
+        flash('Operação não permitida.', 'error')
+        return redirect(url_for('admin_funcionarios'))
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        flash('Funcionário excluído com sucesso.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao excluir: {e}', 'error')
+    return redirect(url_for('admin_funcionarios'))
+
 # Produtos
 @app.route('/produtos')
 @login_required
@@ -1817,6 +2015,12 @@ def produtos():
 @login_required
 def novo_produto():
     if request.method == 'POST':
+        # Cota por plano: produtos_max
+        uid = session.get('user_id')
+        total = Produto.query.filter_by(user_id=uid).count()
+        if check_quota_exceeded(uid, 'produtos_max', total):
+            flash('Limite de produtos atingido para seu plano. Faça upgrade para adicionar mais.', 'warning')
+            return redirect(url_for('produtos'))
         # Convert price from Brazilian format (comma) to float
         preco_str = request.form['preco'].replace(',', '.')
         
@@ -1935,6 +2139,12 @@ def clientes():
 @login_required
 def novo_cliente():
     if request.method == 'POST':
+        # Cota por plano: clientes_max
+        uid = session.get('user_id')
+        total = Cliente.query.filter_by(user_id=uid).count()
+        if check_quota_exceeded(uid, 'clientes_max', total):
+            flash('Limite de clientes atingido para seu plano. Faça upgrade para adicionar mais.', 'warning')
+            return redirect(url_for('clientes'))
         # Validações
         nome = request.form.get('nome', '').strip()
         email = request.form.get('email', '').strip()
@@ -2193,6 +2403,13 @@ def vendas():
 @login_required
 def nova_venda():
     if request.method == 'POST':
+        # Cota por plano: vendas_mes_max
+        uid = session.get('user_id')
+        inicio_mes = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        total_mes = Venda.query.filter(Venda.user_id==uid, Venda.data_venda>=inicio_mes).count()
+        if check_quota_exceeded(uid, 'vendas_mes_max', total_mes):
+            flash('Limite mensal de vendas atingido para seu plano. Faça upgrade para registrar mais.', 'warning')
+            return redirect(url_for('vendas'))
         # Criar venda
         venda = Venda(
             cliente_id=int(request.form['cliente_id']) if request.form['cliente_id'] else None,
@@ -2769,6 +2986,7 @@ def excluir_produto_auxiliar(id):
 # Rotas de Nota Fiscal
 @app.route('/notas-fiscais')
 @login_required
+@require_plan('notas_fiscais')
 def notas_fiscais():
     if is_admin():
         notas = NotaFiscal.query.order_by(NotaFiscal.data_emissao.desc()).all()
@@ -2779,6 +2997,7 @@ def notas_fiscais():
 
 @app.route('/notas-fiscais/nova', methods=['GET', 'POST'])
 @login_required
+@require_plan('notas_fiscais')
 def nova_nota_fiscal():
     if request.method == 'POST':
         nota = NotaFiscal(
@@ -3883,6 +4102,7 @@ def toggle_dark_mode():
 # Página principal de relatórios
 @app.route('/relatorios')
 @login_required
+@require_plan('reports')
 def relatorios():
     user_id = session['user_id']
     
@@ -3917,6 +4137,7 @@ def relatorios():
 # P&L (Profit & Loss)
 @app.route('/relatorios/pl')
 @login_required
+@require_plan('reports')
 def relatorio_pl():
     user_id = session['user_id']
     
@@ -3955,6 +4176,7 @@ def relatorio_pl():
 # Fluxo de Caixa
 @app.route('/relatorios/fluxo-caixa')
 @login_required
+@require_plan('reports')
 def relatorio_fluxo_caixa():
     user_id = session['user_id']
     
@@ -3996,6 +4218,7 @@ def relatorio_fluxo_caixa():
 # Top Produtos
 @app.route('/relatorios/top-produtos')
 @login_required
+@require_plan('reports')
 def relatorio_top_produtos():
     user_id = session['user_id']
     
@@ -4016,6 +4239,7 @@ def relatorio_top_produtos():
 # Análise de Sazonalidade
 @app.route('/relatorios/sazonalidade')
 @login_required
+@require_plan('reports')
 def relatorio_sazonalidade():
     user_id = session['user_id']
     
@@ -4045,6 +4269,7 @@ def relatorio_sazonalidade():
 # Rotatividade de Produtos
 @app.route('/relatorios/rotatividade-estoque')
 @login_required
+@require_plan('reports')
 def relatorio_rotatividade_estoque():
     user_id = session['user_id']
     
@@ -4083,6 +4308,7 @@ def relatorio_rotatividade_estoque():
 # Produtos Parados
 @app.route('/relatorios/produtos-parados')
 @login_required
+@require_plan('reports')
 def relatorio_produtos_parados():
     user_id = session['user_id']
     
@@ -4177,6 +4403,7 @@ def api_dashboard_kpis():
 # Exportação para PDF
 @app.route('/relatorios/exportar/<tipo>/<formato>')
 @login_required
+@require_plan('reports')
 def exportar_relatorio(tipo, formato):
     user_id = session['user_id']
     
@@ -4357,6 +4584,7 @@ def exportar_csv(tipo, user_id):
 # Rotas de Cupons
 @app.route('/cupons')
 @login_required
+@require_plan('cupons')
 def cupons():
     user_id = session['user_id']
     cupons = Cupom.query.filter_by(user_id=user_id).order_by(Cupom.created_at.desc()).all()
@@ -4364,6 +4592,7 @@ def cupons():
 
 @app.route('/cupons/novo', methods=['GET', 'POST'])
 @login_required
+@require_plan('cupons')
 def novo_cupom():
     if request.method == 'POST':
         try:
