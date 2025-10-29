@@ -296,10 +296,10 @@ function formatDate(date) {
 function showNotification(message, type = 'info') {
     const alertDiv = document.createElement('div');
     alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
+    alertDiv.innerHTML = [
+        String(message),
+        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>'
+    ].join('');
     
     const container = document.querySelector('main');
     container.insertBefore(alertDiv, container.firstChild);

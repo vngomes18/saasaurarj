@@ -23,9 +23,13 @@
                         Exportar
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='vendas', formato='pdf') }}">Vendas (PDF)</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='produtos', formato='excel') }}">Produtos (Excel)</a></li>
-                        <li><a class="dropdown-item" href="{{ url_for('exportar_relatorio', tipo='clientes', formato='csv') }}">Clientes (CSV)</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('reports.exportar_relatorio', tipo='vendas', formato='pdf') }}">Vendas (PDF)</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('reports.exportar_relatorio', tipo='produtos', formato='excel') }}">Produtos (Excel)</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('reports.exportar_relatorio', tipo='clientes', formato='csv') }}">Clientes (CSV)</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('reports.exportar_relatorio', tipo='vendas', formato='csv') }}?async=1">Vendas (CSV) — Async</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('reports.exportar_relatorio', tipo='produtos', formato='csv') }}?async=1">Produtos (CSV) — Async</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('reports.exportar_relatorio', tipo='clientes', formato='csv') }}?async=1">Clientes (CSV) — Async</a></li>
                     </ul>
                 </div>
             </div>
@@ -109,12 +113,12 @@
                 </div>
                 <div class="card-body">
                     <div class="list-group list-group-flush">
-                        <a href="{{ url_for('relatorio_pl') }}" class="list-group-item list-group-item-action">
+                        <a href="{{ url_for('reports.relatorio_pl') }}" class="list-group-item list-group-item-action">
                             
                             P&L (Profit & Loss)
                             <small class="text-muted d-block">Demonstrativo de resultados</small>
                         </a>
-                        <a href="{{ url_for('relatorio_fluxo_caixa') }}" class="list-group-item list-group-item-action">
+                        <a href="{{ url_for('reports.relatorio_fluxo_caixa') }}" class="list-group-item list-group-item-action">
                             
                             Fluxo de Caixa
                             <small class="text-muted d-block">Entradas e saídas mensais</small>
@@ -135,12 +139,12 @@
                 </div>
                 <div class="card-body">
                     <div class="list-group list-group-flush">
-                        <a href="{{ url_for('relatorio_top_produtos') }}" class="list-group-item list-group-item-action">
+                        <a href="{{ url_for('reports.relatorio_top_produtos') }}" class="list-group-item list-group-item-action">
                             
                             Top Produtos
                             <small class="text-muted d-block">Produtos mais vendidos</small>
                         </a>
-                        <a href="{{ url_for('relatorio_sazonalidade') }}" class="list-group-item list-group-item-action">
+                        <a href="{{ url_for('reports.relatorio_sazonalidade') }}" class="list-group-item list-group-item-action">
                             
                             Sazonalidade
                             <small class="text-muted d-block">Tendências mensais</small>
@@ -161,12 +165,12 @@
                 </div>
                 <div class="card-body">
                     <div class="list-group list-group-flush">
-                        <a href="{{ url_for('relatorio_rotatividade_estoque') }}" class="list-group-item list-group-item-action">
+                        <a href="{{ url_for('reports.relatorio_rotatividade_estoque') }}" class="list-group-item list-group-item-action">
                             
                             Rotatividade
                             <small class="text-muted d-block">Velocidade de giro dos produtos</small>
                         </a>
-                        <a href="{{ url_for('relatorio_produtos_parados') }}" class="list-group-item list-group-item-action">
+                        <a href="{{ url_for('reports.relatorio_produtos_parados') }}" class="list-group-item list-group-item-action">
                             
                             Produtos Parados
                             <small class="text-muted d-block">Produtos sem vendas recentes</small>

@@ -106,14 +106,14 @@ class FallbackSystem {
         
         const banner = document.createElement('div');
         banner.id = 'fallback-banner';
-        banner.innerHTML = `
-            <div class="alert alert-warning alert-dismissible fade show m-0" role="alert">
-                <strong>⚠️ Modo Offline Temporário:</strong> 
-                Usando dados locais devido ao limite de requisições. 
-                Conexão será restaurada automaticamente.
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        `;
+        banner.innerHTML = [
+            '<div class="alert alert-warning alert-dismissible fade show m-0" role="alert">',
+                '<strong>⚠️ Modo Offline Temporário:</strong> ',
+                'Usando dados locais devido ao limite de requisições. ',
+                'Conexão será restaurada automaticamente.',
+                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>',
+            '</div>'
+        ].join('');
         
         // Inserir no topo da página
         document.body.insertBefore(banner, document.body.firstChild);

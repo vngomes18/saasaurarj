@@ -340,65 +340,6 @@ class AutocompleteManager {
 // Instância global
 window.autocompleteManager = new AutocompleteManager();
 
-// CSS para autocomplete
-const autocompleteCSS = `
-.autocomplete-suggestions {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border: 1px solid #ddd;
-    border-top: none;
-    border-radius: 0 0 4px 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-    display: none;
-}
-
-.autocomplete-item {
-    padding: 8px 12px;
-    cursor: pointer;
-    border-bottom: 1px solid #eee;
-    transition: background-color 0.2s;
-}
-
-.autocomplete-item:hover,
-.autocomplete-item.selected {
-    background-color: #f8f9fa;
-}
-
-.autocomplete-item:last-child {
-    border-bottom: none;
-}
-
-.autocomplete-item strong {
-    color: #007bff;
-    font-weight: 600;
-}
-
-/* Dark mode */
-.dark-mode .autocomplete-suggestions {
-    background: #2d3748;
-    border-color: #4a5568;
-}
-
-.dark-mode .autocomplete-item {
-    border-color: #4a5568;
-    color: #e2e8f0;
-}
-
-.dark-mode .autocomplete-item:hover,
-.dark-mode .autocomplete-item.selected {
-    background-color: #4a5568;
-}
-`;
-
-// Injetar CSS
-const styleElAutocomplete = document.createElement('style');
-styleElAutocomplete.textContent = autocompleteCSS;
-document.head.appendChild(styleElAutocomplete);
+// CSS moved to static/css/style.css
 
 console.log('🚀 Autocomplete Manager initialized');

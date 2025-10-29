@@ -17,7 +17,7 @@
       <div class="card">
         <div class="card-body">
           <h5 class="card-title">Novo Funcionário</h5>
-          <form method="POST" action="{{ url_for('admin_funcionarios') }}">
+          <form method="POST" action="{{ url_for('admin.admin_funcionarios') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="mb-3">
               <label class="form-label">Usuário</label>
@@ -57,11 +57,11 @@
                   <td>{{ f.username }}</td>
                   <td>{{ f.email }}</td>
                   <td>
-                    <form method="POST" action="{{ url_for('admin_reset_password', user_id=f.id) }}" class="d-inline">
+                    <form method="POST" action="{{ url_for('admin.admin_reset_password', user_id=f.id) }}" class="d-inline">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                       <button class="btn btn-sm btn-outline-primary">Redefinir Senha</button>
                     </form>
-                    <form method="POST" action="{{ url_for('admin_delete_user', user_id=f.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir este funcionário?');">
+                    <form method="POST" action="{{ url_for('admin.admin_delete_user', user_id=f.id) }}" class="d-inline" onsubmit="return confirm('Tem certeza que deseja excluir este funcionário?');">
                       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                       <button class="btn btn-sm btn-outline-danger">Excluir</button>
                     </form>

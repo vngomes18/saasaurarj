@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, make_response
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session, make_response, Blueprint
 from markupsafe import Markup
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -274,9 +274,18 @@ def add_security_headers(response):
     """Adiciona headers de segurança"""
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['X-Frame-Options'] = 'DENY'
-    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['X-XSS-Protection'] = '0'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
+    # CSP básico (ajuste conforme integrações externas)
+    csp = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; "
+        "connect-src 'self' https://accounts.google.com https://www.googleapis.com"
+    )
+    response.headers['Content-Security-Policy'] = csp
     
     # HSTS apenas em produção
     if os.environ.get('RENDER') or os.environ.get('FLASK_ENV') == 'production':
@@ -323,6 +332,10 @@ except Exception as e:
     print(f"AVISO: Erro ao configurar CORS: {e}")
 
 # Registrar blueprint da API
+auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
+admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
+main_bp = Blueprint('main', __name__, url_prefix='')
+reports_bp = Blueprint('reports', __name__, url_prefix='/relatorios')
 app.register_blueprint(api)
 print("API routes registradas com sucesso!")
 
@@ -443,98 +456,7 @@ def update_user_settings(user_id, **kwargs):
     return settings
 
 # ===== Plano: helpers de recursos e cotas =====
-PLAN_FEATURES = {
-    'free': {
-        'cupons': False,
-        'notas_fiscais': False,
-        'export_pdf': False,
-        'export_excel': False,
-        'api_write': False,
-        'staff_management': False,
-    },
-    'freepremium': {
-        'cupons': True,
-        'notas_fiscais': True,  # emissão manual
-        'export_pdf': True,
-        'export_excel': True,  # limitado
-        'api_write': False,
-        'staff_management': True,
-    },
-    'premium': {
-        'cupons': True,
-        'notas_fiscais': True,
-        'export_pdf': True,
-        'export_excel': True,
-        'api_write': True,
-        'staff_management': True,
-    }
-}
-
-PLAN_QUOTAS = {
-    'free': {
-        'produtos_max': 100,
-        'clientes_max': 200,
-        'vendas_mes_max': 300,
-        'nfe_mes_max': 0,
-        'cupons_ativos_max': 0,
-    },
-    'freepremium': {
-        'produtos_max': 1000,
-        'clientes_max': 2000,
-        'vendas_mes_max': 2000,
-        'nfe_mes_max': 100,
-        'cupons_ativos_max': 10,
-    },
-    'premium': {
-        'produtos_max': None,
-        'clientes_max': None,
-        'vendas_mes_max': None,
-        'nfe_mes_max': None,
-        'cupons_ativos_max': None,
-    }
-}
-
-def get_plan_tier_for_user(user_id):
-    user = User.query.get(user_id)
-    if not user:
-        return 'free'
-    if user.role == 'admin':
-        s = get_user_settings(user_id)
-    else:
-        admin = User.query.filter_by(empresa=user.empresa, role='admin').first()
-        s = get_user_settings(admin.id) if admin else get_user_settings(user_id)
-    tier = (s.plan_tier or 'free').lower()
-    return tier if tier in PLAN_FEATURES else 'free'
-
-def has_feature(user_id, feature):
-    tier = get_plan_tier_for_user(user_id)
-    user = User.query.get(user_id)
-    if feature == 'reports' and user and user.role != 'admin':
-        return False
-    return bool(PLAN_FEATURES.get(tier, {}).get(feature, False))
-
-def require_plan(feature):
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            uid = session.get('user_id')
-            if not uid:
-                return redirect(url_for('login'))
-            if not has_feature(uid, feature):
-                upgrade_link = url_for('planos')
-                msg = Markup(f'Recurso indisponível no seu plano. <a href="{upgrade_link}" class="alert-link">Veja os planos</a> para fazer upgrade.')
-                flash(msg, 'warning')
-                return redirect(url_for('dashboard'))
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
-
-def check_quota_exceeded(user_id, quota_key, current_count):
-    tier = get_plan_tier_for_user(user_id)
-    limit = PLAN_QUOTAS.get(tier, {}).get(quota_key)
-    if limit is None:
-        return False
-    return current_count >= limit
+from plans import get_plan_tier_for_user, has_feature, require_plan, check_quota_exceeded
 
 # Helper de autorização
 def is_admin():
@@ -697,6 +619,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(120), nullable=True)  # Pode ser None para usuários Google
     empresa = db.Column(db.String(100), nullable=False, index=True)
+    empresa_id = db.Column(db.Integer, db.ForeignKey('empresa.id'), nullable=True, index=True)
     role = db.Column(db.String(20), default='user', nullable=False, index=True)  # 'user' | 'admin'
     google_id = db.Column(db.String(100), unique=True, nullable=True, index=True)  # ID do Google
     avatar_url = db.Column(db.String(200), nullable=True)  # URL do avatar do Google
@@ -732,6 +655,15 @@ class User(db.Model):
     def check_password(self, password):
         """Verifica se a senha fornecida está correta"""
         return check_password_hash(self.password_hash, password)
+
+class Empresa(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(150), unique=True, nullable=False, index=True)
+    plan_tier = db.Column(db.String(20), default='free', nullable=False, index=True)
+    billing_status = db.Column(db.String(20), default='active', nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, index=True)
+    users = db.relationship('User', backref='empresa_ref', lazy=True)
 
 class Produto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -1034,85 +966,109 @@ class UserSettings(db.Model):
 @cache.memoize(timeout=300)  # Cache por 5 minutos
 def admin_home():
     from datetime import datetime, timedelta
+    admin_user = User.query.get(session['user_id'])
+    company_user_ids = [u.id for u in User.query.filter_by(empresa_id=admin_user.empresa_id).all()]
     
     # Estatísticas Gerais
     stats = {
-        'total_usuarios': User.query.count(),
-        'usuarios_ativos': User.query.filter(User.created_at >= datetime.now() - timedelta(days=30)).count(),
-        'usuarios_admin': User.query.filter_by(role='admin').count(),
+        'total_usuarios': User.query.filter_by(empresa_id=admin_user.empresa_id).count(),
+        'usuarios_ativos': User.query.filter(
+            User.created_at >= datetime.now() - timedelta(days=30),
+            User.empresa_id == admin_user.empresa_id
+        ).count(),
+        'usuarios_admin': User.query.filter_by(role='admin', empresa_id=admin_user.empresa_id).count(),
     }
     
     # Estatísticas de Clientes
     clientes_stats = {
-        'total': Cliente.query.count(),
-        'novos_este_mes': Cliente.query.filter(Cliente.created_at >= datetime.now().replace(day=1)).count(),
-        'sem_vendas': db.session.query(Cliente).outerjoin(Venda).filter(Venda.id.is_(None)).count(),
+        'total': Cliente.query.filter(Cliente.user_id.in_(company_user_ids)).count(),
+        'novos_este_mes': Cliente.query.filter(
+            Cliente.created_at >= datetime.now().replace(day=1),
+            Cliente.user_id.in_(company_user_ids)
+        ).count(),
+        'sem_vendas': db.session.query(Cliente).outerjoin(Venda).filter(
+            Cliente.user_id.in_(company_user_ids),
+            Venda.id.is_(None)
+        ).count(),
     }
     
     # Estatísticas de Produtos
     produtos_stats = {
-        'total': Produto.query.count(),
-        'estoque_baixo': Produto.query.filter(Produto.estoque_atual <= Produto.estoque_minimo).count(),
-        'sem_estoque': Produto.query.filter_by(estoque_atual=0).count(),
-        'valor_total_estoque': db.session.query(db.func.sum(Produto.estoque_atual * Produto.preco)).scalar() or 0,
+        'total': Produto.query.filter(Produto.user_id.in_(company_user_ids)).count(),
+        'estoque_baixo': Produto.query.filter(
+            Produto.user_id.in_(company_user_ids),
+            Produto.estoque_atual <= Produto.estoque_minimo
+        ).count(),
+        'sem_estoque': Produto.query.filter(
+            Produto.user_id.in_(company_user_ids),
+            Produto.estoque_atual == 0
+        ).count(),
+        'valor_total_estoque': db.session.query(db.func.sum(Produto.estoque_atual * Produto.preco)).filter(
+            Produto.user_id.in_(company_user_ids)
+        ).scalar() or 0,
     }
     
     # Estatísticas de Vendas
     vendas_stats = {
-        'total_vendas': Venda.query.count(),
+        'total_vendas': Venda.query.filter(Venda.user_id.in_(company_user_ids)).count(),
         'vendas_este_mes': Venda.query.filter(
+            Venda.user_id.in_(company_user_ids),
             Venda.data_venda >= datetime.now().replace(day=1),
             Venda.status == 'finalizada'
         ).count(),
         'faturamento_mes': db.session.query(db.func.sum(Venda.valor_total)).filter(
+            Venda.user_id.in_(company_user_ids),
             Venda.data_venda >= datetime.now().replace(day=1),
             Venda.status == 'finalizada'
         ).scalar() or 0,
         'ticket_medio': db.session.query(db.func.avg(Venda.valor_total)).filter(
+            Venda.user_id.in_(company_user_ids),
             Venda.status == 'finalizada'
         ).scalar() or 0,
     }
     
     # Estatísticas de Fornecedores
     fornecedores_stats = {
-        'total': Fornecedor.query.count(),
-        'ativos': Fornecedor.query.filter_by(status='ativo').count(),
-        'inativos': Fornecedor.query.filter_by(status='inativo').count(),
+        'total': Fornecedor.query.filter(Fornecedor.user_id.in_(company_user_ids)).count(),
+        'ativos': Fornecedor.query.filter(Fornecedor.user_id.in_(company_user_ids), Fornecedor.status=='ativo').count(),
+        'inativos': Fornecedor.query.filter(Fornecedor.user_id.in_(company_user_ids), Fornecedor.status=='inativo').count(),
     }
     
     # Estatísticas de Compras
     compras_stats = {
-        'total': Compra.query.count(),
-        'pendentes': Compra.query.filter_by(status='pendente').count(),
-        'confirmadas': Compra.query.filter_by(status='confirmada').count(),
+        'total': Compra.query.filter(Compra.user_id.in_(company_user_ids)).count(),
+        'pendentes': Compra.query.filter(Compra.user_id.in_(company_user_ids), Compra.status=='pendente').count(),
+        'confirmadas': Compra.query.filter(Compra.user_id.in_(company_user_ids), Compra.status=='confirmada').count(),
         'valor_total_pendente': db.session.query(db.func.sum(Compra.valor_total)).filter(
+            Compra.user_id.in_(company_user_ids),
             Compra.status == 'pendente'
         ).scalar() or 0,
     }
     
     # Estatísticas de Produtos Auxiliares
     produtos_aux_stats = {
-        'total': ProdutoAuxiliar.query.count(),
-        'ativos': ProdutoAuxiliar.query.filter_by(status='ativo').count(),
+        'total': ProdutoAuxiliar.query.filter(ProdutoAuxiliar.user_id.in_(company_user_ids)).count(),
+        'ativos': ProdutoAuxiliar.query.filter(ProdutoAuxiliar.user_id.in_(company_user_ids), ProdutoAuxiliar.status=='ativo').count(),
         'estoque_baixo': ProdutoAuxiliar.query.filter(
+            ProdutoAuxiliar.user_id.in_(company_user_ids),
             ProdutoAuxiliar.estoque_atual <= ProdutoAuxiliar.estoque_minimo
         ).count(),
     }
     
     # Estatísticas de Notas Fiscais
     notas_stats = {
-        'total': NotaFiscal.query.count(),
-        'pendentes': NotaFiscal.query.filter_by(status='pendente').count(),
-        'emitidas': NotaFiscal.query.filter_by(status='emitida').count(),
-        'valor_total': db.session.query(db.func.sum(NotaFiscal.valor_total)).scalar() or 0,
+        'total': NotaFiscal.query.filter(NotaFiscal.user_id.in_(company_user_ids)).count(),
+        'pendentes': NotaFiscal.query.filter(NotaFiscal.user_id.in_(company_user_ids), NotaFiscal.status=='pendente').count(),
+        'emitidas': NotaFiscal.query.filter(NotaFiscal.user_id.in_(company_user_ids), NotaFiscal.status=='emitida').count(),
+        'valor_total': db.session.query(db.func.sum(NotaFiscal.valor_total)).filter(NotaFiscal.user_id.in_(company_user_ids)).scalar() or 0,
     }
     
     # Estatísticas de Suporte
     suporte_stats = {
-        'tickets_abertos': TicketSuporte.query.filter(TicketSuporte.status.in_(['aberto', 'em_andamento'])).count(),
-        'tickets_resolvidos': TicketSuporte.query.filter_by(status='resolvido').count(),
-        'tickets_fechados': TicketSuporte.query.filter_by(status='fechado').count(),
-        'total_respostas': RespostaTicket.query.count(),
+        'tickets_abertos': TicketSuporte.query.filter(TicketSuporte.user_id.in_(company_user_ids), TicketSuporte.status.in_(['aberto', 'em_andamento'])).count(),
+        'tickets_resolvidos': TicketSuporte.query.filter(TicketSuporte.user_id.in_(company_user_ids), TicketSuporte.status=='resolvido').count(),
+        'tickets_fechados': TicketSuporte.query.filter(TicketSuporte.user_id.in_(company_user_ids), TicketSuporte.status=='fechado').count(),
+        'total_respostas': RespostaTicket.query.filter(RespostaTicket.user_id.in_(company_user_ids)).count(),
     }
     
     # Dados para gráficos
@@ -1121,6 +1077,7 @@ def admin_home():
     for i in range(7):
         data = datetime.now().date() - timedelta(days=i)
         vendas_dia = Venda.query.filter(
+            Venda.user_id.in_(company_user_ids),
             db.func.date(Venda.data_venda) == data,
             Venda.status == 'finalizada'
         ).count()
@@ -1135,16 +1092,17 @@ def admin_home():
         Produto.nome,
         db.func.sum(ItemVenda.quantidade).label('total_vendido')
     ).join(ItemVenda).join(Venda).filter(
+        Venda.user_id.in_(company_user_ids),
         Venda.status == 'finalizada'
     ).group_by(Produto.id, Produto.nome).order_by(
         db.func.sum(ItemVenda.quantidade).desc()
     ).limit(5).all()
     
     # Usuários recentes
-    usuarios_recentes = User.query.order_by(User.created_at.desc()).limit(5).all()
+    usuarios_recentes = User.query.filter_by(empresa_id=admin_user.empresa_id).order_by(User.created_at.desc()).limit(5).all()
     
     # Tickets recentes
-    tickets_recentes = TicketSuporte.query.order_by(TicketSuporte.data_abertura.desc()).limit(5).all()
+    tickets_recentes = TicketSuporte.query.filter(TicketSuporte.user_id.in_(company_user_ids)).order_by(TicketSuporte.data_abertura.desc()).limit(5).all()
     
     return render_template('admin/index.html', 
                          stats=stats,
@@ -1185,6 +1143,8 @@ def admin_table(table_name: str):
     if not model:
         flash('Tabela não reconhecida.', 'error')
         return redirect(url_for('admin_home'))
+    admin_user = User.query.get(session['user_id'])
+    company_user_ids = [u.id for u in User.query.filter_by(empresa_id=admin_user.empresa_id).all()]
     
     # Parâmetros de paginação
     page = request.args.get('page', 1, type=int)
@@ -1192,7 +1152,13 @@ def admin_table(table_name: str):
     per_page = min(per_page, 100)  # Limitar máximo de itens por página
     
     # Query com paginação
-    pagination = model.query.paginate(
+    query = model.query
+    if model is User:
+        query = query.filter(User.empresa_id == admin_user.empresa_id)
+    elif hasattr(model, 'user_id'):
+        query = query.filter(model.user_id.in_(company_user_ids))
+
+    pagination = query.paginate(
         page=page, 
         per_page=per_page, 
         error_out=False
@@ -1217,7 +1183,14 @@ def admin_table_csv(table_name: str):
     if not model:
         flash('Tabela não reconhecida.', 'error')
         return redirect(url_for('admin_home'))
-    rows = model.query.all()
+    admin_user = User.query.get(session['user_id'])
+    company_user_ids = [u.id for u in User.query.filter_by(empresa_id=admin_user.empresa_id).all()]
+    query = model.query
+    if model is User:
+        query = query.filter(User.empresa_id == admin_user.empresa_id)
+    elif hasattr(model, 'user_id'):
+        query = query.filter(model.user_id.in_(company_user_ids))
+    rows = query.all()
     items = [serialize_model(r) for r in rows]
     output = StringIO()
     if items:
@@ -1241,7 +1214,7 @@ def index():
         return redirect(url_for('dashboard'))
     return render_template('auth/login.html', google_configured=bool(google))
 
-@app.route('/login', methods=['GET', 'POST'])
+@auth_bp.route('/login', methods=['GET', 'POST'], endpoint='login')
 @csrf.exempt
 @safe_rate_limit("5 per minute")  # Rate limiting para login
 def login():
@@ -1312,7 +1285,7 @@ def login():
                 session.permanent = True
 
                 flash('Login realizado com sucesso!', 'success')
-                resp = redirect(url_for('dashboard'))
+                resp = redirect(url_for('main.dashboard'))
                 set_device_cookie(resp, device_id)
                 return resp
         else:
@@ -1828,14 +1801,14 @@ def get_google_oauth_token():
 if google:
     google.tokengetter(get_google_oauth_token)
 
-@app.route('/logout')
+@auth_bp.route('/logout', endpoint='logout')
 def logout():
     session.clear()
     flash('Logout realizado com sucesso!', 'info')
     return redirect(url_for('login'))
 
 # Dashboard
-@app.route('/dashboard')
+@main_bp.route('/dashboard', endpoint='dashboard')
 @login_required
 def dashboard():
     user_id = session['user_id']
@@ -1934,7 +1907,7 @@ def alterar_plano():
     flash(f'Plano atualizado para {novo_plano.capitalize()}.', 'success')
     return redirect(url_for('conta_plano'))
 
-@app.route('/admin/funcionarios', methods=['GET','POST'])
+@admin_bp.route('/funcionarios', methods=['GET','POST'], endpoint='admin_funcionarios')
 @login_required
 @require_plan('staff_management')
 def admin_funcionarios():
@@ -1957,6 +1930,7 @@ def admin_funcionarios():
                 username=username,
                 email=email,
                 empresa=admin_user.empresa,
+                empresa_id=admin_user.empresa_id,
                 role='user'
             )
             funcionario.set_password(password)
@@ -1964,33 +1938,33 @@ def admin_funcionarios():
             db.session.commit()
             flash('Funcionário criado com sucesso.', 'success')
             return redirect(url_for('admin_funcionarios'))
-    funcionarios = User.query.filter_by(empresa=admin_user.empresa, role='user').order_by(User.username).all()
+    funcionarios = User.query.filter_by(empresa_id=admin_user.empresa_id, role='user').order_by(User.username).all()
     return render_template('admin/funcionarios.html', funcionarios=funcionarios)
 
-@app.route('/admin/funcionarios/<int:user_id>/reset-password', methods=['POST'])
+@admin_bp.route('/funcionarios/<int:user_id>/reset-password', methods=['POST'], endpoint='admin_reset_password')
 @login_required
 @require_plan('staff_management')
 def admin_reset_password(user_id):
     admin_user = User.query.get(session['user_id'])
     user = User.query.get(user_id)
-    if not user or user.empresa != admin_user.empresa or user.role != 'user':
+    if not user or user.empresa_id != admin_user.empresa_id or user.role != 'user':
         flash('Operação não permitida.', 'error')
-        return redirect(url_for('admin_funcionarios'))
+        return redirect(url_for('admin.admin_funcionarios'))
     temp_pw = secrets.token_urlsafe(8)
     user.set_password(temp_pw)
     db.session.commit()
     flash(f'Senha redefinida. Nova senha temporária: {temp_pw}', 'success')
-    return redirect(url_for('admin_funcionarios'))
+    return redirect(url_for('admin.admin_funcionarios'))
 
-@app.route('/admin/funcionarios/<int:user_id>/delete', methods=['POST'])
+@admin_bp.route('/funcionarios/<int:user_id>/delete', methods=['POST'], endpoint='admin_delete_user')
 @login_required
 @require_plan('staff_management')
 def admin_delete_user(user_id):
     admin_user = User.query.get(session['user_id'])
     user = User.query.get(user_id)
-    if not user or user.empresa != admin_user.empresa or user.role != 'user':
+    if not user or user.empresa_id != admin_user.empresa_id or user.role != 'user':
         flash('Operação não permitida.', 'error')
-        return redirect(url_for('admin_funcionarios'))
+        return redirect(url_for('admin.admin_funcionarios'))
     try:
         db.session.delete(user)
         db.session.commit()
@@ -1998,7 +1972,7 @@ def admin_delete_user(user_id):
     except Exception as e:
         db.session.rollback()
         flash(f'Erro ao excluir: {e}', 'error')
-    return redirect(url_for('admin_funcionarios'))
+    return redirect(url_for('admin.admin_funcionarios'))
 
 # Produtos
 @app.route('/produtos')
@@ -4100,7 +4074,7 @@ def toggle_dark_mode():
 # ==================== RELATÓRIOS E ANALYTICS ====================
 
 # Página principal de relatórios
-@app.route('/relatorios')
+@reports_bp.route('/', endpoint='relatorios')
 @login_required
 @require_plan('reports')
 def relatorios():
@@ -4135,7 +4109,7 @@ def relatorios():
 # ==================== RELATÓRIOS FINANCEIROS ====================
 
 # P&L (Profit & Loss)
-@app.route('/relatorios/pl')
+@reports_bp.route('/pl', endpoint='relatorio_pl')
 @login_required
 @require_plan('reports')
 def relatorio_pl():
@@ -4174,7 +4148,7 @@ def relatorio_pl():
                          periodo={'inicio': inicio, 'fim': fim})
 
 # Fluxo de Caixa
-@app.route('/relatorios/fluxo-caixa')
+@reports_bp.route('/fluxo-caixa', endpoint='relatorio_fluxo_caixa')
 @login_required
 @require_plan('reports')
 def relatorio_fluxo_caixa():
@@ -4216,7 +4190,7 @@ def relatorio_fluxo_caixa():
 # ==================== ANÁLISE DE VENDAS ====================
 
 # Top Produtos
-@app.route('/relatorios/top-produtos')
+@reports_bp.route('/top-produtos', endpoint='relatorio_top_produtos')
 @login_required
 @require_plan('reports')
 def relatorio_top_produtos():
@@ -4237,7 +4211,7 @@ def relatorio_top_produtos():
     return render_template('relatorios/top_produtos.html', top_produtos=top_produtos)
 
 # Análise de Sazonalidade
-@app.route('/relatorios/sazonalidade')
+@reports_bp.route('/sazonalidade', endpoint='relatorio_sazonalidade')
 @login_required
 @require_plan('reports')
 def relatorio_sazonalidade():
@@ -4267,7 +4241,7 @@ def relatorio_sazonalidade():
 # ==================== RELATÓRIOS DE ESTOQUE ====================
 
 # Rotatividade de Produtos
-@app.route('/relatorios/rotatividade-estoque')
+@reports_bp.route('/rotatividade-estoque', endpoint='relatorio_rotatividade_estoque')
 @login_required
 @require_plan('reports')
 def relatorio_rotatividade_estoque():
@@ -4306,7 +4280,7 @@ def relatorio_rotatividade_estoque():
                          produtos_rotatividade=produtos_rotatividade)
 
 # Produtos Parados
-@app.route('/relatorios/produtos-parados')
+@reports_bp.route('/produtos-parados', endpoint='relatorio_produtos_parados')
 @login_required
 @require_plan('reports')
 def relatorio_produtos_parados():
@@ -4401,11 +4375,21 @@ def api_dashboard_kpis():
 # ==================== SISTEMA DE EXPORTAÇÃO ====================
 
 # Exportação para PDF
-@app.route('/relatorios/exportar/<tipo>/<formato>')
+@reports_bp.route('/exportar/<tipo>/<formato>', endpoint='exportar_relatorio')
 @login_required
 @require_plan('reports')
 def exportar_relatorio(tipo, formato):
     user_id = session['user_id']
+    # Modo assíncrono opcional via stub de tasks
+    try:
+        if request.args.get('async') == '1':
+            from tasks.exports import export_report
+            result = export_report(tipo, user_id, formato)
+            link_relatorios = url_for('reports.relatorios')
+            flash(Markup(f"Exportação iniciada: {tipo} ({formato}). Status: {result.get('status')} — <a href='{link_relatorios}' class='alert-link'>Ver Relatórios</a>"), 'info')
+            return redirect(link_relatorios)
+    except Exception:
+        pass
     
     if formato == 'pdf':
         return exportar_pdf(tipo, user_id)
@@ -4796,7 +4780,25 @@ def validar_cupom(codigo):
         }
     })
 
+# Registrar blueprints após definir todas as rotas
+app.register_blueprint(auth_bp)
+app.register_blueprint(admin_bp)
+app.register_blueprint(main_bp)
+app.register_blueprint(reports_bp)
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
+# Fallbacks de URL para compatibilidade com caminhos antigos
+@app.route('/login')
+def legacy_login_redirect():
+    return redirect(url_for('auth.login'))
+
+@app.route('/logout')
+def legacy_logout_redirect():
+    return redirect(url_for('auth.logout'))
+
+@app.route('/dashboard')
+def legacy_dashboard_redirect():
+    return redirect(url_for('main.dashboard'))

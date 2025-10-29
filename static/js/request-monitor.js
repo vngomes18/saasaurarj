@@ -21,157 +21,36 @@ class RequestMonitor {
     createMonitorUI() {
         const monitor = document.createElement('div');
         monitor.id = 'request-monitor';
-        monitor.innerHTML = `
-            <div class="monitor-header">
-                <span>📊 Request Monitor</span>
-                <button class="monitor-close" onclick="requestMonitor.hide()">×</button>
-            </div>
-            <div class="monitor-content">
-                <div class="monitor-stat">
-                    <label>Cache:</label>
-                    <span id="cache-size">0</span>
-                </div>
-                <div class="monitor-stat">
-                    <label>Fila:</label>
-                    <span id="queue-size">0</span>
-                </div>
-                <div class="monitor-stat">
-                    <label>Requisições/min:</label>
-                    <span id="current-requests">0</span>/<span id="max-requests">30</span>
-                </div>
-                <div class="monitor-stat">
-                    <label>Status:</label>
-                    <span id="processing-status">Idle</span>
-                </div>
-                <div class="monitor-actions">
-                    <button onclick="requestMonitor.clearCache()">Limpar Cache</button>
-                    <button onclick="requestMonitor.showStats()">Detalhes</button>
-                </div>
-            </div>
-        `;
+        monitor.innerHTML = [
+            '<div class="monitor-header">',
+                '<span>📊 Request Monitor</span>',
+                '<button class="monitor-close" onclick="requestMonitor.hide()">×</button>',
+            '</div>',
+            '<div class="monitor-content">',
+                '<div class="monitor-stat">',
+                    '<label>Cache:</label>',
+                    '<span id="cache-size">0</span>',
+                '</div>',
+                '<div class="monitor-stat">',
+                    '<label>Fila:</label>',
+                    '<span id="queue-size">0</span>',
+                '</div>',
+                '<div class="monitor-stat">',
+                    '<label>Requisições/min:</label>',
+                    '<span id="current-requests">0</span>/<span id="max-requests">30</span>',
+                '</div>',
+                '<div class="monitor-stat">',
+                    '<label>Status:</label>',
+                    '<span id="processing-status">Idle</span>',
+                '</div>',
+                '<div class="monitor-actions">',
+                    '<button onclick="requestMonitor.clearCache()">Limpar Cache</button>',
+                    '<button onclick="requestMonitor.showStats()">Detalhes</button>',
+                '</div>',
+            '</div>'
+        ].join('');
         
-        // CSS do monitor
-        const styleElRequestMonitor = document.createElement('style');
-        styleElRequestMonitor.textContent = `
-            #request-monitor {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                width: 280px;
-                background: #fff;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                z-index: 10000;
-                font-family: 'Courier New', monospace;
-                font-size: 12px;
-                display: none;
-            }
-            
-            .monitor-header {
-                background: #007bff;
-                color: white;
-                padding: 8px 12px;
-                border-radius: 8px 8px 0 0;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                font-weight: bold;
-            }
-            
-            .monitor-close {
-                background: none;
-                border: none;
-                color: white;
-                font-size: 16px;
-                cursor: pointer;
-                padding: 0;
-                width: 20px;
-                height: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            
-            .monitor-content {
-                padding: 12px;
-            }
-            
-            .monitor-stat {
-                display: flex;
-                justify-content: space-between;
-                margin-bottom: 6px;
-                padding: 2px 0;
-            }
-            
-            .monitor-stat label {
-                font-weight: bold;
-                color: #666;
-            }
-            
-            .monitor-actions {
-                margin-top: 12px;
-                display: flex;
-                gap: 6px;
-            }
-            
-            .monitor-actions button {
-                flex: 1;
-                padding: 4px 8px;
-                font-size: 10px;
-                border: 1px solid #ddd;
-                background: #f8f9fa;
-                border-radius: 4px;
-                cursor: pointer;
-            }
-            
-            .monitor-actions button:hover {
-                background: #e9ecef;
-            }
-            
-            /* Dark mode */
-            .dark-mode #request-monitor {
-                background: #2d3748;
-                border-color: #4a5568;
-                color: #e2e8f0;
-            }
-            
-            .dark-mode .monitor-stat label {
-                color: #a0aec0;
-            }
-            
-            .dark-mode .monitor-actions button {
-                background: #4a5568;
-                border-color: #718096;
-                color: #e2e8f0;
-            }
-            
-            .dark-mode .monitor-actions button:hover {
-                background: #718096;
-            }
-            
-            /* Status colors */
-            #processing-status.processing {
-                color: #ffc107;
-                font-weight: bold;
-            }
-            
-            #processing-status.idle {
-                color: #28a745;
-            }
-            
-            #current-requests.warning {
-                color: #ffc107;
-                font-weight: bold;
-            }
-            
-            #current-requests.danger {
-                color: #dc3545;
-                font-weight: bold;
-            }
-        `;
-        
-        document.head.appendChild(styleElRequestMonitor);
+        // CSS moved to static/css/style.css
         document.body.appendChild(monitor);
         
         this.monitor = monitor;

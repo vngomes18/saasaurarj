@@ -49,6 +49,7 @@ def create_indexes():
             ("idx_venda_status", "CREATE INDEX IF NOT EXISTS idx_venda_status ON venda(status)"),
             ("idx_venda_forma_pagamento", "CREATE INDEX IF NOT EXISTS idx_venda_forma_pagamento ON venda(forma_pagamento)"),
             ("idx_venda_user_id", "CREATE INDEX IF NOT EXISTS idx_venda_user_id ON venda(user_id)"),
+            ("idx_venda_user_status_date", "CREATE INDEX IF NOT EXISTS idx_venda_user_status_date ON venda(user_id, status, data_venda)"),
             ("idx_venda_cliente_id", "CREATE INDEX IF NOT EXISTS idx_venda_cliente_id ON venda(cliente_id)"),
             
             # Índices para tabela Cliente
@@ -67,6 +68,7 @@ def create_indexes():
             ("idx_compra_data_compra", "CREATE INDEX IF NOT EXISTS idx_compra_data_compra ON compra(data_compra)"),
             ("idx_compra_valor_total", "CREATE INDEX IF NOT EXISTS idx_compra_valor_total ON compra(valor_total)"),
             ("idx_compra_user_id", "CREATE INDEX IF NOT EXISTS idx_compra_user_id ON compra(user_id)"),
+            ("idx_compra_user_status_date", "CREATE INDEX IF NOT EXISTS idx_compra_user_status_date ON compra(user_id, status, data_compra)"),
             ("idx_compra_fornecedor_id", "CREATE INDEX IF NOT EXISTS idx_compra_fornecedor_id ON compra(fornecedor_id)"),
             
             # Índices para tabela ItemVenda
@@ -82,11 +84,13 @@ def create_indexes():
             ("idx_ticket_prioridade", "CREATE INDEX IF NOT EXISTS idx_ticket_prioridade ON ticket_suporte(prioridade)"),
             ("idx_ticket_created_at", "CREATE INDEX IF NOT EXISTS idx_ticket_created_at ON ticket_suporte(created_at)"),
             ("idx_ticket_user_id", "CREATE INDEX IF NOT EXISTS idx_ticket_user_id ON ticket_suporte(user_id)"),
+            ("idx_ticket_user_status_created", "CREATE INDEX IF NOT EXISTS idx_ticket_user_status_created ON ticket_suporte(user_id, status, created_at)"),
             
             # Índices para tabela NotaFiscal
             ("idx_nota_status", "CREATE INDEX IF NOT EXISTS idx_nota_status ON nota_fiscal(status)"),
             ("idx_nota_data_emissao", "CREATE INDEX IF NOT EXISTS idx_nota_data_emissao ON nota_fiscal(data_emissao)"),
             ("idx_nota_user_id", "CREATE INDEX IF NOT EXISTS idx_nota_user_id ON nota_fiscal(user_id)"),
+            ("idx_nota_user_status_emissao", "CREATE INDEX IF NOT EXISTS idx_nota_user_status_emissao ON nota_fiscal(user_id, status, data_emissao)"),
         ]
         
         # Executar criação dos índices
