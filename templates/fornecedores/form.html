@@ -7,7 +7,7 @@
 {% block content %}
 <div class="container-fluid">
     <!-- Header -->
-    <div class="row mb-4">
+    <div class="row mb-4 page-section-header align-items-center">
         <div class="col-md-6">
             <h2>
                 
@@ -90,16 +90,16 @@
                                         
                                         Categoria
                                     </label>
-                                    <select class="form-select" id="categoria_fornecedor" name="categoria_fornecedor">
-                                        <option value="">Selecione...</option>
-                                        <option value="Matéria-prima" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Matéria-prima' else '' }}>Matéria-prima</option>
-                                        <option value="Produtos acabados" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Produtos acabados' else '' }}>Produtos acabados</option>
-                                        <option value="Serviços" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Serviços' else '' }}>Serviços</option>
-                                        <option value="Equipamentos" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Equipamentos' else '' }}>Equipamentos</option>
-                                        <option value="Tecnologia" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Tecnologia' else '' }}>Tecnologia</option>
-                                        <option value="Logística" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Logística' else '' }}>Logística</option>
-                                        <option value="Outros" {{ 'selected' if fornecedor and fornecedor.categoria_fornecedor == 'Outros' else '' }}>Outros</option>
-                                    </select>
+                                    <div class="categoria-search-container">
+                                        <input type="hidden" id="categoria_hidden" name="categoria_fornecedor" value="{{ fornecedor.categoria_fornecedor if fornecedor else '' }}">
+                                        <input type="text" 
+                                               class="form-control categoria-search-input" 
+                                               id="categoria_fornecedor" 
+                                               placeholder="Digite ou selecione a categoria..."
+                                               autocomplete="off"
+                                               value="{{ fornecedor.categoria_fornecedor if fornecedor else '' }}">
+                                        <div class="categoria-suggestions"></div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -506,6 +506,52 @@
     from { opacity: 1; }
     to { opacity: 0; }
 }
+
+/* Category search autocomplete styles */
+.categoria-search-container {
+    position: relative;
+}
+
+.categoria-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 0.5rem 0.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: none;
+}
+
+.categoria-suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.categoria-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.categoria-suggestion-item:hover {
+    background-color: #f8f9fa;
+}
+
+.categoria-new-item {
+    background-color: #e7f3ff !important;
+    font-weight: 600;
+    color: #0066cc;
+}
+
+.categoria-new-item:hover {
+    background-color: #d0e7ff !important;
+}
 </style>
 
 <script>
@@ -519,6 +565,97 @@
     const ufInput = document.getElementById('uf');
     const telefoneInput = document.getElementById('telefone');
     const limiteCreditoInput = document.getElementById('limite_credito');
+    
+    // Categoria search functionality
+    const categoriaInput = document.getElementById('categoria_fornecedor');
+    const categoriaHidden = document.getElementById('categoria_hidden');
+    const categorias = [
+        'Matéria-prima',
+        'Produtos acabados',
+        'Serviços',
+        'Equipamentos',
+        'Tecnologia',
+        'Logística',
+        'Outros'
+    ];
+    
+    function searchCategorias() {
+        const term = categoriaInput.value.toLowerCase();
+        const suggestionsBox = document.querySelector('.categoria-suggestions');
+        
+        if (!suggestionsBox) return;
+        
+        const filtered = categorias.filter(c => c.toLowerCase().includes(term));
+        
+        // Add "Nova Categoria" option at the beginning - show if no exact match exists
+        let addNewOption = '';
+        const exactMatch = categorias.some(c => c.toLowerCase() === term);
+        if (term.length > 0 && !exactMatch) {
+            addNewOption = `<div class="categoria-suggestion-item categoria-new-item" data-action="add-new">+ Adicionar: "${categoriaInput.value}"</div>`;
+        }
+        
+        // Build the suggestions HTML
+        let suggestionsHTML = '';
+        if (filtered.length === 0 && term.length > 0) {
+            // No matches found - show add new option and message
+            suggestionsHTML = addNewOption + '<div class="categoria-suggestion-item p-2 text-muted">Nenhuma categoria encontrada</div>';
+        } else if (filtered.length > 0) {
+            // Found some matches - show add new option (if applicable) and matches
+            suggestionsHTML = addNewOption + filtered.map(c => `
+                <div class="categoria-suggestion-item">${c}</div>
+            `).join('');
+        } else {
+            // No search term - show all categories
+            suggestionsHTML = categorias.map(c => `
+                <div class="categoria-suggestion-item">${c}</div>
+            `).join('');
+        }
+        
+        suggestionsBox.innerHTML = suggestionsHTML;
+        suggestionsBox.style.display = 'block';
+    }
+    
+    // Show all categories on focus
+    if (categoriaInput) {
+        categoriaInput.addEventListener('focusin', function() {
+            searchCategorias();
+        });
+        
+        categoriaInput.addEventListener('input', function() {
+            searchCategorias();
+        });
+    }
+    
+    // Handle category selection
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('categoria-suggestion-item')) {
+            // Check if it's the "add new" option
+            if (e.target.dataset.action === 'add-new') {
+                const newCategoria = categoriaInput.value;
+                // Add to the categories array
+                if (newCategoria && !categorias.includes(newCategoria)) {
+                    categorias.push(newCategoria);
+                }
+                categoriaInput.value = newCategoria;
+                categoriaHidden.value = newCategoria;
+            } else {
+                const selectedCategoria = e.target.textContent;
+                categoriaInput.value = selectedCategoria;
+                categoriaHidden.value = selectedCategoria;
+            }
+            document.querySelector('.categoria-suggestions').style.display = 'none';
+        }
+    });
+    
+    // Close suggestions when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.classList.contains('categoria-search-input') && !e.target.classList.contains('categoria-suggestion-item')) {
+            const suggestionsBox = document.querySelector('.categoria-suggestions');
+            if (suggestionsBox) {
+                suggestionsBox.style.display = 'none';
+            }
+        }
+    });
 
     // Função para formatar CNPJ
     function formatCNPJ(value) {

@@ -391,7 +391,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login'))
         # Enforce sessão única
         try:
             user = User.query.get(session.get('user_id'))
@@ -399,7 +399,7 @@ def login_required(f):
             if user and user.active_session_id and sess_token != user.active_session_id:
                 flash('Sua sessão foi substituída por um novo login. Faça login novamente.', 'warning')
                 session.clear()
-                return redirect(url_for('login'))
+                return redirect(url_for('auth.login'))
         except Exception:
             pass
         return f(*args, **kwargs)
@@ -467,10 +467,10 @@ def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login'))
         if not is_admin():
             flash('Acesso restrito ao administrador.', 'error')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('main.dashboard'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -697,6 +697,23 @@ def log_audit(user_id: int, entidade: str, entidade_id: int, acao: str, changes:
             pass
         print(f"AVISO: falha ao registrar auditoria: {e}")
 
+# Função auxiliar para gerar código único
+def gerar_codigo_produto(tipo='PROD', user_id=None):
+    """
+    Gera um código único para produtos e produtos auxiliares
+    Formato: TIPO-USERID-TIMESTAMP-RANDOM
+    Exemplo: PROD-123-20250125-ABC123
+    """
+    import random
+    import string
+    
+    timestamp = datetime.utcnow().strftime('%Y%m%d')
+    random_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+    user_part = f"{user_id:04d}" if user_id else "0000"
+    
+    codigo = f"{tipo}-{user_part}-{timestamp}-{random_str}"
+    return codigo
+
 class Produto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False, index=True)
@@ -909,6 +926,7 @@ class ProdutoAuxiliar(db.Model):
     estoque_atual = db.Column(db.Float, default=0)
     estoque_minimo = db.Column(db.Float, default=0)
     codigo_interno = db.Column(db.String(50))
+    codigo_barras = db.Column(db.String(50))
     observacoes = db.Column(db.Text)
     status = db.Column(db.String(20), default='ativo')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -1244,9 +1262,9 @@ def admin_table_csv(table_name: str):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     if 'user_id' in session:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('main.dashboard'))
     return render_template('auth/login.html', google_configured=bool(google))
 
 @auth_bp.route('/login', methods=['GET', 'POST'], endpoint='login')
@@ -1561,7 +1579,7 @@ def api_logout():
 @safe_rate_limit("10 per minute")
 def verify_2fa():
     if not session.get('2fa_required'):
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     if request.method == 'POST':
         token = request.form.get('token', '').strip()
@@ -1571,7 +1589,7 @@ def verify_2fa():
         
         if not user:
             flash('Sessão expirada. Faça login novamente.', 'error')
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login'))
         
         # Verificar token 2FA ou código de backup
         if token:
@@ -1591,7 +1609,7 @@ def verify_2fa():
                 
                 reset_failed_login(user)
                 flash('Login realizado com sucesso!', 'success')
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('main.dashboard'))
             else:
                 flash('Código 2FA inválido!', 'error')
         elif backup_code:
@@ -1618,7 +1636,7 @@ def verify_2fa():
                 
                 reset_failed_login(user)
                 flash('Login realizado com código de backup!', 'success')
-                return redirect(url_for('dashboard'))
+                return redirect(url_for('main.dashboard'))
             else:
                 flash('Código de backup inválido!', 'error')
         else:
@@ -1634,7 +1652,7 @@ def setup_2fa():
     
     if user.two_factor_enabled:
         flash('2FA já está habilitado para sua conta!', 'info')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('main.dashboard'))
     
     # Gerar nova chave secreta
     secret = generate_2fa_secret()
@@ -1666,7 +1684,7 @@ def confirm_2fa():
         db.session.commit()
         
         flash('2FA habilitado com sucesso! Guarde seus códigos de backup.', 'success')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('main.dashboard'))
     else:
         flash('Código 2FA inválido!', 'error')
         return redirect(url_for('setup_2fa'))
@@ -1682,7 +1700,7 @@ def disable_2fa():
     
     if not verify_2fa_token(user.two_factor_secret, token):
         flash('Código 2FA inválido!', 'error')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('main.dashboard'))
     
     # Desabilitar 2FA
     user.two_factor_enabled = False
@@ -1691,7 +1709,7 @@ def disable_2fa():
     db.session.commit()
     
     flash('2FA desabilitado com sucesso!', 'success')
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('main.dashboard'))
 
 @app.route('/register', methods=['GET', 'POST'])
 @csrf.exempt
@@ -1746,7 +1764,7 @@ def register():
             db.session.commit()
             
             flash('Conta criada com sucesso! Faça login para continuar.', 'success')
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login'))
             
         except Exception as e:
             db.session.rollback()
@@ -1760,26 +1778,26 @@ def register():
 def google_login():
     if not google:
         flash('Autenticação Google não configurada. Configure as credenciais no arquivo .env', 'error')
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     return google.authorize(callback=url_for('google_authorized', _external=True))
 
 @app.route('/login/google/authorized')
 def google_authorized():
     if not google:
         flash('Autenticação Google não configurada.', 'error')
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     resp = google.authorized_response()
     if resp is None:
         flash('Acesso negado pelo Google.', 'error')
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     session['google_token'] = (resp['access_token'], '')
     user_info = google.get('userinfo')
     
     if user_info.status != 200:
         flash('Erro ao obter informações do Google.', 'error')
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     
     google_data = user_info.data
     google_id = google_data['id']
@@ -1828,7 +1846,7 @@ def google_authorized():
     session['google_avatar'] = user.avatar_url
     
     flash(f'Bem-vindo, {user.username}!', 'success')
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('main.dashboard'))
 
 def get_google_oauth_token():
     return session.get('google_token')
@@ -1840,7 +1858,7 @@ if google:
 def logout():
     session.clear()
     flash('Logout realizado com sucesso!', 'info')
-    return redirect(url_for('login'))
+    return redirect(url_for('auth.login'))
 
 # Dashboard
 @main_bp.route('/dashboard', endpoint='dashboard')
@@ -2037,6 +2055,11 @@ def novo_produto():
         preco_compra_str = request.form.get('preco_compra', '').replace(',', '.')
         preco_compra = float(preco_compra_str) if preco_compra_str else None
         
+        # Gerar código único se não fornecido
+        codigo_barras = request.form['codigo_barras'].strip()
+        if not codigo_barras:
+            codigo_barras = gerar_codigo_produto('PROD', uid)
+        
         produto = Produto(
             nome=request.form['nome'],
             descricao=request.form['descricao'],
@@ -2044,7 +2067,7 @@ def novo_produto():
             estoque_atual=int(request.form['estoque_atual']),
             estoque_minimo=int(request.form['estoque_minimo']),
             categoria=request.form['categoria'],
-            codigo_barras=request.form['codigo_barras'],
+            codigo_barras=codigo_barras,
             user_id=session['user_id'],
             # Campos de fornecedor
             fornecedor_nome=request.form.get('fornecedor_nome'),
@@ -2940,6 +2963,16 @@ def novo_produto_auxiliar():
             preco_compra_str = request.form.get('preco_compra', '').replace(',', '.')
             preco_compra = float(preco_compra_str) if preco_compra_str else None
             
+            # Gerar código único se não fornecido
+            codigo_interno = request.form.get('codigo_interno', '').strip()
+            if not codigo_interno:
+                codigo_interno = gerar_codigo_produto('AUX', session['user_id'])
+            
+            # Processar código de barras
+            codigo_barras = request.form.get('codigo_barras', '').strip()
+            if not codigo_barras:
+                codigo_barras = gerar_codigo_produto('AUX', session['user_id'])
+            
             produto = ProdutoAuxiliar(
                 nome=request.form['nome'].strip(),
                 descricao=request.form.get('descricao', '').strip(),
@@ -2948,7 +2981,8 @@ def novo_produto_auxiliar():
                 preco_unitario=preco_unitario,
                 estoque_atual=estoque_atual,
                 estoque_minimo=estoque_minimo,
-                codigo_interno=request.form.get('codigo_interno', '').strip(),
+                codigo_interno=codigo_interno,
+                codigo_barras=codigo_barras,
                 observacoes=request.form.get('observacoes', '').strip(),
                 user_id=session['user_id'],
                 # Campos de fornecedor
@@ -3167,9 +3201,12 @@ def caixa_dashboard():
     if sessao:
         movimentos = MovimentoCaixa.query.filter_by(sessao_id=sessao.id).order_by(MovimentoCaixa.created_at.desc()).limit(10).all()
 
+    # Load produtos for the quick sale form
+    produtos = Produto.query.filter_by(user_id=user_id).order_by(Produto.nome).all()
+
     return render_template('caixa/index.html', sessao=sessao, inicio=inicio, fim=fim,
                            total_vendas=total_vendas, qtd_vendas=qtd_vendas, ticket_medio=ticket_medio,
-                           por_pagamento=por_pagamento, movimentos=movimentos)
+                           por_pagamento=por_pagamento, movimentos=movimentos, produtos=produtos)
 
 @app.route('/caixa/abrir', methods=['POST'])
 @login_required

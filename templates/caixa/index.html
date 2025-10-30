@@ -40,6 +40,42 @@
 .stat-title { font-size: .9rem; color:#6c757d; }
 .stat-value { font-size: 1.4rem; font-weight: 700; }
 .badge-status { font-size:.85rem; }
+
+/* Product search autocomplete styles */
+.produto-search-container {
+  position: relative;
+}
+
+.produto-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-top: none;
+  border-radius: 0 0 0.5rem 0.5rem;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: none;
+}
+
+.produto-suggestion-item {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.produto-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.produto-suggestion-item:hover {
+  background-color: #f8f9fa;
+}
 </style>
 {% endblock %}
 
@@ -136,9 +172,15 @@
             <!-- Informações do Produto -->
             <div class="col-sm-6 col-md-5">
               <label class="form-label">Produto</label>
-              <select name="produto_id" id="produtoSelect" class="form-select" required>
-                <option value="">Selecione um produto</option>
-              </select>
+              <div class="produto-search-container">
+                <input type="hidden" id="produto_id_hidden" name="produto_id" required>
+                <input type="text" 
+                       class="form-control produto-search-input" 
+                       id="produtoSelect" 
+                       placeholder="Digite o nome do produto..."
+                       autocomplete="off">
+                <div class="produto-suggestions"></div>
+              </div>
             </div>
             <div class="col-sm-3 col-md-2">
               <label class="form-label">Quantidade</label>
@@ -730,37 +772,89 @@ document.addEventListener('DOMContentLoaded', async () => {
     intervaloParcelasSelect.addEventListener('change', calcularDatasParcelas);
   }
 
-  try {
-    const resp = await fetch("{{ url_for('api.api_produtos') }}");
-    const json = await resp.json();
-    if (json && json.success && Array.isArray(json.data)) {
-      const lista = json.data.slice().sort((a,b) => (a.nome || '').localeCompare(b.nome || ''));
-      lista.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = `${p.nome} (${p.categoria || 'Sem categoria'})`;
-        opt.dataset.preco = p.preco;
-        opt.dataset.estoque = p.estoque_atual;
-        opt.dataset.nome = p.nome;
-        opt.dataset.categoria = p.categoria || '';
-        select.appendChild(opt);
-      });
+  // Product search functionality
+  const produtoSearchInput = document.getElementById('produtoSelect');
+  const produtoHiddenInput = document.getElementById('produto_id_hidden');
+  const produtosData = [
+    {% for produto in produtos %}
+    {
+      id: {{ produto.id }},
+      nome: '{{ produto.nome }}',
+      preco: {{ produto.preco }},
+      estoque: {{ produto.estoque_atual }},
+      categoria: '{{ produto.categoria or "" }}'
+    },
+    {% endfor %}
+  ];
+  
+  function searchProdutos(input) {
+    const term = input.value.toLowerCase();
+    const suggestionsBox = document.querySelector('.produto-suggestions');
+    
+    if (!suggestionsBox) return;
+    
+    const filtered = term.length < 1
+      ? produtosData
+      : produtosData.filter(p => p.nome.toLowerCase().includes(term));
+    
+    if (filtered.length === 0 && term.length > 0) {
+      suggestionsBox.innerHTML = '<div class="produto-suggestion-item p-2 text-muted">Nenhum produto encontrado</div>';
+    } else if (filtered.length > 0) {
+      suggestionsBox.innerHTML = filtered.map(p => `
+        <div class="produto-suggestion-item" data-produto='{"id":${p.id},"nome":"${p.nome}","preco":${p.preco},"estoque":${p.estoque},"categoria":"${p.categoria}"}'>
+          <strong>${p.nome}</strong> - R$ ${p.preco.toFixed(2).replace('.', ',')} (Estoque: ${p.estoque})
+        </div>
+      `).join('');
     }
-  } catch(e) {
-    console.warn('Falha ao carregar produtos para venda rápida:', e);
+    
+    suggestionsBox.style.display = 'block';
   }
-
-  function updateInfoAndValor(){
-    const opt = select.options[select.selectedIndex];
-    if (!opt || !opt.value) {
+  
+  // Show all products on focus
+  if (produtoSearchInput) {
+    produtoSearchInput.addEventListener('focusin', function() {
+      searchProdutos(this);
+    });
+    
+    produtoSearchInput.addEventListener('input', function() {
+      searchProdutos(this);
+    });
+  }
+  
+  // Handle product selection
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('produto-suggestion-item')) {
+      const produtoData = JSON.parse(e.target.dataset.produto);
+      produtoHiddenInput.value = produtoData.id;
+      produtoSearchInput.value = produtoData.nome;
+      document.querySelector('.produto-suggestions').style.display = 'none';
+      
+      // Update product info and value
+      updateInfoAndValor(produtoData);
+    }
+  });
+  
+  // Close suggestions when clicking outside
+  document.addEventListener('click', function(e) {
+    if (!e.target.classList.contains('produto-search-input') && !e.target.classList.contains('produto-suggestion-item')) {
+      const suggestionsBox = document.querySelector('.produto-suggestions');
+      if (suggestionsBox) {
+        suggestionsBox.style.display = 'none';
+      }
+    }
+  });
+  
+  function updateInfoAndValor(produtoData = null){
+    if (!produtoData) {
       if (info) info.textContent = 'Selecione um produto para ver categoria e estoque.';
       if (qty) { qty.value = ''; qty.removeAttribute('max'); }
       return;
     }
-    const estoque = Number(opt.dataset.estoque || 0);
-    const preco = Number(opt.dataset.preco || 0);
-    const nome = opt.dataset.nome || '';
-    const categoria = opt.dataset.categoria || '';
+    
+    const estoque = Number(produtoData.estoque || 0);
+    const preco = Number(produtoData.preco || 0);
+    const nome = produtoData.nome || '';
+    const categoria = produtoData.categoria || '';
 
     if (info) info.textContent = `${nome} • Categoria: ${categoria || '—'} • Estoque: ${estoque}`;
     if (qty) {
@@ -775,8 +869,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  select.addEventListener('change', updateInfoAndValor);
-  if (qty) qty.addEventListener('input', updateInfoAndValor);
+  if (qty) qty.addEventListener('input', function() {
+    const hiddenInput = document.getElementById('produto_id_hidden');
+    if (hiddenInput && hiddenInput.value) {
+      const produto = produtosData.find(p => p.id == hiddenInput.value);
+      if (produto) updateInfoAndValor(produto);
+    }
+  });
 
   // Inicializa exibição
   updateInfoAndValor();

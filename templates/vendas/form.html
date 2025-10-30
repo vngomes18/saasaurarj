@@ -2,10 +2,13 @@
 
 {% block title %}Nova Venda - SaaS Sistema{% endblock %}
 
+{% block extra_css %}
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <!-- Header -->
-    <div class="row mb-4">
+    <div class="row mb-4 page-section-header align-items-center">
         <div class="col-md-6">
             <h2>
                 
@@ -23,7 +26,7 @@
 
     <!-- Sale Form -->
     <div class="row">
-        <div class="col-lg-8">
+        <div class="col-12">
             <form method="POST" id="sale-form" class="needs-validation" novalidate data-offline-queue="true">
                 <!-- CSRF Token -->
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -127,23 +130,51 @@
                     </div>
                 </div>
 
-                <!-- Form Actions -->
-                <div class="d-flex justify-content-between">
-                    <a href="{{ url_for('vendas') }}" class="btn btn-outline-secondary">
-                        
-                        Cancelar
-                    </a>
-                    <button type="submit" class="btn btn-success" id="submit-btn" disabled>
-                        
-                        Finalizar Venda
-                    </button>
-                </div>
             </form>
         </div>
-
-        <!-- Sale Summary -->
-        <div class="col-lg-4">
-            <div class="card sticky-top" style="top: 20px;">
+    </div>
+    
+    <!-- Cupom and Summary Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <!-- Cupom de Desconto -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        
+                        Cupom de Desconto
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="cupom_codigo" class="form-label">
+                                
+                                Digite o código do cupom
+                            </label>
+                            <div class="input-group">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="cupom_codigo" 
+                                       name="cupom_codigo" 
+                                       placeholder="Digite o código do cupom"
+                                       style="text-transform: uppercase;">
+                            <button class="btn btn-outline-secondary" 
+                                    type="button" 
+                                    id="validar-cupom-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20,6 9,17 4,12"></polyline>
+                                </svg>
+                            </button>
+                            </div>
+                            <div id="cupom-message" class="form-text"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sale Summary -->
+            <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">
                         
@@ -151,28 +182,6 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <!-- Campo de Cupom -->
-                    <div class="mb-3">
-                        <label for="cupom_codigo" class="form-label">
-                            
-                            Cupom de Desconto
-                        </label>
-                        <div class="input-group">
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="cupom_codigo" 
-                                   name="cupom_codigo" 
-                                   placeholder="Digite o código do cupom"
-                                   style="text-transform: uppercase;">
-                            <button class="btn btn-outline-secondary" 
-                                    type="button" 
-                                    id="validar-cupom-btn">
-                                
-                            </button>
-                        </div>
-                        <div id="cupom-message" class="form-text"></div>
-                    </div>
-                    
                     <div id="sale-summary">
                         <div class="text-center text-muted py-4">
                             
@@ -180,6 +189,14 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="d-flex justify-content-end mt-4">
+                <button type="submit" form="sale-form" class="btn btn-success btn-lg" id="submit-btn" disabled>
+                    
+                    Finalizar Venda
+                </button>
             </div>
         </div>
     </div>
@@ -208,17 +225,15 @@
                 <div class="row sale-item mb-3" data-item="${itemCount}">
                     <div class="col-md-5">
                         <label class="form-label">Produto</label>
-                        <select class="form-select produto-select" name="produto_${itemCount}" required>
-                            <option value="">Selecione um produto</option>
-                            {% for produto in produtos %}
-                            <option value="{{ produto.id }}" 
-                                    data-preco="{{ produto.preco }}" 
-                                    data-estoque="{{ produto.estoque_atual }}"
-                                    data-nome="{{ produto.nome }}">
-                                {{ produto.nome }} - R$ {{ "%.2f"|format(produto.preco) }} (Estoque: {{ produto.estoque_atual }})
-                            </option>
-                            {% endfor %}
-                        </select>
+                        <div class="produto-search-container">
+                            <input type="hidden" class="produto-id-input" name="produto_${itemCount}" required>
+                            <input type="text" 
+                                   class="form-control produto-search-input" 
+                                   placeholder="Digite o nome do produto..."
+                                   autocomplete="off"
+                                   data-item="${itemCount}">
+                            <div class="produto-suggestions"></div>
+                        </div>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label">Quantidade</label>
@@ -253,23 +268,83 @@
         // Add item button
         document.getElementById('add-item-btn').addEventListener('click', addSaleItem);
         
-        // Handle product selection
-        itemsContainer.addEventListener('change', function(e) {
-            if (e.target.classList.contains('produto-select')) {
-                const selectedOption = e.target.selectedOptions[0];
+        // Handle product search
+        itemsContainer.addEventListener('input', function(e) {
+            if (e.target.classList.contains('produto-search-input')) {
+                searchProdutos(e.target);
+            }
+        });
+        
+        // Handle product selection from suggestions
+        itemsContainer.addEventListener('click', function(e) {
+            if (e.target.classList.contains('produto-suggestion-item')) {
+                const produtoData = JSON.parse(e.target.dataset.produto);
                 const itemRow = e.target.closest('.sale-item');
+                const searchInput = itemRow.querySelector('.produto-search-input');
+                const hiddenInput = itemRow.querySelector('.produto-id-input');
                 const precoInput = itemRow.querySelector('.preco-input');
+                const suggestionsBox = itemRow.querySelector('.produto-suggestions');
                 
-                if (selectedOption && selectedOption.dataset.preco) {
-                    const preco = parseFloat(selectedOption.dataset.preco);
-                    precoInput.value = 'R$ ' + preco.toFixed(2).replace('.', ',');
-                    calculateSubtotal(itemRow);
-                } else {
-                    precoInput.value = '';
-                    itemRow.querySelector('.subtotal-input').value = '';
-                }
+                hiddenInput.value = produtoData.id;
+                hiddenInput.dataset.estoque = produtoData.estoque;
+                searchInput.value = produtoData.nome;
+                precoInput.value = 'R$ ' + parseFloat(produtoData.preco).toFixed(2).replace('.', ',');
+                suggestionsBox.innerHTML = '';
+                suggestionsBox.style.display = 'none';
+                
+                calculateSubtotal(itemRow);
                 updateSaleSummary();
                 updateSubmitButton();
+            }
+        });
+        
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.classList.contains('produto-search-input') && !e.target.classList.contains('produto-suggestion-item')) {
+                document.querySelectorAll('.produto-suggestions').forEach(box => {
+                    box.innerHTML = '';
+                    box.style.display = 'none';
+                });
+            }
+        });
+        
+        function searchProdutos(input) {
+            const term = input.value.toLowerCase();
+            const suggestionsBox = input.parentElement.querySelector('.produto-suggestions');
+            
+            // Base de produtos embutida no template
+            const produtosData = [
+                {% for produto in produtos %}
+                {
+                    id: {{ produto.id }},
+                    nome: '{{ produto.nome }}',
+                    preco: {{ produto.preco }},
+                    estoque: {{ produto.estoque_atual }}
+                },
+                {% endfor %}
+            ];
+            // Quando vazio, mostrar todos; senão, filtrar por termo
+            const filtered = term.length < 1
+                ? produtosData
+                : produtosData.filter(p => p.nome.toLowerCase().includes(term));
+            
+            if (filtered.length === 0) {
+                suggestionsBox.innerHTML = '<div class="produto-suggestion-item p-2 text-muted">Nenhum produto encontrado</div>';
+            } else {
+                suggestionsBox.innerHTML = filtered.map(p => `
+                    <div class="produto-suggestion-item" data-produto='{"id":${p.id},"nome":"${p.nome}","preco":${p.preco},"estoque":${p.estoque}}'>
+                        <strong>${p.nome}</strong> - R$ ${p.preco.toFixed(2).replace('.', ',')} (Estoque: ${p.estoque})
+                    </div>
+                `).join('');
+            }
+            
+            suggestionsBox.style.display = 'block';
+        }
+
+        // Mostrar sugestões ao focar no campo mesmo sem digitar
+        itemsContainer.addEventListener('focusin', function(e) {
+            if (e.target.classList.contains('produto-search-input')) {
+                searchProdutos(e.target);
             }
         });
         
@@ -277,11 +352,14 @@
         itemsContainer.addEventListener('input', function(e) {
             if (e.target.classList.contains('quantidade-input')) {
                 const itemRow = e.target.closest('.sale-item');
-                const quantidade = parseInt(e.target.value);
-                const selectedOption = itemRow.querySelector('.produto-select').selectedOptions[0];
+                const quantidade = parseInt(e.target.value) || 0;
                 
-                if (selectedOption && selectedOption.dataset.estoque) {
-                    const estoque = parseInt(selectedOption.dataset.estoque);
+                // Get estoque from hidden input if available
+                const hiddenInput = itemRow.querySelector('.produto-id-input');
+                const estoqueInfo = hiddenInput ? hiddenInput.dataset.estoque : null;
+                
+                if (estoqueInfo) {
+                    const estoque = parseInt(estoqueInfo);
                     if (quantidade > estoque) {
                         e.target.setCustomValidity(`Estoque insuficiente. Disponível: ${estoque}`);
                         e.target.reportValidity();
@@ -322,30 +400,6 @@
             itemRow.querySelector('.subtotal-input').value = 'R$ ' + subtotal.toFixed(2).replace('.', ',');
         }
         
-        // Add improved input handling for quantity fields
-        itemsContainer.addEventListener('input', function(e) {
-            if (e.target.classList.contains('quantidade-input')) {
-                const itemRow = e.target.closest('.sale-item');
-                const quantidade = parseInt(e.target.value) || 0;
-                const selectedOption = itemRow.querySelector('.produto-select').selectedOptions[0];
-                
-                if (selectedOption && selectedOption.dataset.estoque) {
-                    const estoque = parseInt(selectedOption.dataset.estoque);
-                    if (quantidade > estoque) {
-                        e.target.setCustomValidity(`Estoque insuficiente. Disponível: ${estoque}`);
-                        e.target.reportValidity();
-                        return;
-                    } else {
-                        e.target.setCustomValidity('');
-                    }
-                }
-                
-                calculateSubtotal(itemRow);
-                updateSaleSummary();
-                updateSubmitButton();
-            }
-        });
-        
         function updateSaleSummary() {
             const items = itemsContainer.querySelectorAll('.sale-item');
             let totalItems = 0;
@@ -356,18 +410,21 @@
                 const quantidade = parseInt(item.querySelector('.quantidade-input').value) || 0;
                 const subtotalText = item.querySelector('.subtotal-input').value.replace('R$ ', '').replace(',', '.');
                 const subtotal = parseFloat(subtotalText) || 0;
-                const produtoSelect = item.querySelector('.produto-select');
-                const selectedOption = produtoSelect.selectedOptions[0];
+                const searchInput = item.querySelector('.produto-search-input');
+                const precoInput = item.querySelector('.preco-input');
+                const produtoNome = searchInput ? searchInput.value : '';
                 
-                if (quantidade > 0 && subtotal > 0 && selectedOption) {
+                if (quantidade > 0 && subtotal > 0 && produtoNome) {
                     totalItems += quantidade;
                     totalValue += subtotal;
+                    
+                    const precoUnit = precoInput.value.replace('R$ ', '').replace(',', '.');
                     
                     summaryHtml += `
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <div>
-                                <small class="fw-bold">${selectedOption.dataset.nome}</small>
-                                <br><small class="text-muted">${quantidade}x R$ ${parseFloat(selectedOption.dataset.preco).toFixed(2).replace('.', ',')}</small>
+                                <small class="fw-bold">${produtoNome}</small>
+                                <br><small class="text-muted">${quantidade}x R$ ${parseFloat(precoUnit).toFixed(2).replace('.', ',')}</small>
                             </div>
                             <span class="badge bg-primary">R$ ${subtotal.toFixed(2).replace('.', ',')}</span>
                         </div>
@@ -443,10 +500,10 @@
             let hasValidItems = false;
             
             items.forEach(item => {
-                const produtoSelect = item.querySelector('.produto-select');
+                const hiddenInput = item.querySelector('.produto-id-input');
                 const quantidade = parseInt(item.querySelector('.quantidade-input').value) || 0;
                 
-                if (produtoSelect.value && quantidade > 0) {
+                if (hiddenInput && hiddenInput.value && quantidade > 0) {
                     hasValidItems = true;
                 }
             });
@@ -556,5 +613,60 @@
         });
     });
 </script>
+
+
+<style>
+/* Product search autocomplete styles */
+.produto-search-container {
+    position: relative;
+}
+
+.produto-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 0.5rem 0.5rem;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: none;
+}
+
+/* Suggestions are shown/hidden via JS */
+
+.produto-suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.produto-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.produto-suggestion-item:hover {
+    background-color: #f8f9fa;
+}
+
+.dark-mode .produto-suggestions {
+    background: var(--glass-bg);
+    border-color: var(--glass-border);
+}
+
+.dark-mode .produto-suggestion-item {
+    border-color: rgba(148, 163, 184, 0.2);
+    color: var(--text-primary);
+}
+
+.dark-mode .produto-suggestion-item:hover {
+    background-color: rgba(37, 99, 235, 0.1);
+}
+</style>
 {% endblock %}
 

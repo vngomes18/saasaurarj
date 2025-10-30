@@ -7,7 +7,7 @@
 {% block content %}
 <div class="container-fluid">
     <!-- Header -->
-    <div class="row mb-4">
+    <div class="row mb-4 page-section-header align-items-center">
         <div class="col-md-8">
             <h2>
                 
@@ -36,7 +36,7 @@
 
     <!-- Form -->
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-12">
             <div class="card">
                 <div class="card-body">
                     <form method="POST" class="needs-validation" novalidate data-offline-queue="true">
@@ -50,7 +50,7 @@
                                 Informações Básicas
                             </h5>
                             <div class="row">
-                                <div class="col-md-8 mb-3">
+                                <div class="col-md-6 mb-3">
                                     <label for="nome" class="form-label">
                                         
                                         Nome do Produto Auxiliar *
@@ -71,37 +71,17 @@
                                         Por favor, insira o nome do produto auxiliar.
                                     </div>
                                 </div>
-
-                                <div class="col-md-4 mb-3">
-                                    <label for="codigo_interno" class="form-label">
-                                        
-                                        Código Interno
-                                    </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-info text-white">
-                                            
-                                        </span>
-                                        <input type="text" 
-                                               class="form-control" 
-                                               id="codigo_interno" 
-                                               name="codigo_interno"
-                                               placeholder="Ex: PA001"
-                                               value="{{ produto.codigo_interno if produto else '' }}">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row">
+                                
                                 <div class="col-md-6 mb-3">
                                     <label for="categoria" class="form-label">
                                         
                                         Categoria
                                     </label>
                                     <div class="categoria-autocomplete-container">
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-info text-white">
-                                                
-                                            </span>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-info text-white">
+                                            
+                                        </span>
                                             <input type="text" 
                                                    class="form-control" 
                                                    id="categoria" 
@@ -124,6 +104,58 @@
                                         <div id="categoria-suggestions" class="categoria-suggestions" style="display: none;">
                                             <!-- Sugestões serão inseridas aqui via JavaScript -->
                                         </div>
+                                        
+                                        <!-- Modal para nova categoria -->
+                                        <div class="modal fade" id="novaCategoriaModal" tabindex="-1" aria-labelledby="novaCategoriaModalLabel" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-success text-white">
+                                                        <h5 class="modal-title" id="novaCategoriaModalLabel">
+                                                            
+                                                            Nova Categoria
+                                                        </h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <label for="nova-categoria-nome" class="form-label">
+                                                                
+                                                                Nome da Nova Categoria
+                                                            </label>
+                                                            <input type="text" 
+                                                                   class="form-control form-control-lg" 
+                                                                   id="nova-categoria-nome" 
+                                                                   placeholder="Ex: Eletrônicos, Roupas, etc."
+                                                                   autocomplete="off">
+                                                            <div class="form-text">
+                                                                
+                                                                Digite o nome da nova categoria que será salva no sistema
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                                            </svg>
+                                                            Cancelar
+                                                        </button>
+                                                        <button type="button" class="btn btn-success" id="salvar-nova-categoria">
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-1">
+                                                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                                                <polyline points="17,21 17,13 7,13 7,21"></polyline>
+                                                                <polyline points="7,3 7,8 15,8"></polyline>
+                                                            </svg>
+                                                            Salvar Categoria
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-text">
+                                        Digite para buscar categorias existentes ou crie uma nova
                                     </div>
                                 </div>
 
@@ -776,84 +808,7 @@
             </div>
         </div>
 
-        <!-- Sidebar com informações -->
-        <div class="col-lg-4">
-            <div class="card sticky-sidebar">
-                <div class="card-header bg-info text-white">
-                    <h6 class="mb-0">
-                        
-                        Informações Úteis
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="alert alert-info border-0">
-                        
-                        <strong>Produtos Auxiliares:</strong> Materiais, ferramentas e insumos utilizados no seu negócio.
-                    </div>
-                    
-                    <div class="alert alert-warning border-0">
-                        
-                        <strong>Controle de Estoque:</strong> O sistema alertará quando o estoque estiver abaixo do mínimo.
-                    </div>
-
-                    <div class="alert alert-success border-0">
-                        
-                        <strong>Organização:</strong> Use categorias para facilitar a gestão dos produtos.
-                    </div>
-
-                    <div class="alert alert-primary border-0">
-                        
-                        <strong>Preços:</strong> Defina preços unitários para controle de custos.
-                    </div>
-
-                    <hr>
-
-                    <h6 class="fw-bold mb-3">
-                        
-                        Categorias Disponíveis
-                    </h6>
-                    
-                    <div class="list-group list-group-flush">
-                        <div class="list-group-item border-0 px-0">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-primary me-3">🔧</span>
-                                <div>
-                                    <strong>Ferramentas</strong>
-                                    <br><small class="text-muted">Ferramentas e equipamentos</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="list-group-item border-0 px-0">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-success me-3">📦</span>
-                                <div>
-                                    <strong>Materiais</strong>
-                                    <br><small class="text-muted">Materiais básicos</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="list-group-item border-0 px-0">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-warning me-3">⚗️</span>
-                                <div>
-                                    <strong>Insumos</strong>
-                                    <br><small class="text-muted">Insumos consumíveis</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="list-group-item border-0 px-0">
-                            <div class="d-flex align-items-center">
-                                <span class="badge bg-info me-3">⚙️</span>
-                                <div>
-                                    <strong>Equipamentos</strong>
-                                    <br><small class="text-muted">Equipamentos diversos</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        
     </div>
 </div>
 
@@ -905,74 +860,17 @@
 </div>
 
 <style>
-/* CSS para sidebar fixa */
-.sticky-sidebar {
-    position: sticky;
-    top: 20px;
-    z-index: 100;
-    max-height: calc(100vh - 40px);
-    overflow-y: auto;
-}
-
-/* Ajustes responsivos */
-@media (max-width: 991.98px) {
-    .sticky-sidebar {
-        position: static;
-        margin-top: 2rem;
-    }
-}
-
-/* Melhorias na aparência da sidebar */
-.sticky-sidebar .card-header {
-    position: sticky;
-    top: 0;
-    z-index: 101;
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-}
-
-.sticky-sidebar .alert {
-    margin-bottom: 1rem;
-    border-left: 4px solid;
-}
-
-.sticky-sidebar .alert-info {
-    border-left-color: #17a2b8;
-}
-
-.sticky-sidebar .alert-warning {
-    border-left-color: #ffc107;
-}
-
-.sticky-sidebar .alert-success {
-    border-left-color: #28a745;
-}
-
-.sticky-sidebar .alert-primary {
-    border-left-color: #007bff;
-}
-
-/* Animação suave para scroll */
-.sticky-sidebar {
-    transition: all 0.3s ease;
-}
-
-/* Sombra quando fixa */
-.sticky-sidebar.sticky {
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-/* Estilos para autocomplete de categoria, fornecedor, CFOP e CST */
 .categoria-autocomplete-container,
-.fornecedor-autocomplete-container,
 .cfop-autocomplete-container,
-.cst-autocomplete-container {
+.cst-autocomplete-container,
+.fornecedor-autocomplete-container {
     position: relative;
 }
 
 .categoria-suggestions,
-.fornecedor-suggestions,
 .cfop-suggestions,
-.cst-suggestions {
+.cst-suggestions,
+.fornecedor-suggestions {
     position: absolute;
     top: 100%;
     left: 0;
@@ -981,58 +879,76 @@
     border: 1px solid #dee2e6;
     border-top: none;
     border-radius: 0 0 0.375rem 0.375rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     max-height: 200px;
     overflow-y: auto;
     z-index: 1000;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
-.categoria-suggestion,
-.fornecedor-suggestion,
-.cfop-suggestion,
-.cst-suggestion {
-    padding: 0.5rem 1rem;
-    border-bottom: 1px solid #f8f9fa;
+.suggestion-item {
+    padding: 0.75rem 1rem;
     cursor: pointer;
+    border-bottom: 1px solid #f8f9fa;
+    display: flex;
+    align-items: center;
     transition: background-color 0.15s ease-in-out;
 }
 
-.categoria-suggestion:hover,
-.fornecedor-suggestion:hover,
-.cfop-suggestion:hover,
-.cst-suggestion:hover {
+.suggestion-item:hover {
     background-color: #f8f9fa;
 }
 
-.categoria-suggestion:last-child,
-.fornecedor-suggestion:last-child,
-.cfop-suggestion:last-child,
-.cst-suggestion:last-child {
+.suggestion-item:last-child {
     border-bottom: none;
 }
 
-/* Estilos específicos para o modal de nova categoria */
+.suggestion-item .suggestion-icon {
+    margin-right: 0.5rem;
+    color: #6c757d;
+    width: 16px;
+}
+
+.suggestion-item.selected {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.suggestion-item.new-category {
+    background-color: #f8f9fa;
+    font-style: italic;
+    color: #28a745;
+}
+
+.suggestion-item.new-category .suggestion-icon {
+    color: #28a745;
+}
+
+.no-suggestions {
+    padding: 0.75rem 1rem;
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+}
+
+.suggestion-highlight {
+    background-color: #fff3cd;
+    font-weight: 600;
+}
+
+/* Modal específico para nova categoria */
 #novaCategoriaModal {
-    z-index: 99999 !important;
+    z-index: 9999 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.5) !important;
 }
 
 #novaCategoriaModal .modal-backdrop {
-    z-index: 99998 !important;
-}
-
-#novaCategoriaModal .modal-content {
-    z-index: 100001 !important;
-    pointer-events: auto !important;
-}
-
-#novaCategoriaModal .modal-dialog {
-    z-index: 100000 !important;
-    pointer-events: auto !important;
-}
-
-#novaCategoriaModal * {
-    pointer-events: auto !important;
-    z-index: 100002 !important;
+    z-index: 9998 !important;
+    background: rgba(0, 0, 0, 0.5) !important;
 }
 
 #novaCategoriaModal .btn {
@@ -1045,14 +961,16 @@
     z-index: 100003 !important;
 }
 
-/* Modal backdrop fix */
-#novaCategoriaModal {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
-    background: rgba(0, 0, 0, 0.5) !important;
+#novaCategoriaModal .modal-content {
+    position: relative !important;
+    z-index: 10000 !important;
+}
+
+#novaCategoriaModal .modal-header,
+#novaCategoriaModal .modal-body,
+#novaCategoriaModal .modal-footer {
+    position: relative !important;
+    z-index: 10001 !important;
 }
 </style>
 
@@ -1132,15 +1050,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const categoriaInput = document.getElementById('categoria');
     const categoriaSuggestions = document.getElementById('categoria-suggestions');
     const adicionarNovaCategoriaBtn = document.getElementById('adicionar-nova-categoria');
-    const novaCategoriaModal = document.getElementById('novaCategoriaModal');
+    const novaCategoriaModal = new bootstrap.Modal(document.getElementById('novaCategoriaModal'));
     const novaCategoriaNomeInput = document.getElementById('nova-categoria-nome');
     const salvarNovaCategoriaBtn = document.getElementById('salvar-nova-categoria');
     
     // Categorias padrão para produtos auxiliares
-    const categoriasPadrao = [
+    let categoriasExistentes = [
         'Ferramentas', 'Materiais', 'Insumos', 'Equipamentos', 
         'Limpeza', 'Segurança', 'Manutenção', 'Escritório', 'Outros'
     ];
+    
+    // Carregar categorias dinamicamente do backend
+    async function carregarCategorias() {
+        try {
+            const response = await fetch('/api/categorias');
+            if (response.ok) {
+                const categoriasBackend = await response.json();
+                // Adicionar categorias do backend sem duplicar
+                categoriasBackend.forEach(categoria => {
+                    if (!categoriasExistentes.includes(categoria)) {
+                        categoriasExistentes.push(categoria);
+                    }
+                });
+            }
+        } catch (error) {
+            console.log('Erro ao carregar categorias do backend:', error);
+        }
+    }
+    
+    // Carregar categorias ao inicializar
+    carregarCategorias();
     
     // Sistema de Autocomplete para Fornecedores
     const fornecedorInput = document.getElementById('fornecedor_nome');
@@ -1302,10 +1241,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Se não há query ou query vazia, mostrar todas as categorias
         if (!query || query.length < 1) {
-            regularSuggestions = categoriasPadrao.filter(categoria => categoria !== 'Outros');
+            regularSuggestions = categoriasExistentes.filter(categoria => categoria !== 'Outros');
         } else {
             // Filtrar categorias que correspondem à query
-            regularSuggestions = categoriasPadrao
+            regularSuggestions = categoriasExistentes
                 .filter(categoria => categoria !== 'Outros') // Remover "Outros" da lista normal
                 .filter(categoria => categoria.toLowerCase().includes(query.toLowerCase()));
         }
@@ -1964,8 +1903,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const novaCategoria = novaCategoriaNomeInput.value.trim();
             if (novaCategoria) {
                 categoriaInput.value = novaCategoria;
-                if (!categoriasPadrao.includes(novaCategoria)) {
-                    categoriasPadrao.push(novaCategoria);
+                if (!categoriasExistentes.includes(novaCategoria)) {
+                    categoriasExistentes.push(novaCategoria);
                 }
                 categoriaSuggestions.style.display = 'none';
                 
