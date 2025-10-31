@@ -34,4 +34,8 @@ with app.app_context():
         print('✅ Schema recriado!')
 "
 
+# Executar migração de código de barras se necessário
+echo "🔧 Verificando migração codigo_barras..."
+python add_codigo_barras_render.py
+
 echo "🎉 Build concluído!"
