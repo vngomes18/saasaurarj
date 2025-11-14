@@ -182,7 +182,8 @@ app.config['GOOGLE_CLIENT_SECRET'] = os.environ.get('GOOGLE_CLIENT_SECRET', '')
 if os.environ.get('RENDER'):
     app.config['PREFERRED_URL_SCHEME'] = 'https'
 
-db = SQLAlchemy(app)
+db = SQLAlchemy()
+db.init_app(app)
 
 # Filtro Jinja2 para formatar datas
 
@@ -363,8 +364,14 @@ def inject_user_settings():
     except Exception:
         settings = None
     is_admin_flag = (session.get('role') == 'admin')
-    feature_reports = has_feature(uid, 'reports') if uid else False
-    effective_plan_tier = get_plan_tier_for_user(uid) if uid else 'free'
+    try:
+        feature_reports = has_feature(uid, 'reports') if uid else False
+    except Exception:
+        feature_reports = False
+    try:
+        effective_plan_tier = get_plan_tier_for_user(uid) if uid else 'free'
+    except Exception:
+        effective_plan_tier = 'free'
     return dict(user_settings=settings, is_admin_flag=is_admin_flag, feature_reports=feature_reports, effective_plan_tier=effective_plan_tier)
 
 # Configuração do OAuth (apenas se as credenciais estiverem configuradas)
@@ -462,7 +469,7 @@ def update_user_settings(user_id, **kwargs):
     return settings
 
 # ===== Plano: helpers de recursos e cotas =====
-from plans import get_plan_tier_for_user, has_feature, require_plan, check_quota_exceeded
+from plans import get_plan_tier_for_user, has_feature, require_plan, check_quota_exceeded, PLAN_FEATURES
 
 # Helper de autorização
 def is_admin():
@@ -1042,7 +1049,6 @@ class UserSettings(db.Model):
 # ========== ADMIN DATA VIEWER ==========
 @app.route('/admin')
 @admin_required
-@cache.memoize(timeout=300)  # Cache por 5 minutos
 def admin_home():
     from datetime import datetime, timedelta
     admin_user = User.query.get(session['user_id'])
@@ -2018,12 +2024,44 @@ def conta_plano():
 @login_required
 @admin_required
 def alterar_plano():
-    novo_plano = request.form.get('plan_tier', '').lower()
-    if novo_plano not in ['free','freepremium','premium']:
+    novo_plano = (request.form.get('plan_tier', '') or '').lower()
+    allowed_tiers = set(PLAN_FEATURES.keys())
+    if novo_plano not in allowed_tiers:
         flash('Plano inválido.', 'error')
         return redirect(url_for('conta_plano'))
-    update_user_settings(session['user_id'], plan_tier=novo_plano)
-    flash(f'Plano atualizado para {novo_plano.capitalize()}.', 'success')
+
+    # Resolver empresa do usuário logado
+    user = User.query.get(session['user_id'])
+    empresa = None
+    if user:
+        if getattr(user, 'empresa_id', None):
+            empresa = Empresa.query.get(user.empresa_id)
+        if not empresa:
+            empresa = Empresa.query.filter_by(nome=user.empresa).first()
+
+    if not empresa:
+        flash('Empresa não encontrada para atualizar o plano.', 'error')
+        return redirect(url_for('conta_plano'))
+
+    # Atualizar plano a nível de Empresa (prioritário)
+    plano_anterior = (empresa.plan_tier or 'free').lower()
+    empresa.plan_tier = novo_plano
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash('Erro ao atualizar o plano. Tente novamente.', 'error')
+        return redirect(url_for('conta_plano'))
+
+    # Registrar auditoria da alteração
+    try:
+        log_audit(user_id=session['user_id'], entidade='empresa', entidade_id=empresa.id, acao='update', changes={
+            'plan_tier': [plano_anterior, novo_plano]
+        })
+    except Exception:
+        pass
+
+    flash(f'Plano da empresa atualizado para {novo_plano.capitalize()}.', 'success')
     return redirect(url_for('conta_plano'))
 
 @admin_bp.route('/funcionarios', methods=['GET','POST'], endpoint='admin_funcionarios')

@@ -41,7 +41,11 @@ class Config:
         if database_url:
             # Se for PostgreSQL, usar psycopg2
             if database_url.startswith('postgres://'):
-                database_url = database_url.replace('postgres://', 'postgresql://', 1)
+                # Converter para o esquema recomendado e garantir o driver psycopg2
+                database_url = database_url.replace('postgres://', 'postgresql+psycopg2://', 1)
+            elif database_url.startswith('postgresql://') and '+psycopg2://' not in database_url:
+                # Tornar o driver explícito quando ausente
+                database_url = database_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
             return database_url
         else:
             # Fallback para SQLite
@@ -49,6 +53,22 @@ class Config:
     
     SQLALCHEMY_DATABASE_URI = get_database_uri()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    # Opções de engine para maior estabilidade com conexões remotas/SSL (Render)
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,          # Valida conexões antes de usar para evitar "SSL closed"
+        'pool_recycle': 1800,           # Recicla conexões a cada 30 min
+        'pool_size': int(os.environ.get('POOL_SIZE', 5)),
+        'max_overflow': int(os.environ.get('MAX_OVERFLOW', 10)),
+        'connect_args': {
+            # Mantém a conexão ativa evitando fechamentos inesperados
+            'keepalives': 1,
+            'keepalives_idle': 30,
+            'keepalives_interval': 10,
+            'keepalives_count': 5,
+            # Garante SSL quando necessário; também está no URL, mas aqui reforça
+            'sslmode': os.environ.get('PGSSLMODE', 'require'),
+        }
+    }
     
     # Configurações de email
     MAIL_SERVER = os.environ.get('MAIL_SERVER')

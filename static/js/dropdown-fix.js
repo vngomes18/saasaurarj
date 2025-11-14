@@ -1,11 +1,21 @@
 // Dropdown Fix JavaScript
-document.addEventListener('DOMContentLoaded', function() {
-    // Fix dropdown z-index issues
-    fixDropdownZIndex();
-    
-    // Ensure dropdowns work properly
-    setupDropdownHandlers();
-});
+(function initDropdownFix() {
+    const run = function() {
+        // Fix dropdown z-index issues
+        fixDropdownZIndex();
+        // Ensure dropdowns work properly
+        setupDropdownHandlers();
+        // Ensure sidebar dropdowns toggle reliably
+        setupSidebarDropdowns();
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', run);
+    } else {
+        // DOM já carregado; executar imediatamente
+        run();
+    }
+})();
 
 function fixDropdownZIndex() {
     // Get all dropdown menus
@@ -68,6 +78,52 @@ function setupDropdownHandlers() {
                 menu.style.zIndex = '1060';
             });
         }
+    });
+}
+
+function setupSidebarDropdowns() {
+    const sidebarDropdowns = document.querySelectorAll('.sidebar-left .dropdown');
+    sidebarDropdowns.forEach(dropdown => {
+        const toggle = dropdown.querySelector('.dropdown-toggle');
+        const menu = dropdown.querySelector('.dropdown-menu');
+        if (!toggle || !menu) return;
+
+        // Bootstrap dropdown instance with outside auto-close
+        let bsDropdown;
+        try {
+            const bs = window.bootstrap || bootstrap;
+            bsDropdown = new bs.Dropdown(toggle, { autoClose: 'outside' });
+        } catch (e) {
+            // Bootstrap may not be available yet; ignore
+        }
+
+        // Prevent default navigation, let Bootstrap handle toggling when available
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            menu.style.zIndex = '1060';
+            // Preferir Bootstrap quando disponível
+            if (bsDropdown && typeof bsDropdown.toggle === 'function') {
+                bsDropdown.toggle();
+                return;
+            }
+            // Fallback robusto: alterna classes em menu e container
+            const isOpen = menu.classList.contains('show');
+            if (isOpen) {
+                menu.classList.remove('show');
+                dropdown.classList.remove('show');
+                toggle.setAttribute('aria-expanded', 'false');
+            } else {
+                menu.classList.add('show');
+                dropdown.classList.add('show');
+                toggle.setAttribute('aria-expanded', 'true');
+            }
+        });
+
+        // Allow clicks inside menu without closing unexpectedly
+        menu.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
     });
 }
 

@@ -60,7 +60,7 @@ PLAN_QUOTAS = {
 
 
 def get_plan_tier_for_user(user_id: int) -> str:
-    """Resolve o plano efetivo para um usuário, preferindo Empresa quando disponível.
+    """Resolve o plano efetivo para um usuário, preferindo Empresa (via empresa_id quando disponível).
     Fallback: UserSettings do admin da mesma empresa."""
     try:
         # Import tardio para evitar ciclos
@@ -72,10 +72,13 @@ def get_plan_tier_for_user(user_id: int) -> str:
     if not user:
         return 'free'
 
-    # Preferir plano por Empresa, se cadastrado
+    # Preferir plano por Empresa, usando empresa_id se existir; fallback por nome
     empresa_record = None
     try:
-        empresa_record = Empresa.query.filter_by(nome=user.empresa).first()
+        if getattr(user, 'empresa_id', None):
+            empresa_record = Empresa.query.get(user.empresa_id)
+        if not empresa_record:
+            empresa_record = Empresa.query.filter_by(nome=user.empresa).first()
     except Exception:
         empresa_record = None
 
