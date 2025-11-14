@@ -24,6 +24,7 @@ import hashlib
 import uuid
 from functools import wraps
 import re
+import requests
 from dotenv import load_dotenv
 from config import config
 from api_routes import api
@@ -341,8 +342,12 @@ app.register_blueprint(api)
 print("API routes registradas com sucesso!")
 
 # Configuração de sessão mais segura
+# No Render, detectar HTTPS automaticamente
+is_render = os.environ.get('RENDER')
+is_https = is_render or os.environ.get('HTTPS', '').lower() == 'true'
+
 app.config.update(
-    SESSION_COOKIE_SECURE=True if os.environ.get('RENDER') else False,  # HTTPS em produção
+    SESSION_COOKIE_SECURE=is_https,  # HTTPS em produção (Render)
     SESSION_COOKIE_HTTPONLY=True,  # Previne acesso via JavaScript
     SESSION_COOKIE_SAMESITE='Lax',  # Proteção CSRF
     PERMANENT_SESSION_LIFETIME=timedelta(hours=8),  # Sessão expira em 8 horas
@@ -476,22 +481,46 @@ def admin_required(f):
 
 # ===== Dispositivo confiável e sessão única =====
 def get_device_identifier(req: request) -> str:
+    """Gera um identificador único para o dispositivo"""
+    # Prioridade 1: Header customizado (para apps mobile)
     header_id = req.headers.get('X-Device-ID') or req.headers.get('X-Device-Id')
     if header_id:
         return header_id.strip()
+    
+    # Prioridade 2: Cookie existente
     cookie_id = req.cookies.get('device_id')
     if cookie_id:
         return cookie_id.strip()
-    user_agent = req.headers.get('User-Agent', '')
+    
+    # Prioridade 3: Gerar baseado em headers (menos confiável no Render devido a proxies)
+    user_agent = req.headers.get('User-Agent', 'unknown')
     accept_lang = req.headers.get('Accept-Language', '')
-    remote_ip = req.headers.get('X-Forwarded-For', req.remote_addr or '')
-    raw = f"{user_agent}|{accept_lang}|{remote_ip}|{os.environ.get('DEVICE_SALT','')}"
+    # No Render, X-Forwarded-For pode variar, então usar apenas User-Agent e Accept-Language
+    # para tornar mais estável
+    is_render = os.environ.get('RENDER')
+    if is_render:
+        # No Render, usar apenas User-Agent e Accept-Language para estabilidade
+        raw = f"{user_agent}|{accept_lang}|{os.environ.get('DEVICE_SALT','render_salt')}"
+    else:
+        remote_ip = req.headers.get('X-Forwarded-For', req.remote_addr or '')
+        raw = f"{user_agent}|{accept_lang}|{remote_ip}|{os.environ.get('DEVICE_SALT','')}"
+    
     return hashlib.sha256(raw.encode('utf-8')).hexdigest()[:64]
 
 def set_device_cookie(resp, device_id: str):
     try:
-        resp.set_cookie('device_id', device_id, max_age=60*60*24*365, httponly=True, samesite='Lax')
-    except Exception:
+        # No Render, usar secure=True quando HTTPS estiver habilitado
+        is_secure = os.environ.get('RENDER') or request.is_secure or request.headers.get('X-Forwarded-Proto') == 'https'
+        resp.set_cookie(
+            'device_id', 
+            device_id, 
+            max_age=60*60*24*365, 
+            httponly=True, 
+            samesite='Lax',
+            secure=is_secure
+        )
+    except Exception as e:
+        print(f"Erro ao setar cookie device_id: {e}")
         pass
 
 def issue_session_token(user) -> str:
@@ -1276,6 +1305,11 @@ def login():
         email = sanitize_input(request.form.get('email', '').strip())
         password = request.form.get('password', '')
         
+        # Log de debug (apenas em desenvolvimento ou Render)
+        is_render = os.environ.get('RENDER')
+        if is_render or os.environ.get('FLASK_DEBUG') == '1':
+            print(f"[LOGIN] Tentativa de login para email: {email}")
+        
         # Validar email
         if not validate_email(email):
             flash('Formato de email inválido!', 'error')
@@ -1283,69 +1317,101 @@ def login():
         
         user = User.query.filter_by(email=email).first()
         
+        if not user:
+            if is_render or os.environ.get('FLASK_DEBUG') == '1':
+                print(f"[LOGIN] Usuário não encontrado: {email}")
+            flash('Email ou senha incorretos!', 'error')
+            return render_template('auth/login.html', google_configured=bool(google))
+        
         # Verificar se conta está bloqueada
         if user and is_account_locked(user):
+            if is_render or os.environ.get('FLASK_DEBUG') == '1':
+                print(f"[LOGIN] Conta bloqueada para usuário: {email}")
             flash('Conta temporariamente bloqueada. Tente novamente mais tarde.', 'error')
             return render_template('auth/login.html', google_configured=bool(google))
         
-        if user and user.password_hash and check_password_hash(user.password_hash, password):
-            # Verificar se 2FA está habilitado
-            if user.two_factor_enabled:
-                # Redirecionar para verificação 2FA
-                session['temp_user_id'] = user.id
-                session['2fa_required'] = True
-                return redirect(url_for('verify_2fa'))
-            else:
-                # Login normal com verificação de dispositivo e sessão
-                device_id = get_device_identifier(request)
-                unlink_device = request.form.get('unlink_device') == 'true' or request.args.get('unlink_device') == 'true'
-                is_admin_role = (user.role == 'admin')
-
-                if user.device_fingerprint:
-                    if user.device_fingerprint != device_id:
-                        if is_admin_role and unlink_device:
-                            user.device_fingerprint = device_id
-                            user.device_last_updated = datetime.utcnow()
-                        else:
-                            msg = 'Login bloqueado: dispositivo diferente do vinculado.'
-                            if is_admin_role:
-                                msg += ' Você pode desvincular o dispositivo anterior para prosseguir.'
-                            flash(msg, 'warning')
-                            return render_template('auth/login.html', google_configured=bool(google))
-                else:
-                    # Primeiro login: vincula dispositivo
-                    user.device_fingerprint = device_id
-                    user.device_last_updated = datetime.utcnow()
-
-                # Emitir token de sessão única
-                sess_token = issue_session_token(user)
-
-                # Carregar configurações do usuário
-                settings = get_user_settings(user.id)
-
-                # Resetar tentativas falhadas e atualizar último login
-                reset_failed_login(user)
-                user.last_login = datetime.utcnow()
-                db.session.commit()
-
-                # Setar sessão e cookie
-                session['user_id'] = user.id
-                session['username'] = user.username
-                session['empresa'] = user.empresa
-                session['role'] = user.role
-                session['dark_mode'] = settings.dark_mode
-                session['active_session_id'] = sess_token
-                session.permanent = True
-
-                flash('Login realizado com sucesso!', 'success')
-                resp = redirect(url_for('main.dashboard'))
-                set_device_cookie(resp, device_id)
-                return resp
-        else:
-            # Incrementar tentativas falhadas
-            if user:
-                increment_failed_login(user)
+        # Verificar senha
+        if not user.password_hash:
+            if is_render or os.environ.get('FLASK_DEBUG') == '1':
+                print(f"[LOGIN] Usuário sem senha definida: {email}")
             flash('Email ou senha incorretos!', 'error')
+            return render_template('auth/login.html', google_configured=bool(google))
+        
+        password_valid = check_password_hash(user.password_hash, password)
+        if not password_valid:
+            if is_render or os.environ.get('FLASK_DEBUG') == '1':
+                print(f"[LOGIN] Senha incorreta para usuário: {email}")
+            increment_failed_login(user)
+            flash('Email ou senha incorretos!', 'error')
+            return render_template('auth/login.html', google_configured=bool(google))
+        
+        # Senha correta - prosseguir com login
+        if is_render or os.environ.get('FLASK_DEBUG') == '1':
+            print(f"[LOGIN] Senha correta para usuário: {email}, ID: {user.id}")
+        
+        # Verificar se 2FA está habilitado
+        if user.two_factor_enabled:
+            # Redirecionar para verificação 2FA
+            session['temp_user_id'] = user.id
+            session['2fa_required'] = True
+            return redirect(url_for('verify_2fa'))
+        else:
+            # Login normal com verificação de dispositivo e sessão
+            device_id = get_device_identifier(request)
+            unlink_device = request.form.get('unlink_device') == 'true' or request.args.get('unlink_device') == 'true'
+            is_admin_role = (user.role == 'admin')
+            is_render_env = os.environ.get('RENDER')
+
+            if is_render_env or os.environ.get('FLASK_DEBUG') == '1':
+                print(f"[LOGIN] Device ID gerado: {device_id[:16]}... (usuário tem: {user.device_fingerprint[:16] if user.device_fingerprint else 'nenhum'}...)")
+
+            # No Render, ser mais flexível com device_fingerprint devido a proxies/load balancers
+            if user.device_fingerprint:
+                if user.device_fingerprint != device_id:
+                    # No Render ou para admins, permitir atualização automática do device
+                    if is_render_env or (is_admin_role and unlink_device):
+                        if is_render_env:
+                            print(f"[RENDER] Atualizando device_fingerprint para usuário {user.id} (ambiente Render)")
+                        user.device_fingerprint = device_id
+                        user.device_last_updated = datetime.utcnow()
+                    else:
+                        msg = 'Login bloqueado: dispositivo diferente do vinculado.'
+                        if is_admin_role:
+                            msg += ' Você pode desvincular o dispositivo anterior para prosseguir.'
+                        flash(msg, 'warning')
+                        return render_template('auth/login.html', google_configured=bool(google))
+            else:
+                # Primeiro login: vincula dispositivo
+                user.device_fingerprint = device_id
+                user.device_last_updated = datetime.utcnow()
+
+            # Emitir token de sessão única
+            sess_token = issue_session_token(user)
+
+            # Carregar configurações do usuário
+            settings = get_user_settings(user.id)
+
+            # Resetar tentativas falhadas e atualizar último login
+            reset_failed_login(user)
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+
+            # Setar sessão e cookie
+            session['user_id'] = user.id
+            session['username'] = user.username
+            session['empresa'] = user.empresa
+            session['role'] = user.role
+            session['dark_mode'] = settings.dark_mode
+            session['active_session_id'] = sess_token
+            session.permanent = True
+
+            if is_render_env or os.environ.get('FLASK_DEBUG') == '1':
+                print(f"[LOGIN] Login bem-sucedido para usuário {user.id} ({email})")
+
+            flash('Login realizado com sucesso!', 'success')
+            resp = redirect(url_for('main.dashboard'))
+            set_device_cookie(resp, device_id)
+            return resp
     
     return render_template('auth/login.html', google_configured=bool(google))
 
